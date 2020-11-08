@@ -1,0 +1,56 @@
+# Publish all joint states -----------------------------------
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50  
+
+# Position Controllers ---------------------------------------
+Pos_controller1:
+  type: effort_controllers/JointPositionController
+  joint: left_front_joint_A
+  pid: {p: 22000.0, i: 20, d: 100.0}
+Pos_controller2:
+  type: effort_controllers/JointPositionController
+  joint: left_front_joint_B
+  pid: {p: 20000.0, i: 0.00, d: 160.0}
+Pos_controller3:
+  type: effort_controllers/JointPositionController
+  joint: left_front_joint_C
+  pid: {p: 12000.0, i: 0.00, d: 60.0}
+Pos_controller4:
+  type: effort_controllers/JointPositionController
+  joint: right_front_joint_A
+  pid: {p: 22000.0, i: 20, d: 100.0}
+Pos_controller5:
+  type: effort_controllers/JointPositionController
+  joint: right_front_joint_B
+  pid: {p: 20000.0, i: 0.00, d: 160.0}
+Pos_controller6:
+  type: effort_controllers/JointPositionController
+  joint: right_front_joint_C
+  pid: {p: 12000.0, i: 0.00, d: 60.0}
+Pos_controller7:
+  type: effort_controllers/JointPositionController
+  joint: left_back_joint_A
+  pid: {p: 22000.0, i: 20, d: 100.0}
+Pos_controller8:
+  type: effort_controllers/JointPositionController
+  joint: left_back_joint_B
+  pid: {p: 20000.0, i: 0.00, d: 160.0}
+Pos_controller9:
+  type: effort_controllers/JointPositionController
+  joint: left_back_joint_C
+  pid: {p: 12000.0, i: 0.00, d: 60.0}
+Pos_controller10:
+  type: effort_controllers/JointPositionController
+  joint: right_back_joint_A
+  pid: {p: 22000.0, i: 20, d: 100.0}
+Pos_controller11:
+  type: effort_controllers/JointPositionController
+  joint: right_back_joint_B
+  pid: {p: 20000.0, i: 0.00, d: 160.0}
+Pos_controller12:
+  type: effort_controllers/JointPositionController
+  joint: right_back_joint_C
+  pid: {p: 12000.0, i: 0.00, d: 60.0}
+
+

@@ -1,0 +1,991 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="dog_sim">
+  <gazebo>
+      <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"/>
+  </gazebo>
+ <link name="world"/>
+    <joint
+    name="world_joint"
+    type="fixed">
+    <origin
+      xyz="0.0 0.0 0.4"
+      rpy="0 0 0" />
+    <parent
+      link="world" />
+    <child
+      link="body" />
+  </joint> 
+  
+  <link
+    name="body">
+    <inertial>
+      <origin
+        xyz="-4.97555680029071E-06 0.000119385827082069 -0.0516401114917389"
+        rpy="0 0 0" />
+      <mass
+        value="43" />
+      <inertia
+        ixx="2"
+        ixy="0"
+        ixz="0"
+        iyy="0.4"
+        iyz="0"
+        izz="2" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/body.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/body.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="hokuyo_link">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0001" />
+      <inertia
+        ixx="0.0000001"
+        ixy="0"
+        ixz="0"
+        iyy="0.0000001"
+        iyz="0"
+        izz="0.0000001" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0"/> 
+      <geometry>
+        <mesh filename="package://dog_sim/hokuyo.dae"/>
+      </geometry>
+      <material name="white">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+  </link>
+  <gazebo reference="hokuyo_link">
+    <sensor type="ray" name="head_hokuyo_sensor">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>true</visualize>
+      <update_rate>40</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>720</samples>
+            <resolution>1</resolution>
+            <min_angle>-1.570796</min_angle>
+            <max_angle>1.570796</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.10</min>
+          <max>1.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
+        <topicName>/big_doggy/laser/scan</topicName>
+        <frameName>hokuyo_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+  <joint
+    name="laserjoint"
+    type="fixed">
+    <origin
+      xyz="0.0 -0.255 0"
+      rpy="1.5708 0 -1.57" />
+    <parent
+      link="body" />
+    <child
+      link="hokuyo_link" />
+  </joint>
+  <link
+    name="imu_link">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.001" />
+      <inertia
+        ixx="0.0000001"
+        ixy="0"
+        ixz="0"
+        iyy="0.0000001"
+        iyz="0"
+        izz="0.0000001" />
+    </inertial>
+  </link>
+  <joint
+    name="imujoint"
+    type="fixed">
+    <origin
+      xyz="0.0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="body" />
+    <child
+      link="imu_link" />
+  </joint>
+  <gazebo reference="imu_link">
+    <gravity>true</gravity>
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <topic>__default_topic__</topic>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <topicName>imu</topicName>
+        <bodyName>imu_link</bodyName>
+        <updateRateHZ>100</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>imu_link</frameName>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
+  </gazebo>
+  <link
+    name="left_front_part_A">
+    <inertial>
+      <origin
+        xyz="-0.00019739 6.939E-06 0.01919"
+        rpy="0 0 0" />
+      <mass
+        value="0.6" />
+      <inertia
+        ixx="0.0015662"
+        ixy="1.6319E-07"
+        ixz="5.052E-06"
+        iyy="0.0011071"
+        iyz="-3.2051E-06"
+        izz="0.0016082" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_front_part_A.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.91765 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_front_part_A.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_front_joint_A"
+    type="continuous">
+    <origin
+      xyz="0.06 -0.1985 -0.051651"
+      rpy="1.5708 0 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="body" />
+    <child
+      link="left_front_part_A" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="left_front_part_B">
+    <inertial>
+      <origin
+        xyz="0.053372 -0.053287 0.054358"
+        rpy="0 0 0" />
+      <mass
+        value="0.3" />
+      <inertia
+        ixx="0.0026835"
+        ixy="0.0017544"
+        ixz="-2.9468E-05"
+        iyy="0.002674"
+        iyz="2.8482E-05"
+        izz="0.0051539" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_front_part_B.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.91765 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_front_part_B.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_front_joint_B"
+    type="continuous">
+    <origin
+      xyz="0.0122 0 0.0545"
+      rpy="0 1.5708 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="left_front_part_A" />
+    <child
+      link="left_front_part_B" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="left_front_part_C">
+    <inertial>
+      <origin
+        xyz="-0.10823 -0.10823 0.0051498"
+        rpy="0 0 0" />
+      <mass
+        value="0.3" />
+      <inertia
+        ixx="0.0010631"
+        ixy="-9.3552E-04"
+        ixz="-1.244E-9"
+        iyy="0.0010631"
+        iyz="-1.1372E-9"
+        izz="0.0020179" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_front_part_C.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.91765 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_front_part_C.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_front_joint_C"
+    type="continuous">
+    <origin
+      xyz="0.1697 -0.16971 0.055"
+      rpy="0 0 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="left_front_part_B" />
+    <child
+      link="left_front_part_C" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="right_front_part_A">
+    <inertial>
+      <origin
+        xyz="-0.00019738595204128 -6.93915414214097E-06 -0.0191898259186131"
+        rpy="0 0 0" />
+      <mass
+        value="0.6" />
+      <inertia
+        ixx="0.00156623132983131"
+        ixy="-1.63187121091778E-07"
+        ixz="-5.05203889400439E-06"
+        iyy="0.0011071071790623"
+        iyz="-3.20505444399073E-06"
+        izz="0.00160817917481026" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_front_part_A.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_front_part_A.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_front_joint_A"
+    type="continuous">
+    <origin
+      xyz="-0.06 -0.1985 -0.051651"
+      rpy="1.5708 0 -3.1416" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="body" />
+    <child
+      link="right_front_part_A" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="right_front_part_B">
+    <inertial>
+      <origin
+        xyz="0.0532873274433164 -0.0533716492208997 -0.0543580164121775"
+        rpy="0 0 0" />
+      <mass
+        value="0.3" />
+      <inertia
+        ixx="0.00267404364668205"
+        ixy="0.00175436244344369"
+        ixz="2.84818731532923E-05"
+        iyy="0.00268346434290709"
+        iyz="-2.94677822681431E-05"
+        izz="0.00515386166446501" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_front_part_B.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_front_part_B.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_front_joint_B"
+    type="continuous">
+    <origin
+      xyz="0.0122 0 -0.0545"
+      rpy="0 -1.5708 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="right_front_part_A" />
+    <child
+      link="right_front_part_B" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="right_front_part_C">
+    <inertial>
+      <origin
+        xyz="-0.108161367566384 -0.108292154423939 -0.00509650968166962"
+        rpy="0 0 0" />
+      <mass
+        value="0.3" />
+      <inertia
+        ixx="0.00106308123371657"
+        ixy="-9.35517254127338E-04"
+        ixz="1.13715176817685E-9"
+        iyy="0.00106305470373166"
+        iyz="1.2440021016652E-9"
+        izz="0.00201791172659927" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_front_part_C.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_front_part_C.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_front_joint_C"
+    type="continuous">
+    <origin
+      xyz="0.16971 -0.1697 -0.055"
+      rpy="0 0 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="right_front_part_B" />
+    <child
+      link="right_front_part_C" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="left_back_part_A">
+    <inertial>
+      <origin
+        xyz="-0.000202161448169924 -6.39339140430517E-06 -0.0191898259275941"
+        rpy="0 0 0" />
+      <mass
+        value="0.6" />
+      <inertia
+        ixx="0.00156629542484471"
+        ixy="1.521847298899E-07"
+        ixz="-5.08706141581606E-08"
+        iyy="0.00110704308404887"
+        iyz="-3.20200944412958E-06"
+        izz="0.00160817917481025" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_back_part_A.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_back_part_A.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_back_joint_A"
+    type="continuous">
+    <origin
+      xyz="0.06 0.1985 -0.051651"
+      rpy="1.5708 0 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="body" />
+    <child
+      link="left_back_part_A" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="left_back_part_B">
+    <inertial>
+      <origin
+        xyz="0.0533716555760238 -0.0532873293081075 0.0543580232923674"
+        rpy="0 0 0" />
+      <mass
+        value="0.3" />
+      <inertia
+        ixx="0.00268346435092347"
+        ixy="0.00175436245645603"
+        ixz="-2.94677845229645E-05"
+        iyy="0.0026740436741944"
+        iyz="2.84818739887322E-05"
+        izz="0.00515386169950021" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_back_part_B.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_back_part_B.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_back_joint_B"
+    type="continuous">
+    <origin
+      xyz="0.0122 0 -0.0545"
+      rpy="0 1.5708 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="left_back_part_A" />
+    <child
+      link="left_back_part_B" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="left_back_part_C">
+    <inertial>
+      <origin
+        xyz="-0.108292154424467 -0.108161367565674 0.00509650968170655"
+        rpy="0 0 0" />
+      <mass
+        value="0.3" />
+      <inertia
+        ixx="0.00106305470373168"
+        ixy="-9.35517254127346E-04"
+        ixz="-1.24400210211448E-9"
+        iyy="0.00106308123371657"
+        iyz="-1.13715176915835E-9"
+        izz="0.00201791172659929" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_back_part_C.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/left_back_part_C.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_back_joint_C"
+    type="continuous">
+    <origin
+      xyz="0.1697 -0.16971 0.055"
+      rpy="0 0 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="left_back_part_B" />
+    <child
+      link="left_back_part_C" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="right_back_part_A">
+    <inertial>
+      <origin
+        xyz="-0.000151525029138538 7.08619407333022E-07 0.0191898259275926"
+        rpy="0 0 0" />
+      <mass
+        value="0.6" />
+      <inertia
+        ixx="0.00156711567356736"
+        ixy="3.05185957114432E-06"
+        ixz="4.71798231205822E-06"
+        iyy="0.0011062228353262"
+        iyz="-3.15043559096438E-06"
+        izz="0.00160817917481022" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_back_part_A.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_back_part_A.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_back_joint_A"
+    type="continuous">
+    <limit effort="60" velocity="314.0" />
+    <origin
+      xyz="-0.06 0.1985 -0.051651"
+      rpy="1.5708 0 -3.1416" />
+    <parent
+      link="body" />
+    <child
+      link="right_back_part_A" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="right_back_part_B">
+    <inertial>
+      <origin
+        xyz="0.0532873313445788 -0.0533716499587068 -0.0543580193721028"
+        rpy="0 0 0" />
+      <mass
+        value="0.3" />
+      <inertia
+        ixx="0.00267404365776635"
+        ixy="0.00175436246239354"
+        ixz="2.84818700527908E-05"
+        iyy="0.0026346438091117"
+        iyz="-2.94677809029801E-05"
+        izz="0.00515386171293932" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_back_part_B.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_back_part_B.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_back_joint_B"
+    type="continuous">
+    <origin
+      xyz="0.0122 0 0.0545"
+      rpy="0 -1.5708 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="right_back_part_A" />
+    <child
+      link="right_back_part_B" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <link
+    name="right_back_part_C">
+    <inertial>
+      <origin
+        xyz="-0.108227254582787 -0.108226267407356 -0.00514980136531683"
+        rpy="0 0 0" />
+      <mass
+        value="0.3" />
+      <inertia
+        ixx="0.00106308123371657"
+        ixy="-9.35517254127336E-04"
+        ixz="1.13715176653392E-9"
+        iyy="0.00106305470373166"
+        iyz="1.24400210004632E-9"
+        izz="0.00201791172659927" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_back_part_C.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://dog_sim/meshes/right_back_part_C.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_back_joint_C"
+    type="continuous">
+
+    <origin
+      xyz="0.16971 -0.1697 -0.055"
+      rpy="0 0 0" />
+    <limit effort="60" velocity="314.0" />
+    <parent
+      link="right_back_part_B" />
+    <child
+      link="right_back_part_C" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.7"/>
+  </joint>
+  <gazebo reference="left_front_part_C">
+      <mu1>2000</mu1>
+      <mu2>2000</mu2>
+      <kp>50000</kp>
+      <sensor type="contact" name="left_front_contact_sensor">
+        <update_rate>100.0</update_rate>
+        <contact>
+          <collision>left_front_part_C_collision</collision>
+        </contact>
+        <plugin name="left_front_contact_sensor" filename="libgazebo_ros_bumper.so">
+          <alwaysOn>true</alwaysOn>
+          <frameName>world</frameName>
+          <updateRate>40.0</updateRate>
+          <bumperTopicName>left_front_contact_sensor</bumperTopicName>
+        </plugin>
+      </sensor>
+  </gazebo>
+  <gazebo reference="right_front_part_C">
+      <mu1>2000</mu1>
+      <mu2>2000</mu2>
+      <kp>50000</kp>
+      <sensor type="contact" name="right_front_contact_sensor">
+        <update_rate>100.0</update_rate>
+        <contact>
+          <collision>right_front_part_C_collision</collision>
+        </contact>
+        <plugin name="right_front_contact_sensor" filename="libgazebo_ros_bumper.so">
+          <alwaysOn>true</alwaysOn>
+          <frameName>world</frameName>
+          <updateRate>40.0</updateRate>
+          <bumperTopicName>right_front_contact_sensor</bumperTopicName>
+        </plugin>
+      </sensor>
+  </gazebo>
+  <gazebo reference="left_back_part_C">
+      <mu1>2000</mu1>
+      <mu2>2000</mu2>
+      <kp>50000</kp>
+      <sensor type="contact" name="left_back_contact_sensor">
+        <update_rate>100.0</update_rate>
+        <contact>
+          <collision>left_back_part_C_collision</collision>
+        </contact>
+        <plugin name="right_back_contact_sensor" filename="libgazebo_ros_bumper.so">
+          <alwaysOn>true</alwaysOn>
+          <frameName>world</frameName>
+          <updateRate>40</updateRate>
+          <bumperTopicName>left_back_contact_sensor</bumperTopicName>
+        </plugin>
+      </sensor>
+  </gazebo>
+  <gazebo reference="right_back_part_C">
+      <mu1>2000</mu1>
+      <mu2>2000</mu2>
+      <kp>50000</kp>
+      <sensor type="contact" name="right_back_contact_sensor">
+        <update_rate>100.0</update_rate>
+        <contact>
+          <collision>right_back_part_C_collision</collision>
+        </contact>
+        <plugin name="right_back_contact_sensor" filename="libgazebo_ros_bumper.so">
+          <alwaysOn>true</alwaysOn>
+          <frameName>world</frameName>
+          <updateRate>40.0</updateRate>
+          <bumperTopicName>right_back_contact_sensor</bumperTopicName>
+        </plugin>
+      </sensor>
+  </gazebo>
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="left_front_joint_A">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor1"/>
+  </transmission>
+  <transmission name="tran2">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="left_front_joint_B">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor2"/>
+  </transmission>
+  <transmission name="tran3">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="left_front_joint_C">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor3"/>
+  </transmission>  
+  <transmission name="tran4">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_front_joint_A">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor4"/>
+  </transmission>
+  <transmission name="tran5">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_front_joint_B">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor5"/>
+  </transmission>
+  <transmission name="tran6">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_front_joint_C">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor6"/>
+  </transmission>
+  <transmission name="tran7">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="left_back_joint_A">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor7"/>
+  </transmission>
+  <transmission name="tran8">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="left_back_joint_B">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor8"/>
+  </transmission>
+  <transmission name="tran9">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="left_back_joint_C">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor9"/>
+   </transmission>  
+  <transmission name="tran10">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_back_joint_A">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor10"/>
+  </transmission>
+  <transmission name="tran11">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_back_joint_B">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor11"/>
+  </transmission>
+  <transmission name="tran12">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_back_joint_C">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor12"/>
+  </transmission>
+</robot>

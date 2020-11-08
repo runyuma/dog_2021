@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="world">
+  <link name="world"/>
+  <joint
+    name="joint"
+    type="fixed">
+    <parent
+      link="world" />
+    <child
+      link="vennue" />
+  </joint>
+  <link
+    name="vennue">
+    <inertial>
+      <origin
+        xyz="0 6 0"
+        rpy="0 0 0" />
+      <mass
+        value="1000" />
+      <inertia
+        ixx="1000"
+        ixy="0"
+        ixz="0"
+        iyy="1000"
+        iyz="0"
+        izz="100" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="-1 -1 0"
+        rpy="1.5707 0 0" />
+      <geometry>
+        <mesh
+          filename="package://big_doggy/vennue.dae" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="-1 -1 0"
+        rpy="1.5707 0 0" />
+      <geometry>
+        <mesh
+          filename="package://big_doggy/vennue.dae" />
+      </geometry>
+    </collision>
+  </link>
+</robot>
