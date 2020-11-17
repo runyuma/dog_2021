@@ -17,6 +17,8 @@ void  pid::cur_update(double _cur_pos, double _cur_vel)
 
 void pid::calculate(double _tar_pos, double _tar_vel)
 {
+    tar_pos = _tar_pos;
+    tar_vel = _tar_vel;
     double _out_com = p*(tar_pos - cur_pos) + d *(tar_vel - cur_vel);
     if(fabs(_out_com)>= max_output)
     {

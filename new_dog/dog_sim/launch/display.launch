@@ -7,7 +7,7 @@
     default="Ture" />
   <param
     name="robot_description"
-    textfile="$(find new_dog)/urdf/big_dog.SLDASM.urdf" />
+    textfile="$(find dog_sim)/urdf/big_dog_fixed.SLDASM.urdf" />
   <param
     name="use_gui"
     value="$(arg gui)" />
@@ -23,5 +23,5 @@
     name="rviz"
     pkg="rviz"
     type="rviz"
-    args="-d $(find new_dog)/urdf.rviz" />
+    args="-d $(find dog_sim)/urdf.rviz" />
 </launch>

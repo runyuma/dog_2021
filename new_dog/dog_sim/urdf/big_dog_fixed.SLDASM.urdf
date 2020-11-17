@@ -12,7 +12,7 @@
     name="world_joint"
     type="fixed">
     <origin
-      xyz="0.0 0.0 0.4"
+      xyz="0.0 0.0 0.5"
       rpy="0 0 0" />
     <parent
       link="world" />
@@ -27,7 +27,7 @@
         xyz="-4.97555680029071E-06 0.000119385827082069 -0.0516401114917389"
         rpy="0 0 0" />
       <mass
-        value="43" />
+        value="10" />
       <inertia
         ixx="2"
         ixy="0"

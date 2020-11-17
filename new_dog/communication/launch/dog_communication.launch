@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
-
+<node name="set_parameters" pkg="dog_communication" type="param_logging.py" output="screen"/>
+<node name="communication" pkg="dog_communication" type="communication_node.py" output="screen"/>
 
 </launch>
 

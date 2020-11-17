@@ -13,8 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
 )
 include_directories(include ${catkin_INCLUDE_DIRS})
 catkin_package()
-add_executable(controller src/control.cpp src/pid.cpp src/sensors_information.cpp src/base_controller.cpp)
-target_link_libraries(controller ${catkin_LIBRARIES})
+add_executable(basecontrol src/control.cpp src/pid.cpp src/sensors_information.cpp src/base_controller.cpp)
+target_link_libraries(basecontrol ${catkin_LIBRARIES})
 
 
 foreach(dir config launch meshes urdf)
