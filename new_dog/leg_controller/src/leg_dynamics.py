@@ -5,6 +5,7 @@
 import numpy as np
 class leg_args():
     def __init__(self,mass_list, lenth_list, discomlist):
+        # class of the parameter of leg
         self.mass_list = mass_list
         self.lenth_list = lenth_list
         self.discomlist = discomlist # distance from massenter to joint
@@ -53,9 +54,13 @@ def get_footpointvel(jac,jointvel_list):
     return np.dot(jac,np.array([jointvel_list]).T)
 
 def get_tauff(LorR,joint_pos,joint_vel,args):
+    # feed forward troque(coriolis force & gravity)
+    # Frame:bofy frame
+    # INPUT:joint_pos: joint_pos value list[3]
+    #       jointvel_list:joint vel value list[3]
     h = - args.mass_list[2] * args.discomlist[2] * args.lenth_list[1] * np.sin(
         joint_pos[2])
-    C_mat = np.mat([[0, 0, 0],
+    C_mat = np.array([[0, 0, 0],
                     [0, h * joint_vel[2],h * (joint_vel[1] + joint_vel[2])],
                     [0, - h * joint_vel[1], 0]])
     gravty = np.mat([[0], [0], [- 9.8]])
@@ -84,12 +89,17 @@ def get_tauff(LorR,joint_pos,joint_vel,args):
         2] * gravty.T * Ja_l3[:, 1])[0, 0]
     taug[2][0] = -(args.mass_list[1] * gravty.T * Ja_l2[:, 2] + args.mass_list[
         2] * gravty.T * Ja_l3[:, 2])[0, 0]
+    #taug feedforward of gravity
     tauff = np.dot(C_mat, np.array([joint_vel]).T) + taug
     return tauff
 
 def get_feedbackward(kp,kd,current_pos,current_vel,target_pos,target_vel):
-    ep = (np.array([target_pos])-np.array([current_pos])).T
-    ev = (np.array([target_vel])-np.array([current_vel])).T
+    # TARGET:function to get get_feedbackward force(type: np.ndarry(3*1))
+    # MEANING:PD control of pos and vel of swing legs
+    # Frame:bofy frame
+    # INPUT:current_pos,current_pos,target_pos,target_vel: np.ndarray(3,1)
+    ep = (target_pos -current_pos )
+    ev = (target_vel - current_vel)
     return np.dot(kp,ep) + np.dot(kd,ev)
 
-# def inversekinamatic(LorR,foot_point):
+

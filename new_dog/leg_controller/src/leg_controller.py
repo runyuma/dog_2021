@@ -15,12 +15,15 @@ class leg_controller():
         self.force_subscriber = rospy.Subscriber('/ground_force',Float32MultiArray, self.groundforce_callback)
         self.swingleg_subscriber = rospy.Subscriber('/swing_leg',Float32MultiArray,self.swingleg_callback)
         self.leg_status_subscriber = rospy.Subscriber('/leg_status', Int32MultiArray, self.leg_status_callback)
+        # sensor:lower computer joint message
         # ground_force: lenth:12 4*[x,y,z] [0,0,0] means no ground force control
         # swing_leg: lenth:24 4*[x,y,z] 4*[vx,vy,vz] [0,0,0] means no swing force control
-        # leg_status: -1:uninitialized do nothing//0: ground//1:swing//2:pos(data in ground force topic)//3: enable//4:diable// 5: jointpos
+        # leg_status: -1:uninitialized do nothing//0: ground//1:swing//2:pos(data in ground force topic)// 5: jointpos//6:joint_torque
 
         self.footpoint_publisher = rospy.Publisher("/foot_points",Float32MultiArray, queue_size=10)
         self.footvel_publisher = rospy.Publisher('/foot_vel',Float32MultiArray, queue_size=10)
+        #foot_point pos of foot
+        #foot_vel vel of foot(might be a big error when using ground force control)
 
         self.foot_points = [np.array([[float('nan') ],[float('nan') ],[float('nan') ]])for i in range(4)]
         self.foot_vel = [np.array([[float('nan') ],[float('nan') ],[float('nan') ]]) for i in range(4)]
@@ -38,7 +41,7 @@ class leg_controller():
         self.target_mode = [-1 for i in range(12)]
         self.target_value = [0. for i in range(12)]
         self.jointtargetmsg = Float32MultiArray(data = self.target_mode + self.target_value )
-        #the list above is for publised to basenode
+        #the list above is for publised to basenode about the mode of control(pos vel torque)
 
         leg_mass = [rospy.get_param('hip_mass'),rospy.get_param('upper_link_mass'),rospy.get_param('lower_link_mass')]
         lenth_list = [rospy.get_param('hip_lenth'),rospy.get_param('upper_link_lenth'),rospy.get_param('lower_link_lenth')]
@@ -55,16 +58,20 @@ class leg_controller():
                     LorR = 1
                 else:
                     LorR = -1
+                #LorR: left or right
                 _joint_pos = self.joint_pos[i]
                 _joint_vel = self.joint_vel[i]
                 if not None in _joint_pos and not None in _joint_vel:
+                    # if have got value
                     self.foot_points[i] = get_footpointpos(LorR,_joint_pos,self.leg_args)
                     jacobian = get_jacobian(LorR,_joint_pos,self.leg_args)
                     self.foot_vel[i] = get_footpointvel(jacobian,_joint_vel)
                     # foot point & foot vel all are np.ndarry
                     if self.leg_status[i] == -1:
-                        pass
+                        self.target_mode[3*i:3*i+3] = [-1,-1,-1]
+                        # do nothing
                     elif self.leg_status[i] == 0:
+                        # ground force
                         if not None in self.target_force[i]:
                             _Force = np.array([self.target_force[i]]).T
                             _joint_torque = np.dot(jacobian.T,_Force)
@@ -74,24 +81,33 @@ class leg_controller():
                         else:
                             print("leg",i ,"didnt get target force")
                     elif self.leg_status[i] == 1:
+                        #swing leg
                         if not None in self.target_swing[i]:
-                            _joint_torque = get_tauff(LorR,_joint_pos,_joint_vel,self.leg_args) + np.dot(jacobian.T,get_feedbackward(kp,kd,self.foot_points[i],self.foot_vel[i],np.array(self.target_swing[i]).reshape(3,1),np.array(self.target_swing[i]).reshape(3,1)))
+                            kp = np.diag([100,50,180])
+                            kd = np.diag([10,5,20])
+                            # kd = np.diag(rospy.get_param("swingleg_D"))
+                            fun_start_time = time.time()
+                            _joint_torque = get_tauff(LorR,_joint_pos,_joint_vel,self.leg_args) + np.dot(jacobian.T,get_feedbackward(kp,kd,self.foot_points[i],self.foot_vel[i],np.array(self.target_swing[i]).reshape(3,1),np.array(self.target_swing[i+4]).reshape(3,1)))
+                            # print(_joint_torque,self.foot_points[i],self.target_swing[i],"***************")
                             self.target_value[3*i:3*i+3] = _joint_torque.T.tolist()[0]
                             self.target_mode[3*i:3*i+3] = [2,2,2]
+                            if self.time_index%1000 == 0:
+                                print(time.time() - fun_start_time)
+                                # average 0.5ms
                         else:
                             print("leg",i ,"didnt get target force")
-                    elif self.leg_status[i] == 3:
-                        self.target_value[3 * i:3 * i + 3] = [0,0,0]
-                        self.target_mode[3 * i:3 * i + 3] = [3, 3, 3]
-                    elif self.leg_status[i] == 4:
-                        self.target_value[3 * i:3 * i + 3] = [0, 0, 0]
-                        self.target_mode[3 * i:3 * i + 3] = [4, 4, 4]
                     elif self.leg_status[i] == 5:
                         if not None in self.target_force[i]:
                             self.target_value[3*i:3*i+3] = self.target_force[i]
                             self.target_mode[3*i:3*i+3] = [0,0,0]
                         else:
                             print("leg",i ,"didnt get target joint_pos")
+                    elif self.leg_status[i] == 6:
+                        if not None in self.target_force[i]:
+                            self.target_value[3*i:3*i+3] = self.target_force[i]
+                            self.target_mode[3*i:3*i+3] = [2,2,2]
+                        else:
+                            print("leg",i ,"didnt get target joint_tor")
 
                 else:
                     if self.time_index%10000 == 0:

@@ -12,8 +12,9 @@ dic = {'totoal_weight':16,
        'lower_link_lenth':0.235,
        'comb_lenth':0.07,
        'comc_lenth':0.15,
-       "body_inertia":[2,0.4,2]
-
+       "body_inertia":[2,0.4,2],
+       "swingleg_P":[600,200,200],
+       "swingleg_D":[50,5,5]
        }
 def params_init():
     rospy.init_node("params_logging")

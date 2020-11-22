@@ -7,6 +7,7 @@ import time
 import binascii
 import copy
 import numpy as np
+from my_packet import *
 import struct
 
 command = "sudo chmod 777 " + "/dev/ttyUSB0"
@@ -44,11 +45,14 @@ class serialCommunication():
             self.recmsgQueue = b''
             self.msg = [b'' for i in range(12)]
             self.begin_mark = b'~'
-        self.message_count = [0 for i in range(12)]
+            self.message_count = [0 for i in range(12)]
+
+            self.packet = MyPacket(1, self.ser.write)
 
     def receive(self,pos_list,vel_list):
+        # receive the control message
         if self.use_virtual_serial:
-            _pos_list = [0.,0.78,-1.57] * 4
+            _pos_list = [-0., -0.78,1.96]+[0.,0.78,-1.57] * 3
             _vel_list = [0,0,0] * 4
             for i in range(12):
                 pos_list[i] = _pos_list[i]
@@ -100,63 +104,71 @@ class serialCommunication():
                             print('analysis_error')
                         self.recmsgQueue = b''
 
-    def send(self,target_value,target_mode):
-        kp = 30
-        #TODO:new rules
+    def send(self,target_value,target_mode,enable_list):
         for i in range(12):
-            if target_mode[i] == 3:
-                self.message_send = b'~'
-                self.message_send += (16 * (i + 1) + 3).to_bytes(length=1, byteorder='big',signed=False) + int(1).to_bytes(length=4, byteorder='big',signed=False)
-                sums = sum(self.message_send) % 256
-                self.message_send += sums.to_bytes(length=1, byteorder='big', signed=False)
-                if self.use_virtual_serial:
-                    if self.time_index % 2000 == 0:
-                        print("sending:",self.message_send)
-                        print("target_mode:", target_mode, 'enabling')
+            if enable_list[i] == 1:
+                # for the motor have been enable
+                if target_mode[i] == -1:
+                    pass # do nothing
                 else:
-                    self.ser.write(self.message_send)
-                    if self.time_index % 2000 == 0:
-                        print("sending", self.message_send)
-                        print("target_mode:",i,"   ", target_mode[i], 'enabling')
-            elif target_mode[i] == 4:
-                self.message_send = b'~'
-                self.message_send += (16 * (i + 1) + 3).to_bytes(length=1, byteorder='big',signed=False) + int(0).to_bytes(length=4, byteorder='big',signed=False)
-                sums = sum(self.message_send) % 256
-                self.message_send += sums.to_bytes(length=1, byteorder='big', signed=False)
-                if self.use_virtual_serial:
-                    if self.time_index % 2000 == 0:
-                        print("sending",self.message_send)
-                        print("target_mode: ",i,"   ", target_mode[i], 'disabling')
-                else:
-                    self.ser.write(self.message_send)
-                    if self.time_index % 2000 == 0:
-                        print("sending", self.message_send)
-                        print("target_mode:",i,"   ", target_mode[i], 'disabling')
-            elif target_mode[i] == -1:
-                pass #TODO：
-            else:
-                if not np.isnan(target_value[i]):
-                    self.message_send = b'~'
-                    self.message_send += (16 * (i+1) + target_mode[i]).to_bytes(length=1,byteorder='big',signed=False) + floatToBytes(target_value[i])
-                    sums = sum(self.message_send)%256
-                    self.message_send += sums.to_bytes(length=1,byteorder='big',signed=False)
-                    # print(self.message_send)
-                    if self.use_virtual_serial:
-                        if self.time_index%2000 == 0:
-                            print("sending:",self.message_send)
-                            print("target_mode:",i,"   ",target_mode[i],"target_value",target_value[i])
-                    else:
-                        self.ser.write(self.message_send)
-                        if self.time_index % 2000 == 0:
-                            print("sending", self.message_send)
-                            print("target_mode:",i,"   ",target_mode[i],"target_value",target_value[i])
-                    self.message_count[i] += 1
-                time.sleep(0.00002)
-        # if self.time_index % 2000 == 0:
-        #     print("massge count :   ", self.message_count)
+                    if not np.isnan(target_value[i]):
+                        self.message_send = b'~'
+                        self.message_send += (16 * (i+1) + target_mode[i]).to_bytes(length=1,byteorder='big',signed=False) + floatToBytes(target_value[i])
+                        sums = sum(self.message_send)%256
+                        self.message_send += sums.to_bytes(length=1,byteorder='big',signed=False)
+                        # print(self.message_send)
+                        if self.use_virtual_serial:
+                            if self.time_index%2000 == 0:
+                                print("sending:",self.message_send)
+                                print("target_mode:",i,"   ",target_mode[i],"target_value",target_value[i])
+                        else:
+                            #self.ser.write(self.message_send)
+                            self.packet.Send(1,1,self.message_send)
+                            if self.time_index % 2000 == 0:
+                                print("sending", self.message_send)
+                                print("target_mode:",i,"   ",target_mode[i],"target_value",target_value[i])
+                        self.message_count[i] += 1
+                    time.sleep(0.00002)
         self.time_index += 1
 
+    def send_enable(self,motor_index):
+        # enable the motor
+        self.message_send = b'~'
+        self.message_send += (16 * (motor_index + 1) + 3).to_bytes(length=1, byteorder='big', signed=False) + int(1).to_bytes(
+            length=4, byteorder='big', signed=False)
+        sums = sum(self.message_send) % 256
+        self.message_send += sums.to_bytes(length=1, byteorder='big', signed=False)
+        if self.use_virtual_serial:
+            print("sending:", self.message_send)
+            print("target_mode:", 'enabling')
+        else:
+            # self.ser.write(self.message_send)
+            self.packet.Send(1, 1, self.message_send)
+            # if self.time_index % 2000 == 0:
+            print("sending", self.message_send)
+            print("target_mode:", motor_index,  'enabling')
+            time.sleep(0.01)
+
+    def send_diable(self,motor_index):
+        #disable motor
+        self.message_send = b'~'
+        self.message_send += (16 * (motor_index + 1) + 3).to_bytes(length=1, byteorder='big', signed=False) + int(0).to_bytes(
+            length=4, byteorder='big', signed=False)
+        sums = sum(self.message_send) % 256
+        self.message_send += sums.to_bytes(length=1, byteorder='big', signed=False)
+        if self.use_virtual_serial:
+            print("sending", self.message_send)
+            print("target_mode: ", motor_index, 'disabling')
+        else:
+            # self.ser.write(self.message_send)
+            self.packet.Send(1, 1, self.message_send)
+            # if self.time_index % 2000 == 0:
+            print("sending", self.message_send)
+            print("target_mode:", motor_index , 'disabling')
+        time.sleep(0.01)
+
     def set_PD(self,_motorid,kp,kd):
+        # set pD of each motor for pos PD control
         self.message_send = b'~'
         self.message_send += (16 * (_motorid + 1) + 4).to_bytes(length=1, byteorder='big', signed=False) + int(kp*100).to_bytes(length=2, byteorder='big', signed=False)+ int(kd*100).to_bytes(length=2, byteorder='big', signed=False)
         sums = sum(self.message_send) % 256
@@ -166,11 +178,9 @@ class serialCommunication():
             print("target_pd",_motorid, kp,kd)
         else:
             print(self.message_send)
-            self.ser.write(self.message_send)
-
-#
-# a = floatToBytes(1.)
-# print(a)
+            print("target_pd", _motorid, kp, kd)
+            #self.ser.write(self.message_send)
+            self.packet.Send(1,1,self.message_send)
 
 
 

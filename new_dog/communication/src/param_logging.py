@@ -11,7 +11,9 @@ dic = {'totoal_weight':16,
        'lower_link_lenth':0.235,
        'comb_lenth':0.07,
        'comc_lenth':0.15,
-       "body_inertia":[0.3,0.1,0.4]
+       "body_inertia":[0.3,0.1,0.4],
+       "swingleg_P":[600,200,200],
+       "swingleg_D":[50,5,5]
 
        }
 def params_init():

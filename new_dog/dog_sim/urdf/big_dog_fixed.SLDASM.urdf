@@ -12,7 +12,7 @@
     name="world_joint"
     type="fixed">
     <origin
-      xyz="0.0 0.0 0.5"
+      xyz="0.0 0.0 0.34"
       rpy="0 0 0" />
     <parent
       link="world" />
