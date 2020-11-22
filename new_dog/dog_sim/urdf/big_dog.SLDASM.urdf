@@ -1,22 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot
-  name="new_dog">
+  name="dog_sim">
   <gazebo>
       <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"/>
   </gazebo>
-<!--     <link name="world"/>
-    <joint
-    name="world_joint"
-    type="fixed">
-    <origin
-      xyz="0.0 0.0 0.4"
-      rpy="0 0 0" />
-    <parent
-      link="world" />
-    <child
-      link="body" />
-  </joint> -->
   
   <link
     name="body">
@@ -25,7 +15,7 @@
         xyz="-4.97555680029071E-06 0.000119385827082069 -0.0516401114917389"
         rpy="0 0 0" />
       <mass
-        value="43" />
+        value="10" />
       <inertia
         ixx="2"
         ixy="0"
@@ -40,7 +30,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/body.STL" />
+          filename="package://dog_sim/meshes/body.STL" />
       </geometry>
       <material
         name="">
@@ -54,7 +44,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/body.STL" />
+          filename="package://dog_sim/meshes/body.STL" />
       </geometry>
     </collision>
   </link>
@@ -77,7 +67,7 @@
     <visual>
       <origin xyz="0 0 0"/> 
       <geometry>
-        <mesh filename="package://new_dog/hokuyo.dae"/>
+        <mesh filename="package://dog_sim/hokuyo.dae"/>
       </geometry>
       <material name="white">
         <color rgba="1 1 1 1"/>
@@ -195,7 +185,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_front_part_A.STL" />
+          filename="package://dog_sim/meshes/left_front_part_A.STL" />
       </geometry>
       <material
         name="">
@@ -209,7 +199,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_front_part_A.STL" />
+          filename="package://dog_sim/meshes/left_front_part_A.STL" />
       </geometry>
     </collision>
   </link>
@@ -250,7 +240,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_front_part_B.STL" />
+          filename="package://dog_sim/meshes/left_front_part_B.STL" />
       </geometry>
       <material
         name="">
@@ -264,7 +254,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_front_part_B.STL" />
+          filename="package://dog_sim/meshes/left_front_part_B.STL" />
       </geometry>
     </collision>
   </link>
@@ -273,7 +263,7 @@
     type="continuous">
     <origin
       xyz="0.0122 0 0.0545"
-      rpy="-0. 1.5708 0" />
+      rpy="0 1.5708 0" />
     <limit effort="60" velocity="314.0" />
     <parent
       link="left_front_part_A" />
@@ -305,7 +295,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_front_part_C.STL" />
+          filename="package://dog_sim/meshes/left_front_part_C.STL" />
       </geometry>
       <material
         name="">
@@ -319,7 +309,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_front_part_C.STL" />
+          filename="package://dog_sim/meshes/left_front_part_C.STL" />
       </geometry>
     </collision>
   </link>
@@ -360,7 +350,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_front_part_A.STL" />
+          filename="package://dog_sim/meshes/right_front_part_A.STL" />
       </geometry>
       <material
         name="">
@@ -374,7 +364,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_front_part_A.STL" />
+          filename="package://dog_sim/meshes/right_front_part_A.STL" />
       </geometry>
     </collision>
   </link>
@@ -415,7 +405,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_front_part_B.STL" />
+          filename="package://dog_sim/meshes/right_front_part_B.STL" />
       </geometry>
       <material
         name="">
@@ -429,7 +419,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_front_part_B.STL" />
+          filename="package://dog_sim/meshes/right_front_part_B.STL" />
       </geometry>
     </collision>
   </link>
@@ -470,7 +460,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_front_part_C.STL" />
+          filename="package://dog_sim/meshes/right_front_part_C.STL" />
       </geometry>
       <material
         name="">
@@ -484,7 +474,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_front_part_C.STL" />
+          filename="package://dog_sim/meshes/right_front_part_C.STL" />
       </geometry>
     </collision>
   </link>
@@ -525,7 +515,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_back_part_A.STL" />
+          filename="package://dog_sim/meshes/left_back_part_A.STL" />
       </geometry>
       <material
         name="">
@@ -539,7 +529,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_back_part_A.STL" />
+          filename="package://dog_sim/meshes/left_back_part_A.STL" />
       </geometry>
     </collision>
   </link>
@@ -580,7 +570,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_back_part_B.STL" />
+          filename="package://dog_sim/meshes/left_back_part_B.STL" />
       </geometry>
       <material
         name="">
@@ -594,7 +584,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_back_part_B.STL" />
+          filename="package://dog_sim/meshes/left_back_part_B.STL" />
       </geometry>
     </collision>
   </link>
@@ -635,7 +625,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_back_part_C.STL" />
+          filename="package://dog_sim/meshes/left_back_part_C.STL" />
       </geometry>
       <material
         name="">
@@ -649,7 +639,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/left_back_part_C.STL" />
+          filename="package://dog_sim/meshes/left_back_part_C.STL" />
       </geometry>
     </collision>
   </link>
@@ -690,7 +680,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_back_part_A.STL" />
+          filename="package://dog_sim/meshes/right_back_part_A.STL" />
       </geometry>
       <material
         name="">
@@ -704,7 +694,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_back_part_A.STL" />
+          filename="package://dog_sim/meshes/right_back_part_A.STL" />
       </geometry>
     </collision>
   </link>
@@ -745,7 +735,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_back_part_B.STL" />
+          filename="package://dog_sim/meshes/right_back_part_B.STL" />
       </geometry>
       <material
         name="">
@@ -759,7 +749,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_back_part_B.STL" />
+          filename="package://dog_sim/meshes/right_back_part_B.STL" />
       </geometry>
     </collision>
   </link>
@@ -800,7 +790,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_back_part_C.STL" />
+          filename="package://dog_sim/meshes/right_back_part_C.STL" />
       </geometry>
       <material
         name="">
@@ -814,7 +804,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://new_dog/meshes/right_back_part_C.STL" />
+          filename="package://dog_sim/meshes/right_back_part_C.STL" />
       </geometry>
     </collision>
   </link>
