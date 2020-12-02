@@ -124,11 +124,13 @@ class serialCommunication():
                         else:
                             #self.ser.write(self.message_send)
                             self.packet.Send(1,1,self.message_send)
+                            # self.packet.Send(1, 1, self.message_send)
+                            # self.packet.Send(1, 1, self.message_send)
                             if self.time_index % 2000 == 0:
                                 print("sending", self.message_send)
                                 print("target_mode:",i,"   ",target_mode[i],"target_value",target_value[i])
                         self.message_count[i] += 1
-                    time.sleep(0.00002)
+                    time.sleep(0.000030)
         self.time_index += 1
 
     def send_enable(self,motor_index):
@@ -149,7 +151,7 @@ class serialCommunication():
             print("target_mode:", motor_index,  'enabling')
             time.sleep(0.01)
 
-    def send_diable(self,motor_index):
+    def send_disable(self,motor_index):
         #disable motor
         self.message_send = b'~'
         self.message_send += (16 * (motor_index + 1) + 3).to_bytes(length=1, byteorder='big', signed=False) + int(0).to_bytes(

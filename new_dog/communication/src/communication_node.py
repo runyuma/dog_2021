@@ -31,7 +31,12 @@ class communication_node():
         self.downstreamSubscriber = rospy.Subscriber('/downstream', Float32MultiArray, self.downstreamcallback )
         # 12*mode 12 *value
         for i in range(12):
-            self.serial.set_PD(i,5,1)
+            if i%3 == 0:
+                self.serial.set_PD(i,15,1)
+            elif i%3 == 1:
+                self.serial.set_PD(i, 5, 1)
+            else:
+                self.serial.set_PD(i, 2, 1)
             time.sleep(0.0001)
         rospy.set_param('motor_enable',[0 for i in range(12)])
         rospy.set_param('leg_enable', [0 for i in range(4)])
@@ -64,7 +69,7 @@ class communication_node():
             if self.motor_enable_list != _motor_enable_list:
                 rospy.set_param('motor_enable',self.motor_enable_list)
 
-            if self.time_index % 2000 == 0:
+            if self.time_index % 1000 == 0:
                 print( "pos, vel ",self.current_pos_stm32,self.current_vel_stm32)
                 print('enable_list',self.leg_enable_list,self.motor_enable_list)
                 print("target",self.target_mode,self.target_value)

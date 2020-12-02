@@ -3,17 +3,17 @@
 import rospy
 import numpy as np
 dic = {'totoal_weight':16,
-       'hip_mass': 0.5,
-       'upper_link_mass': 0.6,
-       'lower_link_mass': 0.06,
-       'hip_lenth':0.05,
-       'upper_link_lenth':0.235,
-       'lower_link_lenth':0.235,
-       'comb_lenth':0.07,
-       'comc_lenth':0.15,
+       'hip_mass': 0.6,
+       'upper_link_mass': 0.95,
+       'lower_link_mass': 0.25,
+       'hip_lenth':0.095,
+       'upper_link_lenth':0.23,
+       'lower_link_lenth':0.22,
+       'comb_lenth':0.04,
+       'comc_lenth':0.12,
        "body_inertia":[0.3,0.1,0.4],
-       "swingleg_P":[600,200,200],
-       "swingleg_D":[50,5,5]
+       "swingleg_P":[150,150,120],
+       "swingleg_D":[35,45,30]
 
        }
 def params_init():
@@ -21,8 +21,8 @@ def params_init():
     rate = rospy.Rate(1)
     for i in dic:
         rospy.set_param(i, dic[i])
-    while not rospy.is_shutdown():
-        for i in dic:
-            rospy.set_param(i,dic[i])
-        rate.sleep()
+    # while not rospy.is_shutdown():
+    #     for i in dic:
+    #         rospy.set_param(i,dic[i])
+    #     rate.sleep()
 params_init()

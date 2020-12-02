@@ -83,8 +83,8 @@ class leg_controller():
                     elif self.leg_status[i] == 1:
                         #swing leg
                         if not None in self.target_swing[i]:
-                            kp = np.diag([100,50,180])
-                            kd = np.diag([10,5,20])
+                            kp = np.diag(rospy.get_param("swingleg_P"))
+                            kd = np.diag(rospy.get_param("swingleg_D"))
                             # kd = np.diag(rospy.get_param("swingleg_D"))
                             fun_start_time = time.time()
                             _joint_torque = get_tauff(LorR,_joint_pos,_joint_vel,self.leg_args) + np.dot(jacobian.T,get_feedbackward(kp,kd,self.foot_points[i],self.foot_vel[i],np.array(self.target_swing[i]).reshape(3,1),np.array(self.target_swing[i+4]).reshape(3,1)))

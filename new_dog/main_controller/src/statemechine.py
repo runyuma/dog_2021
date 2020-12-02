@@ -1,6 +1,6 @@
 # -*-coding:utf-8-*-
 import numpy as np
-height = 0.1  #步抬起高度
+height = 0.15  #步抬起高度
 
 class statemachine():
     def __init__(self):

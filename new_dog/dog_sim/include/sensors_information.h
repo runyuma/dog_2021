@@ -18,8 +18,9 @@ public:
     const string imu_topic = "/imu";
     const string downstream_topic = "/downstream";
     // ros::Subscriber imu_subscriber, jointstates_subscriber;
-    double joint_pos[12], joint_vel[12], quaternion[4], angular_vel[3],acceleration[3],target_value[12];//target_value upperconcole
-    int target_mode[12] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
+    double joint_pos[12], joint_vel[12], quaternion[4], angular_vel[3],acceleration[3];//target_value upperconcole
+    int target_mode[12] = {-0,-0,-0,-0,-0,-0,-0,-0,-0,-0,-0,-0};
+    double target_value[12] = {0,1.4,-2.8, 0,1.4,-2.8, 0,1.4,-2.8, 0,1.4,-2.8};
     double joint_pos_PC[12], joint_vel_PC[12];
     sensors_information();
     ~sensors_information();

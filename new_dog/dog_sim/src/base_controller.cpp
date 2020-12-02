@@ -45,6 +45,7 @@ void base_controller::pub_motortorque()
         if(control_mode[i] == -1)
         {
             control_value[i] = 0.;
+            control_torque(i, control_value[i]);
              //do nothing
         }
         else if (control_mode[i] == 0)

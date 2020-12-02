@@ -10,6 +10,10 @@ test_upperconcle = 0
 test_singleleg = 1
 test_jacobian = 0
 test_swing_leg = 0
+test_singleleg_two_point = 1
+test_swing_leg_singlepos = 0
+test_gravity = 0
+recovery = 0
 def test_upperconcole():
     rospy.init_node("uppernode")
     rate = rospy.Rate(1)
@@ -31,14 +35,15 @@ def test_singleleg():
     status_msg = Int32MultiArray()
     footforce_msg = Float32MultiArray()
     swingleg_msg = Float32MultiArray()
-    rospy.set_param("leg_enable",[1,1,1,1])
+    rospy.set_param("leg_enable",[1,0,0,0])
     time.sleep(0.5)
     time_index = 0
+    phase_count = 0
 
-    if test_swing_leg:
-        _statemachine = [statemachine() for i in range(4)]
-        init_pos = np.array([[0.05],[0],[-0.26]])
-        final_pos =np.array([[0.05],[0.1],[-0.26]])
+
+    _statemachine = [statemachine() for i in range(4)]
+    init_pos = np.array([[0.1],[0],[-0.26]])
+    final_pos =np.array([[0.1],[-0.1],[-0.26]])
     while not rospy.is_shutdown():
         if test_jacobian:
             if time_index <=1000:
@@ -46,7 +51,35 @@ def test_singleleg():
                 footforce_msg.data = [0, 1., -2.] * 4
             else:
                 status_msg.data = [0, 0 ,0 , 0]
-                footforce_msg.data = [0,0,-20] * 4
+                footforce_msg.data = [0,0,-5] * 4
+        elif test_singleleg_two_point:
+            if time_index <= 1000:
+                status_msg.data = [5, 5, 5, 5]
+                footforce_msg.data = [0, 1., -2.] * 4
+
+            else:
+                if _statemachine[0].phase <= 1:
+                    status_msg.data = [1,-1,-1,-1]
+                    _pos = [None,None,None,None]
+                    _vel = [None, None, None, None]
+                    for i in range(4):
+                        T = 0.4
+                        if phase_count%2 == 0:
+                            _statemachine[i].generate_point(T,init_pos,final_pos)
+                        elif phase_count%2 == 1:
+                            _statemachine[i].generate_point(T, final_pos, init_pos)
+                        _pos[i] = _statemachine[i].target_pos.T[0].tolist()
+                        _vel[i] = _statemachine[i].target_vel.T[0].tolist()
+
+                        _statemachine[i].phase += 1/(1000*T)
+                    swingleg_msg.data = _pos[0] +[0.,0.,0.]*3+_vel[0]+[0.,0.,0.]*3
+                    # swingleg_msg.data = _pos[0] + _pos[1]+ _pos[2]+ _pos[3]+ _vel[0]+ _vel[1]+ _vel[2]+ _vel[3]
+
+                    print(_statemachine[0].phase,_pos,_vel)
+                    print(footforce_msg.data)
+                else:
+                    _statemachine[0].phase = 0
+                    phase_count += 1
         elif test_swing_leg:
             if time_index <= 1000:
                 status_msg.data = [5, 5, 5, 5]
@@ -54,22 +87,72 @@ def test_singleleg():
 
             else:
                 if _statemachine[0].phase <= 1:
-                    status_msg.data = [1,1,1,1]
+                    status_msg.data = [1,-1,-1,-1]
                     _pos = [None,None,None,None]
                     _vel = [None, None, None, None]
                     for i in range(4):
-                        _statemachine[i].generate_point(0.5,init_pos,final_pos)
+                        T = 0.4
+                        _statemachine[i].generate_point(T,init_pos,init_pos)
                         _pos[i] = _statemachine[i].target_pos.T[0].tolist()
                         _vel[i] = _statemachine[i].target_vel.T[0].tolist()
-                        _statemachine[i].phase += 0.002
-                    # swingleg_msg.data = _pos +[0,0,0]*3+_vel+[0,0,0]*3
-                    swingleg_msg.data = _pos[0] + _pos[1]+ _pos[2]+ _pos[3]+ _vel[0]+ _vel[1]+ _vel[2]+ _vel[3]
+
+                        _statemachine[i].phase += 1/(1000*T)
+                    swingleg_msg.data = _pos[0] +[0.,0.,0.]*3+_vel[0]+[0.,0.,0.]*3
+                    # swingleg_msg.data = _pos[0] + _pos[1]+ _pos[2]+ _pos[3]+ _vel[0]+ _vel[1]+ _vel[2]+ _vel[3]
 
                     print(_statemachine[0].phase,_pos,_vel)
                     print(footforce_msg.data)
-        else:
-            status_msg.data = [5, 5, 5, 5]
-            footforce_msg.data = [0, 0, 0.] * 4
+                else:
+                    _statemachine[0].phase = 0
+
+        elif test_swing_leg_singlepos:
+            if time_index <= 1000:
+                status_msg.data = [5, 5, 5, 5]
+                footforce_msg.data = [0, 0.78, -1.57] * 4
+            else:
+                _pos = [0.08,0.0,-0.26]
+                status_msg.data = [1, -1, -1, -1]
+                swingleg_msg.data = _pos + [0., 0., 0.] * 3 + [0., 0., 0.] * 4
+        elif test_gravity:
+            if time_index <= 1000:
+                status_msg.data = [5, 5, 5, 5]
+                footforce_msg.data = [0, 1., -2.] * 4
+
+            else:
+                rospy.set_param("swingleg_P",[0,0,0])
+                rospy.set_param("swingleg_D",[0,0,0])
+                if _statemachine[0].phase <= 1:
+                    status_msg.data = [1,-1,-1,-1]
+                    _pos = [None,None,None,None]
+                    _vel = [None, None, None, None]
+                    for i in range(4):
+                        T = 0.4
+                        _statemachine[i].generate_point(T,init_pos,final_pos)
+                        _pos[i] = _statemachine[i].target_pos.T[0].tolist()
+                        _vel[i] = _statemachine[i].target_vel.T[0].tolist()
+                        _statemachine[i].phase += 1/(1000*T)
+                    swingleg_msg.data = _pos[0] +[0.,0.,0.]*3+_vel[0]+[0.,0.,0.]*3
+                    # swingleg_msg.data = _pos[0] + _pos[1]+ _pos[2]+ _pos[3]+ _vel[0]+ _vel[1]+ _vel[2]+ _vel[3]
+
+                    print(_statemachine[0].phase,_pos,_vel)
+                    print(footforce_msg.data)
+                else:
+                    _statemachine[0].phase = 0
+
+        elif recovery:
+            if time_index%1000<=500:
+                status_msg.data = [5, 5, 5, 5]
+                # footforce_msg.data = [0., 0.78, -1.57] * 4
+                footforce_msg.data = [0, 0, 0.] * 4
+                # footforce_msg.data = [0, 1., -2.] * 4
+            else:
+                status_msg.data = [5, 5, 5, 5]
+                # footforce_msg.data = [0., 0.78, -1.57] * 4
+                footforce_msg.data = [0, 0, 0.] * 4
+                # footforce_msg.data = [0, 1., -2.] * 4
+        # else:
+        #     status_msg.data = [-1, -1, -1, -1]
+        #     footforce_msg.data = [-0, -0, -0.] * 4
 
         time_index += 1
         status_publisher.publish(status_msg)

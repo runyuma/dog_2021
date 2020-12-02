@@ -83,13 +83,16 @@ def get_tauff(LorR,joint_pos,joint_vel,args):
                     [np.cos(joint_pos[0]) * args.lenth_list[0] - np.sin(joint_pos[0]) * (np.cos(joint_pos[1]) * args.lenth_list[1]+ np.cos(joint_pos[1] + joint_pos[2]) * args.discomlist[2]),
                      np.cos(joint_pos[0]) * (np.sin(joint_pos[1]) * args.lenth_list[1]+np.sin(joint_pos[1] + joint_pos[2]) * args.discomlist[2]),
                      np.cos(joint_pos[0]) * np.sin(joint_pos[1] + joint_pos[2]) * args.discomlist[2]]])
-    taug[0][0] = -(args.mass_list[1] * gravty.T * Ja_l2[:, 0] + args.mass_list[
-        2] * gravty.T * Ja_l3[:, 0])[0, 0]
-    taug[1][0] = -(args.mass_list[1] * gravty.T * Ja_l2[:, 1] + args.mass_list[
-        2] * gravty.T * Ja_l3[:, 1])[0, 0]
-    taug[2][0] = -(args.mass_list[1] * gravty.T * Ja_l2[:, 2] + args.mass_list[
-        2] * gravty.T * Ja_l3[:, 2])[0, 0]
+    # taug[0][0] = -(args.mass_list[1] * gravty.T * Ja_l2[:, 0] + args.mass_list[
+    #     2] * gravty.T * Ja_l3[:, 0])[0, 0]
+    # taug[1][0] = -(args.mass_list[1] * gravty.T * Ja_l2[:, 1] + args.mass_list[
+    #     2] * gravty.T * Ja_l3[:, 1])[0, 0]
+    # taug[2][0] = -(args.mass_list[1] * gravty.T * Ja_l2[:, 2] + args.mass_list[
+    #     2] * gravty.T * Ja_l3[:, 2])[0, 0]
+    taug = - (Ja_l2.T*(args.mass_list[1] * gravty)).A + -(Ja_l3.T*(args.mass_list[2] * gravty)).A
+
     #taug feedforward of gravity
+
     tauff = np.dot(C_mat, np.array([joint_vel]).T) + taug
     return tauff
 

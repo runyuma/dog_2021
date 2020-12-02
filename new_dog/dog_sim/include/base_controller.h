@@ -18,8 +18,8 @@ class base_controller
 private:
     list<string> jointtopiclist{"/Pos_controller1/command", "/Pos_controller2/command", "/Pos_controller3/command", "/Pos_controller4/command", "/Pos_controller5/command", "/Pos_controller6/command", "/Pos_controller7/command", "/Pos_controller8/command", "/Pos_controller9/command", "/Pos_controller10/command", "/Pos_controller11/command", "/Pos_controller12/command" };
     const string upstreamtopic = "/upstream";
-    float p[3] = {25,25,10};
-    float d[3] = {1,1,0.3};
+    float p[3] = {40,40,50};
+    float d[3] = {0.5,0.5,0.3};
     void control_pos(int _motor_id, double _pos);
     void control_torque(int _motor_id, double _tor);
     int time_index = 0;
