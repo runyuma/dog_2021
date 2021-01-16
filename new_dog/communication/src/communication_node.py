@@ -57,6 +57,7 @@ class communication_node():
 
     def main(self):
         while not rospy.is_shutdown():
+            art_time = time.time()
             self.motor_enable_list = rospy.get_param('motor_enable')
             self.leg_enable_list = rospy.get_param("leg_enable")
             self.set_able()

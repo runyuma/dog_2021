@@ -57,8 +57,8 @@ class serialCommunication():
             for i in range(12):
                 pos_list[i] = _pos_list[i]
                 vel_list[i] = _vel_list[i]
-                pass
 
+            pass
         else:
             count = self.ser.inWaiting()
             if count > 0:

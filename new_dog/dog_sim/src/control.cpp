@@ -14,7 +14,6 @@ int main(int argc, char** argv)
     // base_controller _base_controller = base_controller(argc,argv);
  
     base_controller _base_controller;
-    ros::NodeHandle *pnh;
     ros::init(argc, argv, "control");
     _base_controller.pnh = new ros::NodeHandle();
     _base_controller.controller_init();
@@ -29,10 +28,16 @@ int main(int argc, char** argv)
         {
             cout<<"mode"<<_base_controller.control_mode[0]<<endl;
             cout<<"value"<<_base_controller.control_value[0]<<endl;
-            i ++;
+            // for( int j=0;j<24;j++ )
+            //     {
+            //          cout<<"id: "<<j <<"  motor_pos"<<_base_controller._msg[j]<<"  motor_vel"<<_base_controller._msg[j+12]<<endl;
+            //     }
+            
         } 
+        i ++;
         loop_rate.sleep();
     }
+    delete _base_controller.pnh;
     
     return 0;
 }

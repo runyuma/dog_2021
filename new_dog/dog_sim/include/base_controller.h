@@ -32,6 +32,7 @@ public:
     ros::Publisher upstreamPublisher;
     int control_mode[12]; // mode to control moter -1:uninitial 0:pos 1:vel 2:torque 3:enable 4:disable
     double control_value[12];
+    float _msg[24];
     std_msgs::Float64 motorcontrol_msg[12];
     std_msgs::Float32MultiArray sensors_msg;
     pid pid_list[12];

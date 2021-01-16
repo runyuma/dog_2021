@@ -1,13 +1,12 @@
 {
+    "python.autoComplete.extraPaths": [
+        "/home/marunyu/catkin_ws/devel/lib/python2.7/dist-packages",
+        "/opt/ros/melodic/lib/python2.7/dist-packages",
+        "/usr/local/webots/lib/controller/python27"
+    ],
     "files.associations": {
-        "iostream": "cpp",
-        "unordered_map": "cpp",
+        "core": "cpp",
         "ostream": "cpp",
-        "random": "cpp",
-        "*.tcc": "cpp",
-        "typeinfo": "cpp",
-        "stdexcept": "cpp",
-        "list": "cpp",
         "cctype": "cpp",
         "clocale": "cpp",
         "cmath": "cpp",
@@ -23,12 +22,15 @@
         "array": "cpp",
         "atomic": "cpp",
         "strstream": "cpp",
+        "*.tcc": "cpp",
         "bitset": "cpp",
         "chrono": "cpp",
         "complex": "cpp",
         "condition_variable": "cpp",
         "cstdint": "cpp",
         "deque": "cpp",
+        "list": "cpp",
+        "unordered_map": "cpp",
         "unordered_set": "cpp",
         "vector": "cpp",
         "exception": "cpp",
@@ -39,6 +41,7 @@
         "initializer_list": "cpp",
         "iomanip": "cpp",
         "iosfwd": "cpp",
+        "iostream": "cpp",
         "istream": "cpp",
         "limits": "cpp",
         "mutex": "cpp",
@@ -46,6 +49,7 @@
         "numeric": "cpp",
         "ratio": "cpp",
         "sstream": "cpp",
+        "stdexcept": "cpp",
         "streambuf": "cpp",
         "system_error": "cpp",
         "thread": "cpp",
@@ -55,6 +59,7 @@
         "type_traits": "cpp",
         "utility": "cpp",
         "typeindex": "cpp",
+        "typeinfo": "cpp",
         "valarray": "cpp",
         "algorithm": "cpp",
         "iterator": "cpp",
@@ -62,15 +67,9 @@
         "memory": "cpp",
         "memory_resource": "cpp",
         "optional": "cpp",
+        "random": "cpp",
         "set": "cpp",
         "string": "cpp",
-        "string_view": "cpp",
-        "core": "cpp",
-        "*.ipp": "cpp"
-    },
-    "python.autoComplete.extraPaths": [
-        "/home/marunyu/catkin_ws/devel/lib/python2.7/dist-packages",
-        "/opt/ros/melodic/lib/python2.7/dist-packages",
-        "/usr/local/webots/lib/controller/python27"
-    ]
+        "string_view": "cpp"
+    }
 }

@@ -88,7 +88,6 @@ void base_controller::pub_motortorque()
 void base_controller::upstreamPublish()
 {
     sensors_msg.data.clear();
-    float _msg[24];
     for( int i=0;i<12;i++ )
     {
          if(i%3==0)

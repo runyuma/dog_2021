@@ -13,7 +13,8 @@ dic = {'totoal_weight':16,
        'comc_lenth':0.12,
        "body_inertia":[0.3,0.1,0.4],
        "swingleg_P":[150,150,120],
-       "swingleg_D":[35,45,30]
+       "swingleg_D":[35,45,30],
+       "state_estimation_mode":0 # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
 
        }
 def params_init():
