@@ -23,6 +23,7 @@ class state_estimation():
         self.linear_acceleration = np.zeros((3,1))
         self.body_pos = np.zeros((3,1))
         self.body_vel = np.zeros((3,1))
+        rospy.set_param("USE_TOUCHSENSOR",0)
 
     def main(self):
         while not rospy.is_shutdown():
@@ -62,7 +63,7 @@ class state_estimation():
         rpy_angle = [0, 0, 0]  # XYZ
 
         self.rpy[0][0] = np.arctan2(2 * (y * z + w * x), w * w - x * x - y * y + z * z)
-        self.rpy[1][0] = np.arcsin(-2 * (x * z - w * y))
+        self.rpy[1][0] = np.arcsin(2*(w*y - x*z))
         self.rpy[2][0] = np.arctan2(2 * (x * y + w * z), w * w + x * x - y * y - z * z)
 
 
@@ -72,7 +73,7 @@ class state_estimation():
         # print("state_callback")
         self.body_pos[0][0] = msg.pose[1].position.x
         self.body_pos[1][0] = msg.pose[1].position.y
-        self.body_pos[2][0] = msg.pose[1].position.z
+        self.body_pos[2][0] = msg.pose[1].position.z-0.05
         # print("state_callback working")
 
         # Read the Vel of the robot

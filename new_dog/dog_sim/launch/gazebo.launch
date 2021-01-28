@@ -36,6 +36,8 @@
   </node>
   <node name="set_parameters" pkg="dog_sim" type="param_logging.py" output="screen"/>
   <node name="basecontrol" pkg="dog_sim" type="basecontrol" output="screen"/>
+  <!-- <node name="leg_control" pkg="leg_controller" type="leg_controller" output="screen"/> 
+  <node name="state_estimation" pkg="state_estimation" type="state_estimation.py" output="screen"/>-->
 </launch>
 
 

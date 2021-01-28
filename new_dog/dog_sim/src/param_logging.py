@@ -13,12 +13,14 @@ dic = {'totoal_weight':16,
        'comb_lenth':0.07,
        'comc_lenth':0.15,
        "body_inertia":[2,0.4,2],
-       "swingleg_P":[200,150,150],
-       "swingleg_D":[10,20,10],
-       "state_estimation_mode":0 # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
+       "swingleg_P":[400,150,250],
+       "swingleg_D":[30,20,20],
+       "state_estimation_mode":0, # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
+	"body_lenth":0.255,
+	"body_width":0.06
        }
-# "swingleg_P":[400,350,350],
-#        "swingleg_D":[10,20,10]
+# "swingleg_P":[200,150,150],
+#        "swingleg_D":[10,20,10],
 def params_init():
     rospy.init_node("params_logging")
     rate = rospy.Rate(1)

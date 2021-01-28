@@ -217,7 +217,7 @@
       link="left_front_part_A" />
     <axis
       xyz="0 0 1" />
-    <dynamics damping="1"/>
+    <dynamics damping="3"/>
   </joint>
   <link
     name="left_front_part_B">
@@ -382,7 +382,7 @@
       link="right_front_part_A" />
     <axis
       xyz="0 0 1" />
-    <dynamics damping="1"/>
+    <dynamics damping="3"/>
   </joint>
   <link
     name="right_front_part_B">
@@ -547,7 +547,7 @@
       link="left_back_part_A" />
     <axis
       xyz="0 0 1" />
-    <dynamics damping="1"/>
+    <dynamics damping="3"/>
   </joint>
   <link
     name="left_back_part_B">
@@ -712,7 +712,7 @@
       link="right_back_part_A" />
     <axis
       xyz="0 0 1" />
-    <dynamics damping="1"/>
+    <dynamics damping="3"/>
   </joint>
   <link
     name="right_back_part_B">
