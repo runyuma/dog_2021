@@ -74,7 +74,7 @@ def QP_solve(_leg_poses,groundLeg,forceTorque):
     return force_list, error
 
 def OSQP_solve(_leg_poses,groundLeg,forceTorque):
-    miu = 0.5
+    miu = 0.4
     leg_num = sum(groundLeg)
     if leg_num == 4:
         dia = [100, 40., 20., 80, 200., 50]

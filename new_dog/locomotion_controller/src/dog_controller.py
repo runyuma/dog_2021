@@ -5,7 +5,7 @@ import copy
 import time
 from gait_schedular import *
 from QP_solver import *
-default_height = 0.34
+default_height = 0.32
 USE_HIPLOOP = 1
 USE_RAIBERT_HEURISTIC = 0
 
@@ -60,7 +60,7 @@ class Dog():
 
         self.TF_mat = np.dot(np.dot(matr_z,matr_y),matr_x)
 
-    def getTargetstate(self,t,n, target_vel = None,target_angular_vel = None,target_pos = None, target_dir = None,last_targetstate = None):
+    def getTargetstate(self,t,n,target_pos = None, target_dir = None,last_targetstate = None):
         # get desired state in a step
         # t the time between one state and another
         # n the number of state
@@ -126,27 +126,42 @@ class Dog():
         elif self._statemachine._gait.name == "TROTING_WALKING" or self._statemachine._gait.name == "TROTING_RUNING" or self._statemachine._gait.name == "SLOW_WALKING":
             current_vel = np.dot(np.linalg.inv(self.TF_mat),self.body_vel)
             vel_diff = self.command_vel[1][0] - current_vel[1][0]
+            rpy = last_targetstate[0]
+            matr_y = np.array([[np.cos(rpy[1][0]), 0, np.sin(rpy[1][0])],
+                               [0, 1, 0],
+                               [-np.sin(rpy[1][0]), 0, np.cos(rpy[1][0])]])
+            matr_x = np.array([[1, 0, 0],
+                               [0, np.cos(rpy[0][0]), - np.sin(rpy[0][0])],
+                               [0, np.sin(rpy[0][0]), np.cos(rpy[0][0])]])
+            matr_z = np.array([[np.cos(rpy[2][0]), -np.sin(rpy[2][0]), 0],
+                               [np.sin(rpy[2][0]), np.cos(rpy[2][0]), 0],
+                               [0, 0, 1]])
+            target_TFmat = np.dot(np.dot(matr_z,matr_y),matr_x)
             if USE_RAIBERT_HEURISTIC:
                 last_targetstate[1][0][0] = self.body_pos[0][0]
             if abs(vel_diff)>0.3:
-                ay = np.sign(vel_diff) * min(abs(vel_diff)/ (n * t), 1)
+                ay = np.sign(vel_diff) * min(abs(vel_diff)/ (n * t), 0.8)
                 for i in range(n):
-                    vy = current_vel[1][0] + ay * i * t
-                    dy = current_vel[1][0]*t + ay * i * t * t/2
-                    self.target_vel = np.dot(self.TF_mat,np.array([[0],[vy],[0]]))
-                    self.target_pos = last_targetstate[1] + np.dot(self.TF_mat,np.array([[0],[dy],[0]]))
+                    vy = np.dot(np.linalg.inv(target_TFmat),last_targetstate[3])[1][0] + ay * i * t
+                    dy = np.dot(np.linalg.inv(target_TFmat),last_targetstate[3])[1][0]*i*t + ay * i * i * t * t/2
+                    self.target_vel = np.dot(target_TFmat,np.array([[0],[vy],[0]]))
+                    self.target_pos = last_targetstate[1] + np.dot(target_TFmat,np.array([[0],[dy],[0]]))
                     self.target_omega = self.command_omega
                     self.target_rpy = last_targetstate[0] + np.array([[0],[0],[self.command_omega[2][0] * t * i]])
+                    if abs(self.target_rpy[2][0]) >  np.pi:
+                        self.target_rpy[2][0] += - np.sign(self.target_rpy[2][0]) * 2 * np.pi
                 state = [self.target_rpy, self.target_pos, self.target_omega, self.target_vel]
                 states = [state for i in range(n)]
                 return states
             else:
                 for i in range(n):
-                    dy = current_vel[1][0]*t
+                    dy = self.command_vel[1][0]*t*i
                     self.target_vel = np.dot(self.TF_mat,self.command_vel)
-                    self.target_pos = last_targetstate[1] + np.dot(self.TF_mat,np.array([[0],[dy],[0]]))
+                    self.target_pos = last_targetstate[1] + np.dot(target_TFmat,np.array([[0],[dy],[0]]))
                     self.target_omega = self.command_omega
                     self.target_rpy = last_targetstate[0] + np.array([[0],[0],[self.command_omega[2][0] * t * i]])
+                    if abs(self.target_rpy[2][0]) > np.pi:
+                        self.target_rpy[2][0] += - np.sign(self.target_rpy[2][0]) * 2 * np.pi
                 state = [self.target_rpy, self.target_pos, self.target_omega, self.target_vel]
                 states = [state for i in range(n)]
                 return states
@@ -177,7 +192,7 @@ class Dog():
 
         elif self._statemachine._gait.name == "TROTING_WALKING" or self._statemachine._gait.name == "TROTING_RUNING":
             Force_limit = np.array([[50],[50],[200]])
-            Force_KP = np.diag([400,650,600])
+            Force_KP = np.diag([400,450,600])
             Force_KD = np.diag([250,100,120])
             Force_KA = np.diag([0,0,0])
             Torque_limit = np.array([[20], [30], [30]])
@@ -185,7 +200,7 @@ class Dog():
             # Torque_KD = np.diag([30, 40, 50])
             # Torque_KA = np.diag([0.0, .0, .0])
             Torque_KP = np.diag([400, 600, 500])
-            Torque_KD = np.diag([30, 50, 40])
+            Torque_KD = np.diag([50, 50, 40])
             Torque_KA = np.diag([0.0, .0, .0])
         elif self._statemachine._gait.name == "SLOW_WALKING":
             if not USE_RAIBERT_HEURISTIC:
@@ -195,7 +210,7 @@ class Dog():
                 Force_KA = np.diag([0, 0, 0])
                 Torque_limit = np.array([[20], [30], [30]])
                 Torque_KP = np.diag([400, 600, 600])
-                Torque_KD = np.diag([50, 50, 50])
+                Torque_KD = np.diag([50, 65, 60])
                 Torque_KA = np.diag([0.0, 0.0, 0.0])
             elif USE_RAIBERT_HEURISTIC:
                 Force_limit = np.array([[50], [50], [200]])
@@ -217,7 +232,8 @@ class Dog():
         omegaError = target_omega - self.omega
         angularaccError = omegaError - self.errorLast_omega
         self.errorLast_omega = omegaError
-
+        if abs(self.rpy[2][0])>= np.pi/2 and abs(target_rpy[2][0])>= np.pi and self.rpy[2][0]*target_rpy[2][0] <0:
+            target_rpy[2][0] += np.sign(target_rpy[2][0])  * 2 * np.pi
         target_torque = np.dot(Torque_KP, target_rpy - self.rpy) + np.dot(Torque_KD, omegaError) + np.dot(Torque_KA,
                                                                                                           angularaccError)
         for i in range(3):
@@ -227,37 +243,6 @@ class Dog():
                 target_torque[i][0] = np.sign(target_torque[i][0]) * Torque_limit[i][0]
         if target_force[2][0] < 100:
             target_force[2][0] = 100
-            # Force_limit = np.array([[50], [50], [200]])
-            # Force_KD = np.diag([300,300,350]) #Force_KD = np.diag([1500,1500,1500])
-            # Force_KA = np.diag([5,5,10])
-            # Torque_limit = np.array([[20], [30], [30]])
-            # Torque_KD = np.diag([120, 160, 100])#Torque_KD = np.diag([100, 100, 100])
-            # Torque_KA = np.diag([1.0, 1.0, 1.0])
-            # pos_error = target_pos - self.body_pos
-            # dpos_error = pos_error - self.last_poserror
-            # self.last_poserror = pos_error
-            # _target_vel = target_vel + np.dot(np.diag([0.05,0.05,0.05])/0.01,pos_error) - np.dot(np.diag([1,1,1]),dpos_error)
-            # rpy_error = target_rpy - self.rpy
-            # drpy_error = rpy_error - self.last_rpyerror
-            # self.last_rpyerror = drpy_error
-            # _target_omega = target_omega + np.dot(np.diag([0.05,0.1,0.05])/0.01,rpy_error) - np.dot(np.diag([2,1,2]),drpy_error)
-            #
-            # velerror = _target_vel - self.body_vel
-            # accerror = velerror - self.errorLast_vel
-            # self.errorLast_vel = velerror
-            # target_force = np.dot(Force_KD,np.dot(np.linalg.inv(self.TF_mat),velerror))- np.dot(Force_KA,accerror) + np.dot(np.linalg.inv(self.TF_mat),np.array( [[0], [0], [self.body_mass * 9.8]]))
-            # omegaError = _target_omega - self.omega
-            # angularaccError = omegaError - self.errorLast_omega
-            # self.errorLast_omega = omegaError
-            # target_torque = np.dot(Torque_KD,omegaError)- np.dot(Torque_KA,angularaccError)
-            # for i in range(3):
-            #     if abs(target_force[i][0]) >= Force_limit[i][0]:
-            #         target_force[i][0] = np.sign(target_force[i][0]) * Force_limit[i][0]
-            #     if abs(target_torque[i][0]) >= Torque_limit[i][0]:
-            #         target_torque[i][0] = np.sign(target_torque[i][0]) * Torque_limit[i][0]
-            # if target_force[2][0] < 100:
-            #     target_force[2][0] = 100
-            # print("PD*******:",dpos_error,drpy_error,velerror,omegaError,accerror,angularaccError)
         return (target_force,target_torque,)
 
     def statemachine_update(self):
@@ -279,7 +264,6 @@ class Dog():
 
 
         #update_time
-
         self._statemachine._gait.gaittime_update(self.ros_time - self.last_rostime)
 
         #state_index
@@ -301,7 +285,9 @@ class Dog():
             self.last_targetstate = self.targetstates[self.stateindex]
             if self._statemachine._gait.name == "STANDING":
                 if self.beginwalk == 1:
-                    self._statemachine._gait.gait_init("TROTING_WALKING") # TODO;proper change logic
+                    self.command_vel = np.array([[0],[-0.5],[0]])
+                    self.command_omega = np.array([[0], [-0.], [0.0]])
+                    self._statemachine._gait.gait_init("TROTING_RUNING") # TODO;proper change logic
             self.schedualgroundLeg = self._statemachine._gait.get_schedualgroundLeg()
 
         self.last_rostime = copy.deepcopy(self.ros_time)

@@ -137,7 +137,7 @@ class state_machine():
 def gait_swingLeg(phase, Tf, ini_pos, fin_pos):
     # 要摆腿轨迹规划
     #Tf 摇摆时间 ini_pos:初始点 fin_pos:落足点
-    height = 0.10
+    height = 0.15
     target_pos = np.array([[ini_pos[0][0] + (fin_pos[0][0] - ini_pos[0][0])*(3 * phase**2 - 2*phase**3)], [ini_pos[1][0] + (fin_pos[1][0] - ini_pos[1][0]) * (3 * phase**2 - 2*phase**3)], [0]])
     target_vel = np.array([[(fin_pos[0][0] - ini_pos[0][0])*(6 * phase - 6*phase**2)/Tf], [ (fin_pos[1][0] - ini_pos[1][0]) * (6 * phase - 6*phase**2)/Tf], [0]])
     target_acc = np.array(
