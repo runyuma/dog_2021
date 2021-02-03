@@ -12,8 +12,8 @@ from gazebo_msgs.msg import ModelStates
 from std_msgs.msg import Float32MultiArray, Float32, Int32MultiArray
 import math
 import time
-
-DEBUG = 1
+from action import *
+DEBUG = 0
 
 class locomotion_controlller():
     def __init__(self):
@@ -26,9 +26,7 @@ class locomotion_controlller():
         self.footpoint_gotvalue = 0
         self.footvel_gotvalue = 0
         self.state_gotvalue = 0
-        self._Dog = Dog()
-        self._Dog.body_lenth = rospy.get_param("body_lenth")
-        self._Dog.body_width = rospy.get_param("body_width")
+
 
 
         self.force_publisher = rospy.Publisher('/ground_force', Float32MultiArray, queue_size=10)
@@ -37,52 +35,83 @@ class locomotion_controlller():
 
         self.status_msg = Int32MultiArray()
         self.status_msg.data = [0,0,0,0]
-        self.last_time = time.time()
-        self.last_rostime = rospy.get_time()
+
         self.time_index = 0
         rospy.set_param("leg_enable", [1, 1, 1, 1])
 
-        rospy.set_param("target_dir",[0,0,0])
-        rospy.set_param("beginwalk",0)
+        self.define_action()
+        self.action_queue = [self.moving_action]
+
+    def define_action(self):
+        self.moving_action = action("moving",3,float("inf"),self.moving_init,self.moving_fun,self.moving_destructor)
+
+    def moving_init(self):
+        self._Dog = Dog()
+        self._Dog.body_lenth = rospy.get_param("body_lenth")
+        self._Dog.body_width = rospy.get_param("body_width")
         self._Dog.last_rostime = rospy.get_time()
+        rospy.set_param("current_gait",0)
+        self.time_index = 0
+        self.last_time = time.time()
+        self.last_rostime = rospy.get_time()
+        self.is_moving = 1
+        # TODO:restart stateestimation
+
+    def moving_fun(self):
+        rostime = rospy.get_time()
+        self._Dog.ros_time = rostime
+        self._Dog.command_vel = np.array([[0], [rospy.get_param("command_vel")], [0]])
+        self._Dog.command_omega = np.array([[0], [0], [rospy.get_param("command_omega")]])
+        self._Dog.gait_num = rospy.get_param("current_gait")
+        self._Dog.statemachine_update()
+        self._Dog.get_TFmat()
+        if self.time_index % 8 == 0:
+            self._Dog.Force_calculation()
+            self.force_publish()
+        self._Dog.swingleg_calculation()
+        self.set_schedulegroundleg()
+        self.status_piblish()
+        self.swing_publish()
+        self.visual()
+        self.time_index += 1
+
+    def moving_destructor(self):
+        self.is_moving = 0
 
     def main(self):
         while not rospy.is_shutdown():
-            rostime = rospy.get_time()
-            self._Dog.ros_time = rostime
-            self._Dog.target_dir = rospy.get_param("target_dir")
-            self._Dog.beginwalk = rospy.get_param("beginwalk")
-            self._Dog.statemachine_update()
-            self._Dog.get_TFmat()
-            if self.time_index% 8 == 0:
-                self._Dog.Force_calculation()
-                self.force_publish()
-            self._Dog.swingleg_calculation()
-            self.status_piblish()
-            self.swing_publish()
+            _action = self.action_queue[0]
+            if self.time_index == 0:
+                _action.action_initfun()
+            _action.action_fun()
+            if self.time_index >= _action.actionlenth:
+                del(self.action_queue[0])
+                self.time_index = 0
             self.rate.sleep()
-            self.visual()
-            self.time_index += 1
+
 
     def footvel_callback(self, msg):
-        for i in range(4):
-            self._Dog.footvel[i][0] = msg.data[i * 3 + 0]
-            self._Dog.footvel[i][1] = msg.data[i * 3 + 1]
-            self._Dog.footvel[i][2] = msg.data[i * 3 + 2]
+        if self.is_moving:
+            for i in range(4):
+                self._Dog.footvel[i][0] = msg.data[i * 3 + 0]
+                self._Dog.footvel[i][1] = msg.data[i * 3 + 1]
+                self._Dog.footvel[i][2] = msg.data[i * 3 + 2]
 
     def footpoint_callback(self, msg):
-        body_lenth = self._Dog.body_lenth
-        body_width = self._Dog.body_width
-        for i in range(4):
-            Xside_sigh = (-1) ** i
-            Yside_sign = (-1) ** (1+i//2)
-            self._Dog.footpoint[i][0] = msg.data[i * 3 + 0] + Xside_sigh * body_width
-            self._Dog.footpoint[i][1] = msg.data[i * 3 + 1] + Yside_sign * body_lenth
-            self._Dog.footpoint[i][2] = msg.data[i * 3 + 2]
+        if self.is_moving:
+            body_lenth = self._Dog.body_lenth
+            body_width = self._Dog.body_width
+            for i in range(4):
+                Xside_sigh = (-1) ** i
+                Yside_sign = (-1) ** (1+i//2)
+                self._Dog.footpoint[i][0] = msg.data[i * 3 + 0] + Xside_sigh * body_width
+                self._Dog.footpoint[i][1] = msg.data[i * 3 + 1] + Yside_sign * body_lenth
+                self._Dog.footpoint[i][2] = msg.data[i * 3 + 2]
 
     def state_estimation_callback(self,msg):
-        state = np.array([msg.data]).T
-        self._Dog.rpy,self._Dog.body_pos,self._Dog.omega,self._Dog.body_vel = np.vsplit(state,[3,6,9])
+        if self.is_moving:
+            state = np.array([msg.data]).T
+            self._Dog.rpy,self._Dog.body_pos,self._Dog.omega,self._Dog.body_vel = np.vsplit(state,[3,6,9])
 
     def status_piblish(self):
 
@@ -92,6 +121,12 @@ class locomotion_controlller():
             else:
                 self.status_msg.data[i]= 1
         self.leg_status_publisher.publish(self.status_msg)
+
+    def set_schedulegroundleg(self):
+        if self._Dog.set_shedule:
+            schedulegroundleg = self._Dog.schedualgroundLeg
+            rospy.set_param("schedule_groundleg",schedulegroundleg)
+            self._Dog.set_shedule = 0
 
     def force_publish(self):
         self.groundforce_msg = Float32MultiArray()

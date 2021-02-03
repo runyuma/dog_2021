@@ -13,8 +13,12 @@ dic = {'totoal_weight':16,
        'comb_lenth':0.07,
        'comc_lenth':0.15,
        "body_inertia":[2,0.4,2],
-       "swingleg_P":[450,150,250],
+       "swingleg_P":[450,250,250],
        "swingleg_D":[40,20,20],
+       "schedule_groundleg":[1,1,1,1],
+       "current_gait": 0,# 0 is standing 1 is trot_runing
+       "command_vel":0,
+       "command_omega":0,
        "state_estimation_mode":0, # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
 	"body_lenth":0.255,
 	"body_width":0.055
