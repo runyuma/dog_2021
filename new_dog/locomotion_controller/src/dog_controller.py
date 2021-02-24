@@ -284,7 +284,8 @@ class Dog():
 
     def swingleg_calculation(self):
         self.target_state = self.targetstates[self.stateindex]
-        self.target_vel = self.target_state[3]
+        _target_vel = self.target_state[3]
+        _target_vel = np.dot(np.linalg.inv(self.TF_mat),_target_vel)
         for i in range(4):
             if self.schedualgroundLeg[i] == 0:
                 Xside_sigh = (-1) ** i
@@ -295,11 +296,12 @@ class Dog():
                 swing_time = time/(phase2-phase1)
                 side_sign = (-1)**i
                 final_point = np.array([[Xside_sigh * self.body_width],[Yside_sign * self.body_lenth],[0]])
-                final_point += np.array([[side_sign * 0.06],[0],[-default_height]])
-                final_point += np.array([[0],[self._statemachine._gait.Gait_pacePropotion * swing_time * self.target_vel[1][0]],[0]])
+                final_point += np.array([[side_sign * 0.06],[0],[-default_height]])#TODO//0.06 tobechanged
+                final_point += np.array([[0],[self._statemachine._gait.Gait_pacePropotion * swing_time * _target_vel[1][0]],[0]])
                 if USE_RAIBERT_HEURISTIC:
                     final_point += self._statemachine._gait.Gait_pacePropotion * swing_time *(1 - self._statemachine.phase[i]) * np.dot(np.linalg.inv(self.TF_mat),(self.body_vel - self.target_vel))
                 _targte_swingpos,_targte_swingvel,_targte_swingacc= gait_swingLeg(self._statemachine.phase[i],swing_time, self.init_SWINGfootpoint[i], final_point)
+                _targte_swingpos[0][0] = final_point[0][0]# TODO:// magic change
                 self.target_swingpos[i] = _targte_swingpos
                 self.target_swingvel[i] = _targte_swingvel
 

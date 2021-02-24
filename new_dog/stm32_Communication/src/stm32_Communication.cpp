@@ -122,6 +122,22 @@ void DownStreamCallback(const std_msgs::Float32MultiArray::ConstPtr& DownStreamM
             }
         }
     }
+    for(int Count = 0;Count < 12;Count ++)
+    {
+     int sidesign = Count/6;
+     int motor_count = Count%6;
+     UnitreeMotorData_t* pMotorData = nullptr;
+     pMotorData = &(pMotorDriver[sidesign]->MotorData[motor_count]);
+     switch(pMotorData->MotionMode)
+     {
+        case DISABLE:std::cout<<"motor"<<Count<<"disable"<<std::endl;break;
+        case TORMODE:std::cout<<"motor"<<Count<<"TarTor: "<<pMotorData->TarTor<<std::endl;break;
+        case VELMODE:std::cout<<"motor"<<Count<<"TarVel: "<<pMotorData->TarVel<<std::endl;break;
+        case POSMODE:std::cout<<"motor"<<Count<<"TarPos: "<<pMotorData->TarPos<<std::endl;break;
+        default:break;
+     }
+
+    }
 } 
 
 /**

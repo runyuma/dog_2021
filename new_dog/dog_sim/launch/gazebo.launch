@@ -16,7 +16,7 @@
     type="spawn_model"
     args="-file $(find dog_sim)/urdf/world.urdf -urdf -model world "
     output="screen" /> -->
-
+  <param name="/joint_state_controller/publish_rate" value="1000" />
   <node name="controller_spawner" pkg="controller_manager" type="spawner"
       output="screen" args="joint_state_controller
                 Pos_controller1

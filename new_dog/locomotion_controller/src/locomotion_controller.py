@@ -184,7 +184,7 @@ class locomotion_controlller():
                 print("phase:",self._Dog._statemachine.phase)
                 print("target_state:",self._Dog.targetstates[self._Dog.stateindex])
                 print("gait_time: ", self._Dog._statemachine._gait.Gait_currentTime)
-                print("loop_time:", self.looptime)
+                print("loop_time:", self.looptime,"   ",self.looprostime)
                 print("target_Force/Torque",self._Dog.target_force,"\n",self._Dog.target_torque)
                 print("force_list",self._Dog.force_list,self._Dog.forceerror)
                 print("swing_pos:",self._Dog.target_swingpos)
