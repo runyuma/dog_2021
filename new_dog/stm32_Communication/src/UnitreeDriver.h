@@ -5,6 +5,7 @@
  * @brief   驱动板通讯类
  ******************************************************************************
  * @attent  类内部自带一个serial对象,在实例化本对象的时候需要将串口名字输入
+ *          结构体内部的数据是下位机上发的原始数据，没有做任何映射
  ****************************************************************************/
 #ifndef UNITREEDRIVER_H
 #define UNITREEDRIVER_H
@@ -21,13 +22,13 @@ typedef enum{
 
 typedef struct{
     MotionMode_t MotionMode = DISABLE;  // 运动模式
-    float TarTor;
-    float TarPos;
-    float TarVel;
-    float KP;
-    float KD;
-    float CurVel;
-    float CurPos;
+    float TarTor = 0.0f;
+    float TarPos = 0.0f;
+    float TarVel = 0.0f;
+    float KP = 0.0f;
+    float KD = 0.0f;
+    float CurVel = 0.0f;
+    float CurPos = 0.0f;
 }UnitreeMotorData_t;    // 存储控制信息和反馈信息的结构体
 
 class UnitreeDriver
@@ -38,8 +39,9 @@ class UnitreeDriver
         void SendControlDataToSTM32(void);
         void UpdateMotorData(void);
         void SetKPKD(uint8_t MotorID, float KP, float KD);
-        UnitreeMotorData_t MotorData[6];    // 0 1 2 对应 前0 1 2；3 4 5对应后0 1 2；
+        UnitreeMotorData_t MotorData[6];            // 0 1 2 对应 左0 1 2；3 4 5对应右0 1 2；
     private:
+
         serial::Serial prvSerial;
         uint8_t prvCRCCalculate(uint8_t *pStr, uint8_t Len);
         /* Tx */

@@ -4,23 +4,7 @@
  * @date    2021/02/17
  * @brief   驱动板通讯类
  ******************************************************************************
- * @attent  // 
-             上位机下发控制:(约1KHz)
-             0x7E + 电机ID(3bit) + 控制帧类型(5bit) + 数据内容 + CRC8校验码   一共7 * 3 = 21个字节
-             统一长度为 8Bytes
-             使能帧 0 bool
-             参数帧 1 uint16_t + uint16_t(KP/KD)
-             力矩帧 2 float
-             速度帧 3 float
-             位置帧 4 float
-             电机ID 3 4 5专指后腿的0 1 2
-             // 
-             上位机反馈:(约1KHz)
-             0x7E + 电机ID(3bit) + 反馈帧类型(5bit) + float当前速度 + float当前位置 + CRC8校验码      11个字节
-             数据帧：0
-             错误帧：1
-             两个都是小端模式，无所谓了
-             // 小端模式：高字节位于高地址当中
+ * @attent
  ****************************************************************************/
 #include "UnitreeDriver.h"
 #include <ros/ros.h>
@@ -31,15 +15,15 @@
 #define CONTROLFRAMELENGTH  7
 #define DriverBaudRate      921600  // 驱动板使用的串口波特率
 
-/** 
- * @brief   构造函数 
+/**
+ * @brief   构造函数
  * @return  当前时间[s]
 **/
-static double getCurrentTime()  
-{  
+static double getCurrentTime()
+{
     ros::Time CurrentTime = ros::Time::now();
     return double(CurrentTime.toSec());
-} 
+}
 
 /** @brief 构造函数 **/
 UnitreeDriver::UnitreeDriver(const std::string PortName)
@@ -56,15 +40,13 @@ UnitreeDriver::UnitreeDriver(const std::string PortName)
             prvSerial.open();
         }
         catch(serial::IOException& e){
-            double StartTime = getCurrentTime();
-            ROS_ERROR_STREAM("Open Serial Failed!"); 
-            
-            return ; 
+            ROS_ERROR_STREAM("Open Serial Failed!");
+            return ;
         }
 
         if(prvSerial.isOpen()){
             double StartTime = getCurrentTime();
-            ROS_INFO_STREAM(PortName << "Open Serial Succeed!"); 
+            ROS_INFO_STREAM(PortName << "Open Serial Succeed!");
             double EndTime = getCurrentTime();
             ROS_INFO_STREAM(EndTime - StartTime);
         }
@@ -75,7 +57,7 @@ UnitreeDriver::UnitreeDriver(const std::string PortName)
 
 /** @brief 析构函数 **/
 UnitreeDriver::~UnitreeDriver(){
-    
+
 }
 
 /** @brief 下发控制信息给STM32 */
@@ -89,7 +71,6 @@ void UnitreeDriver::SendControlDataToSTM32(){
             case TORMODE:EncodeTorFrame(SendBuffer.data() + 7 * count, count, MotorData[count].TarTor);break;
             case VELMODE:EncodeVelFrame(SendBuffer.data() + 7 * count, count, MotorData[count].TarVel);break;
             case POSMODE:EncodePosFrame(SendBuffer.data() + 7 * count, count, MotorData[count].TarPos);break;
-            default:break;
         }
     }
     /* 发送 */
@@ -118,11 +99,11 @@ void UnitreeDriver::UpdateMotorData(){
             }
             else{   // 可能没接收完毕，不选择丢弃，暂时保留
                 break;
-            } 
+            }
         }
     }
     else{
-        
+
     }
 }
 
@@ -149,17 +130,13 @@ void UnitreeDriver::SetKPKD(uint8_t MotorID, float KP, float KD){
  */
 uint8_t UnitreeDriver::prvCRCCalculate(uint8_t *pStr, uint8_t Len){
     uint8_t crc = 0xAA, polynomial=0x7D;
-    for(uint8_t i = 0; i < Len; i++)
-    {
+    for(uint8_t i = 0; i < Len; i++){
         crc = crc ^ (*pStr++);
-        for (uint8_t j = 0; j < 8; j++)
-        {
-            if (crc & 0x01)
-            {
+        for (uint8_t j = 0; j < 8; j++){
+            if (crc & 0x01){
                 crc = (crc >> 1) ^ polynomial;
             }
-            else
-            {
+            else{
                 crc >>= 1;
             }
         }
@@ -243,10 +220,11 @@ void UnitreeDriver::EncodePosFrame(uint8_t *pData, uint8_t MotorID, float Positi
 void UnitreeDriver::DecodeFrame(uint8_t *pData){
     uint8_t ErrorCode = pData[1] & 0x1F;
     if(ErrorCode){    // 电机发生了错误
-        
+
     }
     else{
-        memcpy(&(MotorData[(pData[1] & 0xE0) >> 5].CurVel), &pData[2], 8);  // 先速度后位置
+        int8_t MotorID = (pData[1] & 0xE0) >> 5;
+        memcpy(&(MotorData[MotorID].CurVel), &pData[2], 8);   // 先速度后位置
     }
 }
 

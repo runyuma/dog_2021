@@ -7,6 +7,7 @@
  * @attent  这里的STM32指的是两个电机驱动板
  *          串口未像之前的节点里添加权限！
  *          TODO：目前下发的是理想零点下的数据，接收的是实际数据
+ *          2.23 加入了电机正反方向数组的设定
  ****************************************************************************/
 #include "UnitreeDriver.h"
 #include <serial/serial.h>
@@ -18,53 +19,59 @@
 #define SENDRATE        1000    // Hz,节点通过串口下发的频率
 #define UPQUEUESIZE     10      // UpQueue长度
 #define DOWNQUEUESIZE   20      // DownQueue长度
-#define LEFTINDEX       0       // 左边下标
-#define RIGHTINDEX      1       // 右边下标
+#define FRONTINDEX      0       // 前驱动板下标
+#define BACKINDEX       1       // 后驱动板下标
 // KP KD
-#define MOTOR0KP        3.0f
+#define MOTOR0KP        0.002f    // 0号KP
 #define MOTOR0KD        5.0f
-#define MOTOR1KP        4.0f
-#define MOTOR1KD        6.0f
-#define MOTOR2KP        7.0f
-#define MOTOR2KD        8.0f
-// 减速比
-
-// 相对零点
-
+#define MOTOR1KP        0.002f    // 1号KP
+#define MOTOR1KD        5.0f
+#define MOTOR2KP        0.002f    // 2号KP
+#define MOTOR2KD        5.0f
+// 逻辑零点实际位置数组：下发命令的时候，加上本数组；接收的时候，减掉本数组；第一排是前面的电机，第二排是后面的电机
+#define LOGIZZEROPOSARRAY   {{1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f},  \
+                            {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}}
+// 正反 + 减速比数组：下发命令时乘本数组，接收的时候除以本数组
+#define MOTORDIRARRAY       {{1, 1, 1.2727272727f, 1, 1, 1.2727272727f},    \
+                            {1, 1, 1.2727272727f, 1, 1, 1.2727272727f}}
 /* User Config */
 
-UnitreeDriver *pMotorDriver[2] = {nullptr, nullptr};   // 0 左驱动板 1 右驱动板
+static UnitreeDriver *pMotorDriver[2] = {nullptr, nullptr};     // 0 前驱动板 1 后驱动板
+static const float LogicZeroPosArray[2][6] = LOGIZZEROPOSARRAY; // 逻辑零位实际位置数组
+static const float MotorRatioArray[2][6] = MOTORDIRARRAY;         // 电机正反减速比数组
 void DownStreamCallback(const std_msgs::Float32MultiArray::ConstPtr& DownStreamMsg);
-void PublishMotorData(ros::Publisher& Pub);
+void Map_PublishMotorData(ros::Publisher& Pub);
 void DebugTest();
 void NodeUserInit();
 
-static double getCurrentTime(){  
+/** @brief 获取当前时间 */
+static double getCurrentTime(){
     ros::Time CurrentTime = ros::Time::now();
     return double(CurrentTime.toSec());
-} 
+}
 
+/** @brief 主函数 */
 int main(int argc, char **argv){
     ros::init(argc, argv, "STM32_Node");    // 创建Node
     ros::NodeHandle nh;                     // 和topic service param等交互的公共接口，是操作节点的凭据
-    
+
     ros::Publisher UpStreamPub = nh.advertise<std_msgs::Float32MultiArray>("/upstream", UPQUEUESIZE);   // 发布12个电机的数据
     ros::Subscriber DownStreamSub = nh.subscribe("/downstream", DOWNQUEUESIZE, DownStreamCallback);     // 订阅
-    pMotorDriver[0] = new UnitreeDriver("/dev/ttyUSB0");
-    pMotorDriver[1] = new UnitreeDriver("/dev/ttyUSB1");
-    NodeUserInit();
+    pMotorDriver[FRONTINDEX] = new UnitreeDriver("/dev/ttyUSB0");
+    pMotorDriver[BACKINDEX] = new UnitreeDriver("/dev/ttyUSB1");
+    NodeUserInit(); // 参数初始化
 
     ros::Rate loop_rate(SENDRATE);
     while(ros::ok()){
-        pMotorDriver[LEFTINDEX]->UpdateMotorData();             // 刷新电机当前数据
-        pMotorDriver[RIGHTINDEX]->UpdateMotorData();
-        PublishMotorData(UpStreamPub);                  // 发布电机当前数据
-        ros::spinOnce();                                // 刷新控制数据(调用本函数之后，会直接调用CallBack函数，所以应该是不用担心数据还没来得及刷新的问题的)
-        pMotorDriver[LEFTINDEX]->SendControlDataToSTM32();      // 下发新的数据到STM32
-        pMotorDriver[RIGHTINDEX]->SendControlDataToSTM32();      // 
+        pMotorDriver[FRONTINDEX]->UpdateMotorData();            // 刷新电机当前数据
+        pMotorDriver[BACKINDEX]->UpdateMotorData();
+        Map_PublishMotorData(UpStreamPub);                          // 发布电机当前数据
+        ros::spinOnce();                                        // 刷新控制数据(调用本函数之后，会直接调用CallBack函数，所以应该是不用担心数据还没来得及刷新的问题的)
+        pMotorDriver[FRONTINDEX]->SendControlDataToSTM32();     // 下发新的数据到STM32
+        pMotorDriver[BACKINDEX]->SendControlDataToSTM32();      //
         loop_rate.sleep();
     }
-}  
+}
 
 /** @brief 节点部分数据初始化函数 */
 void NodeUserInit(void){
@@ -81,90 +88,71 @@ void NodeUserInit(void){
 /**
  * @brief 订阅回调函数
  * @param DownStreamMsg：DownStream数据，前12个字节表示运动模式，对应的后12个字节表示数据(位置模式就是位置数据,速度模式就是速度数据)
- *        左前 右前 左后 右后
- *        位置数据会经过处理转变为实际目标位置数据
+ *        前左 前右 后左 后右
  */
 void DownStreamCallback(const std_msgs::Float32MultiArray::ConstPtr& DownStreamMsg){
-    for(uint8_t Count = 0;Count < 2;Count ++){
-        /* 运动模式赋值 */
-        // 左
-        pMotorDriver[LEFTINDEX]->MotorData[0 + Count * 3].MotionMode = MotionMode_t(DownStreamMsg->data.at(0 + Count * 6));
-        pMotorDriver[LEFTINDEX]->MotorData[1 + Count * 3].MotionMode = MotionMode_t(DownStreamMsg->data.at(1 + Count * 6));
-        pMotorDriver[LEFTINDEX]->MotorData[2 + Count * 3].MotionMode = MotionMode_t(DownStreamMsg->data.at(2 + Count * 6));
-        // 右
-        pMotorDriver[RIGHTINDEX]->MotorData[0 + Count * 3].MotionMode = MotionMode_t(DownStreamMsg->data.at(3 + Count * 6));
-        pMotorDriver[RIGHTINDEX]->MotorData[1 + Count * 3].MotionMode = MotionMode_t(DownStreamMsg->data.at(4 + Count * 6));
-        pMotorDriver[RIGHTINDEX]->MotorData[2 + Count * 3].MotionMode = MotionMode_t(DownStreamMsg->data.at(5 + Count * 6));
-    }
-    // 更新控制数据
-    for(uint8_t Count = 0;Count < 2;Count ++){// 前 后
-        for(uint8_t MotorCount = 0;MotorCount < 3;MotorCount ++){   // 0 1 2
-            UnitreeMotorData_t* pMotorData = nullptr;
-            // 左
-            pMotorData = &(pMotorDriver[LEFTINDEX]->MotorData[MotorCount + Count * 3]);
-            switch(pMotorData->MotionMode)
-            {
+    static int CoutCount = 0;
+    for(uint8_t Count = 0;Count < 2;Count ++){  // 前驱动板 后驱动板
+        for(uint8_t MotorCount = 0;MotorCount < 6;MotorCount ++){   // 先左后右
+            UnitreeMotorData_t* pMotorData = &(pMotorDriver[Count]->MotorData[MotorCount]);
+            pMotorData->MotionMode = MotionMode_t(DownStreamMsg->data.at(MotorCount + Count * 6));
+            switch(pMotorData->MotionMode){
                 case DISABLE:break;
-                case TORMODE:pMotorData->TarTor = DownStreamMsg->data.at(12 + MotorCount + Count * 6);break;
-                case VELMODE:pMotorData->TarVel = DownStreamMsg->data.at(12 + MotorCount + Count * 6);break;
-                case POSMODE:pMotorData->TarPos = DownStreamMsg->data.at(12 + MotorCount + Count * 6);break;
-                default:break;
-            }
-            // 右
-            pMotorData = &(pMotorDriver[RIGHTINDEX]->MotorData[MotorCount + Count * 3]);
-            switch(pMotorData->MotionMode)
-            {
-                case DISABLE:break;
-                case TORMODE:pMotorData->TarTor = DownStreamMsg->data.at(15 + MotorCount + Count * 6);break;
-                case VELMODE:pMotorData->TarVel = DownStreamMsg->data.at(15 + MotorCount + Count * 6);break;
-                case POSMODE:pMotorData->TarPos = DownStreamMsg->data.at(15 + MotorCount + Count * 6);break;
-                default:break;
+                case TORMODE:{
+                    float LogTarTor = DownStreamMsg->data.at(12 + MotorCount + Count * 6);
+                    pMotorData->TarTor = LogTarTor / MotorRatioArray[Count][MotorCount];
+                }break;
+                case VELMODE:{
+                    float LogTarVel = DownStreamMsg->data.at(12 + MotorCount + Count * 6);
+                    pMotorData->TarVel = LogTarVel * MotorRatioArray[Count][MotorCount];
+                }break;
+                case POSMODE:{
+                    float LogTarPos = DownStreamMsg->data.at(12 + MotorCount + Count * 6);
+                    pMotorData->TarPos = LogTarPos * MotorRatioArray[Count][MotorCount] + LogicZeroPosArray[Count][MotorCount];
+                }break;
             }
         }
     }
-    for(int Count = 0;Count < 12;Count ++)
-    {
-     int sidesign = Count/6;
-     int motor_count = Count%6;
-     UnitreeMotorData_t* pMotorData = nullptr;
-     pMotorData = &(pMotorDriver[sidesign]->MotorData[motor_count]);
-     switch(pMotorData->MotionMode)
-     {
-        case DISABLE:std::cout<<"motor"<<Count<<"disable"<<std::endl;break;
-        case TORMODE:std::cout<<"motor"<<Count<<"TarTor: "<<pMotorData->TarTor<<std::endl;break;
-        case VELMODE:std::cout<<"motor"<<Count<<"TarVel: "<<pMotorData->TarVel<<std::endl;break;
-        case POSMODE:std::cout<<"motor"<<Count<<"TarPos: "<<pMotorData->TarPos<<std::endl;break;
-        default:break;
-     }
-
+    if(++CoutCount == 1000){
+        std::cout << "STM32 will receive :";
+        for(int Count = 0;Count < 12;Count){
+            UnitreeMotorData_t* pMotorData = &(pMotorDriver[Count / 6]->MotorData[Count % 6]);
+            std::cout << "Index: " << Count / 6 << "MotorIndex: " << Count % 6;
+            switch(pMotorData->MotionMode){
+                case DISABLE:break;
+                case TORMODE:{
+                    std::cout << "Tor" << pMotorData->TarTor << std::endl;
+                }break;
+                case VELMODE:{
+                    std::cout << "Vel" << pMotorData->TarVel << std::endl;
+                }break;
+                case POSMODE:{
+                    std::cout << "Pos" << pMotorData->TarPos << std::endl;
+                }break;
+            }
+        }
     }
-} 
+}
 
 /**
- * @brief 发布电机数据
+ * @brief 依据原始数据做映射，并且发布电机数据
  * @param Pub：发布者的引用
  */
-void PublishMotorData(ros::Publisher& Pub){
+void Map_PublishMotorData(ros::Publisher& Pub){
     std_msgs::Float32MultiArray MotorDataArray;
     MotorDataArray.data.clear();
     MotorDataArray.data.resize(24); // 12位置 + 12速度
-    /* 向量构建 */
-    for(int count = 0;count < 3;count ++){
-        // 左012 右012 左3(0)4(1)5(2) 右3(0)4(1)5(2)
-        MotorDataArray.data[0 + count] = pMotorDriver[LEFTINDEX]->MotorData[count].CurPos;
-        MotorDataArray.data[3 + count] = pMotorDriver[RIGHTINDEX]->MotorData[count].CurPos;
-        MotorDataArray.data[6 + count] = pMotorDriver[LEFTINDEX]->MotorData[count + 3].CurPos;
-        MotorDataArray.data[9 + count] = pMotorDriver[RIGHTINDEX]->MotorData[count + 3].CurPos;
-
-        MotorDataArray.data[12 + count] = pMotorDriver[LEFTINDEX]->MotorData[count].CurVel;
-        MotorDataArray.data[15 + count] = pMotorDriver[RIGHTINDEX]->MotorData[count].CurVel;
-        MotorDataArray.data[18 + count] = pMotorDriver[LEFTINDEX]->MotorData[count + 3].CurVel;
-        MotorDataArray.data[21 + count] = pMotorDriver[RIGHTINDEX]->MotorData[count + 3].CurVel;
+    for(uint8_t Count = 0;Count < 12;Count ++){ // 前左右 后左右
+        uint8_t Index = Count / 6;              // 前还是后
+        uint8_t MotorIndex = Count % 6;         // 前or后的哪个电机
+        /* 实际->逻辑 */
+        MotorDataArray.data[Count] = (pMotorDriver[Index]->MotorData[MotorIndex].CurPos - LogicZeroPosArray[Index][MotorIndex]) / MotorRatioArray[Index][MotorIndex];
+        MotorDataArray.data[12 + Count] = pMotorDriver[Index]->MotorData[MotorIndex].CurVel / MotorRatioArray[Index][MotorIndex];
     }
-    Pub.publish(MotorDataArray);
+    Pub.publish(MotorDataArray);  // 发布
 }
 
 /** @brief 调试用的一个函数 */
 void DebugTest(void){
-    
+
 }
