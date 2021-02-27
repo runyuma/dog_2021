@@ -22,15 +22,15 @@
 #define FRONTINDEX      0       // 前驱动板下标
 #define BACKINDEX       1       // 后驱动板下标
 // KP KD
-#define MOTOR0KP        0.002f    // 0号KP
+#define MOTOR0KP        0.03f    // 0号KP
 #define MOTOR0KD        5.0f
-#define MOTOR1KP        0.002f    // 1号KP
+#define MOTOR1KP        0.03f    // 1号KP
 #define MOTOR1KD        5.0f
-#define MOTOR2KP        0.002f    // 2号KP
+#define MOTOR2KP        0.03f    // 2号KP
 #define MOTOR2KD        5.0f
 // 逻辑零点实际位置数组：下发命令的时候，加上本数组；接收的时候，减掉本数组；第一排是前面的电机，第二排是后面的电机
-#define LOGIZZEROPOSARRAY   {{1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f},  \
-                            {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}}
+#define LOGIZZEROPOSARRAY   {{0.985000f, 0.501654f, 0.627867f, 0.0f, 0.0f, 0.0f},  \
+                            {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
 // 正反 + 减速比数组：下发命令时乘本数组，接收的时候除以本数组
 #define MOTORDIRARRAY       {{1, 1, 1.2727272727f, 1, 1, 1.2727272727f},    \
                             {1, 1, 1.2727272727f, 1, 1, 1.2727272727f}}
@@ -65,8 +65,9 @@ int main(int argc, char **argv){
     while(ros::ok()){
         pMotorDriver[FRONTINDEX]->UpdateMotorData();            // 刷新电机当前数据
         pMotorDriver[BACKINDEX]->UpdateMotorData();
-        Map_PublishMotorData(UpStreamPub);                          // 发布电机当前数据
+        Map_PublishMotorData(UpStreamPub);                      // 发布电机当前数据
         ros::spinOnce();                                        // 刷新控制数据(调用本函数之后，会直接调用CallBack函数，所以应该是不用担心数据还没来得及刷新的问题的)
+        DebugTest();
         pMotorDriver[FRONTINDEX]->SendControlDataToSTM32();     // 下发新的数据到STM32
         pMotorDriver[BACKINDEX]->SendControlDataToSTM32();      //
         loop_rate.sleep();
@@ -113,25 +114,26 @@ void DownStreamCallback(const std_msgs::Float32MultiArray::ConstPtr& DownStreamM
             }
         }
     }
-    if(++CoutCount == 1000){
-        std::cout << "STM32 will receive :";
-        for(int Count = 0;Count < 12;Count){
-            UnitreeMotorData_t* pMotorData = &(pMotorDriver[Count / 6]->MotorData[Count % 6]);
-            std::cout << "Index: " << Count / 6 << "MotorIndex: " << Count % 6;
-            switch(pMotorData->MotionMode){
-                case DISABLE:break;
-                case TORMODE:{
-                    std::cout << "Tor" << pMotorData->TarTor << std::endl;
-                }break;
-                case VELMODE:{
-                    std::cout << "Vel" << pMotorData->TarVel << std::endl;
-                }break;
-                case POSMODE:{
-                    std::cout << "Pos" << pMotorData->TarPos << std::endl;
-                }break;
-            }
-        }
-    }
+    // if(++CoutCount == 1000){
+    //     CoutCount = 0;
+    //     std::cout << "STM32 will receive :";
+    //     for(int Count = 0;Count < 12;Count){
+    //         UnitreeMotorData_t* pMotorData = &(pMotorDriver[Count / 6]->MotorData[Count % 6]);
+    //         std::cout << "Index: " << Count / 6 << "MotorIndex: " << Count % 6;
+    //         switch(pMotorData->MotionMode){
+    //             case DISABLE:break;
+    //             case TORMODE:{
+    //                 std::cout << "Tor" << pMotorData->TarTor << std::endl;
+    //             }break;
+    //             case VELMODE:{
+    //                 std::cout << "Vel" << pMotorData->TarVel << std::endl;
+    //             }break;
+    //             case POSMODE:{
+    //                 std::cout << "Pos" << pMotorData->TarPos << std::endl;
+    //             }break;
+    //         }
+    //     }
+    // }
 }
 
 /**
@@ -149,10 +151,11 @@ void Map_PublishMotorData(ros::Publisher& Pub){
         MotorDataArray.data[Count] = (pMotorDriver[Index]->MotorData[MotorIndex].CurPos - LogicZeroPosArray[Index][MotorIndex]) / MotorRatioArray[Index][MotorIndex];
         MotorDataArray.data[12 + Count] = pMotorDriver[Index]->MotorData[MotorIndex].CurVel / MotorRatioArray[Index][MotorIndex];
     }
+    // std::cout << MotorDataArray.data[0] << " " << MotorDataArray.data[1] << " " << MotorDataArray.data[2] << std::endl;
     Pub.publish(MotorDataArray);  // 发布
 }
 
 /** @brief 调试用的一个函数 */
 void DebugTest(void){
-
+    pMotorDriver[FRONTINDEX]->MotorData[0].MotionMode = POSMODE;
 }
