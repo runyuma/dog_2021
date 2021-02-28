@@ -5,6 +5,7 @@ import numpy as np
 from std_msgs.msg import Float32MultiArray, Float32, Int32MultiArray
 
 
+
 class gait_schedular():
     def __init__(self):
         self.Gait_phase = []  # phase of each foot
@@ -109,62 +110,49 @@ class gait_schedular():
 
     def get_schedualgroundLeg(self):
         # groundLeg
-        groundLeg = [0, 0, 0, 0]
+        groundLeg = [0,0,0,0]
         for i in range(4):
             if self.Gait_phase[self.Gait_index][i] == 1:
                 groundLeg[i] = 1
         return groundLeg
 
     def get_nextschedualgroundLeg(self):
-        groundLeg = [0, 0, 0, 0]
+        groundLeg = [0,0,0,0]
         next_index = self.get_nextindex()
         for i in range(4):
             if self.Gait_phase[next_index][i] == 1:
                 groundLeg[i] = 1
         return groundLeg
-
-    def get_lastschedualgroundLeg(self):
-        groundLeg = [0, 0, 0, 0]
-        last_index = self.get_lastindex()
-        for i in range(4):
-            if self.Gait_phase[last_index][i] == 1:
-                groundLeg[i] = 1
-        return groundLeg
-
-
 SWING = 0
 GROUND = 1
-
-
 class state_machine():
     def __init__(self):
-        self.phase = [1, 1, 1, 1]
+        self.phase = [1,1,1,1]
         self.timestep = 0.001
         self._gait = gait_schedular()
         self._gait.gait_init("STANDING")
 
 
+
 def gait_swingLeg(phase, Tf, ini_pos, fin_pos):
     # 要摆腿轨迹规划
-    # Tf 摇摆时间 ini_pos:初始点 fin_pos:落足点
+    #Tf 摇摆时间 ini_pos:初始点 fin_pos:落足点
     height = 0.15
-    target_pos = np.array([[ini_pos[0][0] + (fin_pos[0][0] - ini_pos[0][0]) * (3 * phase ** 2 - 2 * phase ** 3)],
-                           [ini_pos[1][0] + (fin_pos[1][0] - ini_pos[1][0]) * (3 * phase ** 2 - 2 * phase ** 3)], [0]])
-    target_vel = np.array([[(fin_pos[0][0] - ini_pos[0][0]) * (6 * phase - 6 * phase ** 2) / Tf],
-                           [(fin_pos[1][0] - ini_pos[1][0]) * (6 * phase - 6 * phase ** 2) / Tf], [0]])
+    target_pos = np.array([[ini_pos[0][0] + (fin_pos[0][0] - ini_pos[0][0])*(3 * phase**2 - 2*phase**3)], [ini_pos[1][0] + (fin_pos[1][0] - ini_pos[1][0]) * (3 * phase**2 - 2*phase**3)], [0]])
+    target_vel = np.array([[(fin_pos[0][0] - ini_pos[0][0])*(6 * phase - 6*phase**2)/Tf], [ (fin_pos[1][0] - ini_pos[1][0]) * (6 * phase - 6*phase**2)/Tf], [0]])
     target_acc = np.array(
-        [[(fin_pos[0][0] - ini_pos[0][0]) * (6 - 12 * phase) / Tf ** 2],
-         [(fin_pos[1][0] - ini_pos[1][0]) * (6 - 12 * phase) / Tf ** 2], [0]])
+        [[(fin_pos[0][0] - ini_pos[0][0]) * (6 - 12 * phase) / Tf**2],
+         [(fin_pos[1][0] - ini_pos[1][0]) * (6 - 12 * phase) / Tf**2], [0]])
     if phase <= 0.5:
-        target_pos[2][0] = ini_pos[2][0] + height * (3 * (2 * phase) ** 2 - 2 * (2 * phase) ** 3)
-        target_vel[2][0] = height * (6 * (2 * phase) - 6 * (2 * phase) ** 2) / (Tf / 2)
-        target_acc[2][0] = height * (6 - 12 * (2 * phase)) / (Tf / 2) ** 2
+        target_pos[2][0] = ini_pos[2][0] + height * (3 * (2*phase)**2 - 2*(2*phase)**3)
+        target_vel[2][0] = height * (6 * (2*phase) - 6*(2*phase)**2)/(Tf/2)
+        target_acc[2][0] = height * (6 - 12 * (2*phase)) / (Tf/2)**2
     else:
         target_pos[2][0] = ini_pos[2][0] + height - height * (3 * (2 * phase - 1) ** 2 - 2 * (2 * phase - 1) ** 3)
-        target_vel[2][0] = - height * (6 * (2 * phase - 1) - 6 * (2 * phase - 1) ** 2) / (Tf / 2)
-        target_acc[2][0] = - height * (6 - 12 * (2 * phase - 1)) / (Tf / 2) ** 2
+        target_vel[2][0] = - height * (6 * (2 * phase - 1) - 6 * (2 * phase - 1) ** 2) / (Tf/2)
+        target_acc[2][0] = - height * (6 - 12 * (2 * phase - 1)) / (Tf/2) ** 2
 
-    return (target_pos, target_vel, target_acc)
+    return(target_pos,target_vel,target_acc)
     # def Gait_statemachine_init(Dog):
     #     # 状态机步态初始化
     #     Dog.schedule.Gait_currentTime = 0

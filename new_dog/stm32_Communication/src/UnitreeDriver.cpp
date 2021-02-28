@@ -152,7 +152,7 @@ uint8_t UnitreeDriver::prvCRCCalculate(uint8_t *pStr, uint8_t Len){
  */
 void UnitreeDriver::EncodeAbleFrame(uint8_t *pData, uint8_t MotorID, bool Able){
     pData[0] = 0x7E;
-    pData[1] = (uint8_t)((MotorID & 0x05) << 5) | (0x00);
+    pData[1] = (uint8_t)((MotorID & 0x07) << 5) | (0x00);
     pData[5] = Able;
     pData[6] = prvCRCCalculate(pData, 6);   // 包括CRC校验码总共7个字节
 }

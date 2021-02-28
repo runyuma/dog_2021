@@ -92,7 +92,7 @@ Eigen::Vector3f get_tauff(int sidesign, float * theta_list, float * joint_vel, l
     Eigen::Vector3f gravity;
     gravity<< 0,0,-9.81;
 
-    float lenthlist_l2[3] = {_legparam.lenth_list[0],_legparam.discomlist[1],0};
+    float lenthlist_l2[3] = {_legparam.discomlist[0],_legparam.discomlist[1],0};
     Eigen::Matrix3f ja_l2 =get_jacobian(sidesign,theta_list,lenthlist_l2);
 
     float lenthlist_l3[3] = {_legparam.lenth_list[0],_legparam.lenth_list[1],_legparam.discomlist[2]};
@@ -101,6 +101,7 @@ Eigen::Vector3f get_tauff(int sidesign, float * theta_list, float * joint_vel, l
     Eigen::Vector3f joint_torque = -_legparam.mass_list[1]*(ja_l2.transpose() * gravity) -_legparam.mass_list[2]*(ja_l3.transpose() * gravity);
     joint_torque = joint_torque + C_mat * joint_array;
     return joint_torque;
+    
 }
 
 Eigen::Vector3f get_feedbackward(Eigen::Matrix3f kp,Eigen::Matrix3f kd,Eigen::Vector3f current_pos,Eigen::Vector3f current_vel,Eigen::Vector3f target_pos,Eigen::Vector3f target_vel)

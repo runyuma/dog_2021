@@ -8,22 +8,22 @@ from statemechine import *
 from std_msgs.msg import Float32MultiArray,Float32,Int32MultiArray
 test_upperconcle = 0
 test_singleleg = 1
-test_jacobian = 1
-test_swing_leg = 0
+test_jacobian = 0
+test_swing_leg = 1
 test_singleleg_two_point = 0
 test_swing_leg_singlepos = 0
 test_gravity = 0
 recovery = 0
 def test_upperconcole():
     rospy.init_node("uppernode")
-    rate = rospy.Rate(1)
+    rate = rospy.Rate(1000)
     upperpub = rospy.Publisher('/downstream', Float32MultiArray,queue_size=10)
     msg = Float32MultiArray()
     # msg.data = [0 for i in range(12)] + [0, 1., -2.]*4
     msg.data = [-1, -1, 3]+[-1 for i in range(9)] + [0. for i in range(12)]
     upperpub.publish(msg)
     while not rospy.is_shutdown():
-        msg.data = [-1, -1, 0] + [-1 for i in range(9)] +[0,0,.0]+ [0 for i in range(9)]
+        msg.data = [0, 0, 0] + [-1 for i in range(9)] +[0,0.78,-1.57]+ [0 for i in range(9)]
         upperpub.publish(msg)
         rate.sleep()
 def test_singleleg():
@@ -42,8 +42,8 @@ def test_singleleg():
 
 
     _statemachine = [statemachine() for i in range(4)]
-    init_pos = [np.array([[0.1],[0],[-0.26]]),np.array([[-0.1],[0],[-0.26]]),np.array([[0.1],[0],[-0.26]]),np.array([[-0.1],[0],[-0.26]])]
-    final_pos =[np.array([[0.1],[0.1],[-0.26]]),np.array([[-0.1],[0.1],[-0.26]]),np.array([[0.1],[0.1],[-0.26]]),np.array([[-0.1],[0.1],[-0.26]])]
+    init_pos = [np.array([[0.1],[0],[-0.3]]),np.array([[-0.1],[0],[-0.26]]),np.array([[0.1],[0],[-0.26]]),np.array([[-0.1],[0],[-0.26]])]
+    final_pos =[np.array([[0.1],[0.1],[-0.3]]),np.array([[-0.1],[0.1],[-0.26]]),np.array([[0.1],[0.1],[-0.26]]),np.array([[-0.1],[0.1],[-0.26]])]
     while not rospy.is_shutdown():
         if test_jacobian:
             if time_index <=1000:
@@ -84,7 +84,7 @@ def test_singleleg():
         elif test_swing_leg:
             if time_index <= 1000:
                 status_msg.data = [5, 5, 5, 5]
-                footforce_msg.data = [0, 1., -2.] * 4
+                footforce_msg.data = [0, 0.78, -1.57] * 4
 
             else:
                 if _statemachine[0].phase <= 1:
@@ -113,7 +113,7 @@ def test_singleleg():
                 status_msg.data = [5, 5, 5, 5]
                 footforce_msg.data = [0, 0.78, -1.57] * 4
             else:
-                _pos = [0.08,0.0,-0.20]
+                _pos = [0.10,0.0,-0.30]
                 status_msg.data = [1, -1, -1, -1]
                 swingleg_msg.data = _pos + [0., 0., 0.] * 3 + [0., 0., 0.] * 4
         elif test_gravity:

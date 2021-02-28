@@ -1,5 +1,5 @@
 #include"leg_controller.h"
-
+#define SIGN(x) (x>0 ? 1 : -1)
 void leg_controller::sensor_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg)
 {
     for( int i=0;i<4;i++ )
@@ -84,6 +84,8 @@ leg_status_subscriber = pnh->subscribe("/leg_status", 10, &leg_controller::leg_s
 footpoint_publisher =  pnh->advertise<std_msgs::Float32MultiArray>("/foot_points",10);
 footvel_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/foot_vel",10);
 jointtarget_publisher  = pnh->advertise<std_msgs::Float32MultiArray>("/downstream",10);
+
+
 for( int i=0;i<12;i++ )
 {
     footpoint_pubmsg.data.push_back(0);
@@ -95,12 +97,16 @@ float mass_list[3] ;
 float lenth_list[3];
 float discomlist[3] ;
 
+pnh-> getParam("use_sim",use_sim);
+
+pnh-> getParam("damping_compensation",damping_compensation);
 pnh-> getParam("hip_mass",mass_list[0]);
 pnh-> getParam("upper_link_mass",mass_list[1]);
 pnh-> getParam("lower_link_mass",mass_list[2]);
 pnh-> getParam("hip_lenth",lenth_list[0]);
 pnh-> getParam("upper_link_lenth",lenth_list[1]);
 pnh-> getParam("lower_link_lenth",lenth_list[2]);
+pnh-> getParam("coma_lenth",discomlist[0]);
 pnh-> getParam("comb_lenth",discomlist[1]);
 pnh-> getParam("comc_lenth",discomlist[2]);
 
@@ -180,13 +186,20 @@ void leg_controller::main()
                 _target_vel<<target_swing[3*i + 12], target_swing[3*i+1 + 12], target_swing[3*i+2 + 12];
                 _joint_torque = get_tauff(sidesign, _joint_pos, _joint_vel,Leg_parameter);
                 Eigen::Vector3f taubf= jacobian * get_feedbackward(KP ,KD , _foot_point, _foot_vel, _target_pos,_target_vel);
-               
                if(time_index %1000 == 0)
                {
                     cout<<"tauff"<<i<<_joint_torque<<endl;
                     cout<<"taubf"<<i<<"     "<<taubf<<KP<<KD<<_foot_point<<_foot_vel<<endl;
                }
                _joint_torque += taubf;
+               if(!use_sim)
+               {
+                   for( int j=0;j<3;j++ )
+                   {
+                        _joint_torque[j] = _joint_torque[j] + SIGN(_joint_torque[j]) * damping_compensation[j];
+                   }
+                   
+               }
                 // cout<<getCurrentTime() - start_time<<endl;
                 for( int j=0;j<3;j++ )
                 {  

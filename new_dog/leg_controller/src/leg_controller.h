@@ -30,6 +30,9 @@ public:
     int leg_status[4] = {-1,-1,-1,-1};
     int leg_getvalue[4] = {0,0,0,0};
 
+    int use_sim;
+     std::vector<float> damping_compensation; 
+    // third joint torque compensation
     
     ros::NodeHandle *pnh;
     ros::Subscriber sensor_subscriber;

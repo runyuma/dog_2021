@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+<node name="set_parameters" pkg="stm32_Communication" type="param_logging.py" output="screen"/>
+<node name="communication" pkg="stm32_Communication" type="STM32_Node" output="screen"/>
+
+</launch>
+
+

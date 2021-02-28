@@ -10,6 +10,7 @@ dic = {'totoal_weight':16,
        'hip_lenth':0.05,
        'upper_link_lenth':0.235,
        'lower_link_lenth':0.235,
+       'coma_lenth':0.05,
        'comb_lenth':0.07,
        'comc_lenth':0.15,
        "body_inertia":[2,0.4,2],
@@ -21,7 +22,8 @@ dic = {'totoal_weight':16,
        "command_omega":0,
        "state_estimation_mode":0, # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
 	"body_lenth":0.255,
-	"body_width":0.055
+	"body_width":0.055,
+       "use_sim":1,
        }
 # "swingleg_P":[200,150,150],
 #        "swingleg_D":[10,20,10],

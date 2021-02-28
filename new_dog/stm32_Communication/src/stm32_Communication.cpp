@@ -60,7 +60,6 @@ int main(int argc, char **argv){
     pMotorDriver[FRONTINDEX] = new UnitreeDriver("/dev/ttyUSB0");
     pMotorDriver[BACKINDEX] = new UnitreeDriver("/dev/ttyUSB1");
     NodeUserInit(); // 参数初始化
-
     ros::Rate loop_rate(SENDRATE);
     while(ros::ok()){
         pMotorDriver[FRONTINDEX]->UpdateMotorData();            // 刷新电机当前数据
@@ -69,7 +68,7 @@ int main(int argc, char **argv){
         ros::spinOnce();                                        // 刷新控制数据(调用本函数之后，会直接调用CallBack函数，所以应该是不用担心数据还没来得及刷新的问题的)
         DebugTest();
         pMotorDriver[FRONTINDEX]->SendControlDataToSTM32();     // 下发新的数据到STM32
-        pMotorDriver[BACKINDEX]->SendControlDataToSTM32();      //
+        // pMotorDriver[BACKINDEX]->SendControlDataToSTM32();      //
         loop_rate.sleep();
     }
 }
@@ -157,5 +156,5 @@ void Map_PublishMotorData(ros::Publisher& Pub){
 
 /** @brief 调试用的一个函数 */
 void DebugTest(void){
-    pMotorDriver[FRONTINDEX]->MotorData[0].MotionMode = POSMODE;
+    
 }
