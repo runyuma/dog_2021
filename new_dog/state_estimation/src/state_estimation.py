@@ -21,22 +21,8 @@ class state_estimation():
         self.rate = rospy.Rate(500)
         self.body_lenth = rospy.get_param("body_lenth")
         self.body_width = rospy.get_param("body_width")
-        # self.state_estimation_mode = rospy.get_param("state_estimation_mode")# 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
-        self.state_estimation_mode = 1
-        if self.state_estimation_mode == 0 or TEST:
-            self.Imu_Subscriber = rospy.Subscriber("/imu", Imu, self.Imu_callback)
-            self.state_Subscriber = rospy.Subscriber("/gazebo/model_states", ModelStates, self.state_callback)
-            self.got_xyz = 0
-        else:
-            if USE_SIM:
-                self.Imu_Subscriber = rospy.Subscriber("/imu", Imu, self.Imu_callback)
-                topic_name = ["/left_front_contact_sensor","/right_front_contact_sensor","/left_back_contact_sensor","/right_back_contact_sensor"]
-                callback_fun = [self.left_front_callback,self.right_front_callback,self.left_back_callback,self.right_back_callback]
-                self.touchsensors = [None,None,None,None]
-                for i in range(4):
-                    self.touchsensors[i] = rospy.Subscriber(topic_name[i],ContactsState,callback_fun[i])
-        self.footpoint_subscriber = rospy.Subscriber("/foot_points", Float32MultiArray, self.footpoint_callback)
-        self.state_publisher = rospy.Publisher("/state",Float32MultiArray,queue_size = 10)
+        self.state_estimation_mode = rospy.get_param("state_estimation_mode")# 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
+
         self.contact_state = [0,0,0,0]
         self.touchsensors = [np.zeros(3) for i in range(4)]
         self.rpy = np.zeros((3,1))
@@ -86,10 +72,28 @@ class state_estimation():
             self.test_rpy = np.zeros((3, 1))
             self.test_omega = np.zeros((3, 1))
 
+            if self.state_estimation_mode == 0 or TEST:
+                self.Imu_Subscriber = rospy.Subscriber("/imu", Imu, self.Imu_callback)
+                self.state_Subscriber = rospy.Subscriber("/gazebo/model_states", ModelStates, self.state_callback)
+                self.got_xyz = 0
+            if USE_SIM:
+                self.Imu_Subscriber = rospy.Subscriber("/imu", Imu, self.Imu_callback)
+                topic_name = ["/left_front_contact_sensor", "/right_front_contact_sensor", "/left_back_contact_sensor",
+                              "/right_back_contact_sensor"]
+                callback_fun = [self.left_front_callback, self.right_front_callback, self.left_back_callback,
+                                self.right_back_callback]
+                self.touchsensors = [None, None, None, None]
+                for i in range(4):
+                    self.touchsensors[i] = rospy.Subscriber(topic_name[i], ContactsState, callback_fun[i])
+            self.footpoint_subscriber = rospy.Subscriber("/foot_points", Float32MultiArray, self.footpoint_callback)
+            self.state_publisher = rospy.Publisher("/state", Float32MultiArray, queue_size=10)
+
     def main(self):
         while not rospy.is_shutdown():
             if self.state_estimation_mode == 0:
                 self.state_publish()
+                if USE_TOUCHSENSOR:
+                    rospy.set_param("contact_state", self.contact_state)
             elif self.state_estimation_mode == 1:
                 if not self.initialed:
                     if self.foot_point_received and self.got_imu :
@@ -139,11 +143,14 @@ class state_estimation():
         self.schedule_leg = rospy.get_param("schedule_groundleg")
         C_mat = self.get_TFmat()
         self.footpoint_W = np.dot(C_mat, self.footpoint)
+        if USE_TOUCHSENSOR:
+            rospy.set_param("contact_state", self.contact_state)
         # update contact point
         if self.last_schedule_leg != self.schedule_leg:
             still_contact = np.array(self.last_schedule_leg) * np.array(self.schedule_leg)
             new_contact = np.array([1,1,1,1]) - still_contact
             self.foot_contactpoint = self.foot_contactpoint * still_contact + (np.dot(self.body_pos ,np.ones((1,4))) + self.footpointW) * new_contact
+            self.last_schedule_leg = self.schedule_leg
         # cauculate pos
 
         self.body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * np.array(self.schedule_leg),axis=1).reshape((3,1))/sum(self.schedule_leg)
@@ -313,7 +320,7 @@ class state_estimation():
 
 
     def state_callback(self,msg):
-        if not TEST:
+        if not TEST or self.state_estimation_mode == 0:
             self.got_xyz = 1
             # Read the position of the robot
             # print("state_callback")
