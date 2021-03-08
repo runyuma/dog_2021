@@ -214,7 +214,7 @@ if __name__ == '__main__':
     OSQP_solve(_leg_poses2, groundLeg3, forceTorque1)
     print(time.time() - start_time)
     print(OSQP_solve(foot_point2, groundLeg3, forceTorque3))
-    print(OSQP_solve(_leg_poses1, groundLeg4, forceTorque2))
+    print(OSQP_solve(_leg_poses1, groundLeg2, forceTorque1))
     # print(time.time()-a)
 
 

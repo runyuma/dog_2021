@@ -9,6 +9,8 @@
 #include "UnitreeDriver.h"
 #include <ros/ros.h>
 #include <iostream>
+#include<stdlib.h>
+#include<string>
 
 #define FRAMEHEAD           0x7E    // 帧头
 #define BACKFRAMELENGTH     11
@@ -33,6 +35,11 @@ UnitreeDriver::UnitreeDriver(const std::string PortName)
     }
     else{
         try{
+//            std::string Command = "sudo chmod 777 " + PortName;
+//            std::string Password = "456456456rr";
+//            std::string serial_commmand = "echo " + Password + "|sudo - S " + Command;
+//            system(serial_commmand.data());
+
             prvSerial.setPort(PortName);
             prvSerial.setBaudrate(DriverBaudRate);
             serial::Timeout to = serial::Timeout::simpleTimeout(1000);

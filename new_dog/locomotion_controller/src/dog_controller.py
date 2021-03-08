@@ -40,7 +40,7 @@ class Dog():
         self.command_vel = np.zeros((3,1))
         self.command_omega = np.zeros((3,1))
 
-        self.use_touchtenser = rospy.get_param("USE_TOUCHSENSOR")
+        # self.use_touchtenser = rospy.get_param("USE_TOUCHSENSOR")
         self.ros_time = 0
         self.last_rosime = 0
         self.set_shedule = 1

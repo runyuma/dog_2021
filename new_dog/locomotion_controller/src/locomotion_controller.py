@@ -41,12 +41,14 @@ class locomotion_controlller():
 
         self.define_action()
         self.action_queue = [self.moving_action]
+        self.is_moving = 0
 
     def define_action(self):
         self.moving_action = action("moving",3,float("inf"),self.moving_init,self.moving_fun,self.moving_destructor)
 
     def moving_init(self):
         self._Dog = Dog()
+        self._Dog.state_estimation_mode = rospy.get_param("state_estimation_mode")
         self._Dog.body_lenth = rospy.get_param("body_lenth")
         self._Dog.body_width = rospy.get_param("body_width")
         self._Dog.last_rostime = rospy.get_time()
@@ -63,6 +65,8 @@ class locomotion_controlller():
         self._Dog.command_vel = np.array([[0], [rospy.get_param("command_vel")], [0]])
         self._Dog.command_omega = np.array([[0], [0], [rospy.get_param("command_omega")]])
         self._Dog.gait_num = rospy.get_param("current_gait")
+
+        # self._Dog.contact_state = rospy.get_param("contact_state")
         self._Dog.statemachine_update()
         self._Dog.get_TFmat()
         if self.time_index % 8 == 0:
