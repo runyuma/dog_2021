@@ -5,6 +5,13 @@
 #define MIN(a,b) (a>b ? b : a)
 #define PI 3.14159f
 #define USE_RAIBERT_HEURISTIC 0
+
+std::map<int,std::string> gait_map= {
+  { 0,"STANDING" },
+  { 1,"TROTING_RUNING",}};
+
+
+
 dog_controller::dog_controller()
 {
   g<<0,0,-9.81;
@@ -30,7 +37,7 @@ void dog_controller::get_TFmat()
 void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> last_targetstate)
 {
   std::vector<Eigen::Matrix<float,3,4>> states(n);
-  if(_state_machine._gait.name == "STANDING")
+  if(_statemachine._gait.name == "STANDING")
   {
     if(DEFAULT_HEIGHT - body_pos(2)>= 0.05)
     {
@@ -86,7 +93,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
 
     }
   }
-  else if(_state_machine._gait.name == "TROTING_WALKING" or _state_machine._gait.name == "TROTING_RUNING" or _state_machine._gait.name == "SLOW_WALKING")
+  else if(_statemachine._gait.name == "TROTING_WALKING" or _statemachine._gait.name == "TROTING_RUNING" or _statemachine._gait.name == "SLOW_WALKING")
   {
     Eigen::Vector3f current_vel = TF_mat.inverse() * body_vel;
     float vel_diff = command_vel(1) - current_vel(1);
@@ -167,20 +174,20 @@ void dog_controller::getTarget_Force()
   Eigen::Vector3f Force_limit,Torque_limit;
   Force_limit<<50,50,200;
   Torque_limit<<20,30,30;
-  if(_state_machine._gait.name == "STANDING")
+  if(_statemachine._gait.name == "STANDING")
   {
     Force_KP<<2500,0,0,0,800,0,0,0,800;
     Force_KD<<600,0,0,0,350,0,0,0,150;
     Torque_KP<<200,0,0,0,300,0,0,0,300;
     Torque_KD<<30,0,0,0,12,0,0,0,50;
   }
-  else if (_state_machine._gait.name == "TROTING_WALKING" or _state_machine._gait.name == "TROTING_RUNING") {
+  else if (_statemachine._gait.name == "TROTING_WALKING" or _statemachine._gait.name == "TROTING_RUNING") {
     Force_KP<<400,0,0,0,450,0,0,0,600;
     Force_KD<<250,0,0,0,100,0,0,0,120;
     Torque_KP<<400,0,0,0,600,0,0,0,500;
     Torque_KD<<50,0,0,0,50,0,0,0,50;
   }
-  else if (_state_machine._gait.name == "SLOW_WALKING") {
+  else if (_statemachine._gait.name == "SLOW_WALKING") {
     Force_KP<<500,0,0,0,800,0,0,0,800;
     Force_KD<<300,0,0,0,350,0,0,0,150;
     Torque_KP<<400,0,0,0,600,0,0,0,600;
@@ -196,7 +203,7 @@ void dog_controller::getTarget_Force()
   target_torque = Torque_KP * (target_rpy - rpy) + Torque_KD * (target_omega - omega);
   for (int i = 0;i<3;i++) {
     if(ABS(target_force(i))>= Force_limit(i)){target_force(i) = SIGN(target_force(i)) * Force_limit(i);}
-      if(ABS(target_torque(i))>= Torque_limit(i)){target_torque(i) = SIGN(target_torque(i)) * Torque_limit(i);}
+    if(ABS(target_torque(i))>= Torque_limit(i)){target_torque(i) = SIGN(target_torque(i)) * Torque_limit(i);}
   }
 
 
@@ -205,7 +212,111 @@ void dog_controller::getTarget_Force()
 
 void dog_controller::statemachine_update()
 {
+  int _gait_index = _statemachine._gait.Gait_index;
+  float _gait_time = _statemachine._gait.Gait_time[_gait_index];
 
+  if(_statemachine._gait.Gait_currentTime == 0)
+  {
+    start_phasetime = ros_time.toSec();
+    _statemachine._gait.get_schedualgroundLeg();
+    memcpy(schedualgroundLeg,_statemachine._gait.schedualgroundLeg,4*sizeof (int));
+    _statemachine.phase = _statemachine._gait.Gait_phase[_gait_index];
+
+    getTargetstate(0.01,int(_gait_time/0.01),last_targetstate);
+    int last_index = _statemachine._gait.get_lastindex();
+    for (int i=0;i<4;i++) {
+      if(_statemachine._gait.Gait_phase[_gait_index][i]!= 1 and _statemachine._gait.Gait_phase[last_index][i] == 1)
+      {
+        init_SWINGfootpoint.block(0,i,3,1) = footpoint.block(0,i,3,1);
+      }
+    }
+  }
+  loop_time = (ros_time-last_rostime).toSec();
+  _statemachine._gait.gaittime_update((ros_time-last_rostime).toSec());
+
+  state_index = int(_statemachine._gait.Gait_currentTime/0.01);
+  if(state_index>= _gait_time/0.01)
+  {
+    state_index = int(_gait_time/0.01) - 1;
+  }
+
+  int next_index = _statemachine._gait.get_nextindex();
+  for (int i = 0;i<4;i++) {
+    if(schedualgroundLeg[i] != 1)
+    {
+      float phase_diff = _statemachine._gait.Gait_phase[next_index][i] - _statemachine._gait.Gait_phase[_gait_time][i];
+      _statemachine.phase[i] += (ros_time - last_rostime).toSec() * phase_diff/_gait_time;
+    }
+  }
+  if(_statemachine._gait.Gait_currentTime >= _gait_time)
+  {
+    _statemachine._gait.Gait_index = _statemachine._gait.get_nextindex();
+    _statemachine.phase = _statemachine._gait.Gait_phase[_statemachine._gait.Gait_index];
+    _statemachine._gait.Gait_currentTime = 0;
+    last_targetstate = targetstates[state_index];
+    if(gait_num != last_gait)
+    {
+      _statemachine._gait=gait_schedular(gait_map[gait_num]);
+    }
+    last_gait = gait_num;
+    _statemachine._gait.get_schedualgroundLeg();
+    memcpy(schedualgroundLeg,_statemachine._gait.schedualgroundLeg,4*sizeof (int));
+    set_schedule = 1;
+  }
+  last_rostime = ros_time;
+}
+
+void dog_controller::Force_calculation()
+{
+  target_state = targetstates[state_index];
+  getTarget_Force();
+  Eigen::VectorXf ForceTorque = Eigen::VectorXf::Zero(6);
+  ForceTorque.block(0,0,3,1) = target_force;
+  ForceTorque.block(3,0,3,1) = target_torque;
+  _qp_solver.solveQP(footpoint,schedualgroundLeg,ForceTorque);
+  force_list = _qp_solver.foot_force;
+  for (int i = 0;i<4;i++) {
+    if(_statemachine.phase[i]>= 0.95 and _statemachine._gait.Gait_phase[_statemachine._gait.Gait_index][i] != 1)
+    {
+      schedualgroundLeg[i] = 1;
+      Eigen::Vector3f _force;
+      _force<<0,0,10;
+      force_list.block(0,i,3,1) =  _force;
+    }
+  }
+
+
+}
+
+void dog_controller::swingleg_calculation()
+{
+  target_state = targetstates[state_index];
+  Eigen::Vector3f _target_vel = target_state.block(0,3,3,1);
+  _target_vel = TF_mat.inverse()*_target_vel;
+  std::vector<float> current_phase = _statemachine._gait.Gait_phase[_statemachine._gait.Gait_index];
+  std::vector<float> next_phase = _statemachine._gait.Gait_phase[_statemachine._gait.get_nextindex()];
+  float time = _statemachine._gait.Gait_time[_statemachine._gait.Gait_index];
+  for (int i = 0;i<4;i++) {
+    if(schedualgroundLeg[i] == 0)
+    {
+     int Xsidesign = pow(-1,i);
+     int Ysidesign = pow(-1,1+i/2);
+     float phase1 = current_phase[i];
+     float phase2 = next_phase[i];
+     float swing_time = time/(phase2 - phase1);
+     Eigen::Vector3f final_point;
+     final_point<<Xsidesign*(body_width + hip_lenth),Ysidesign*body_width + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),-DEFAULT_HEIGHT;
+     if( USE_RAIBERT_HEURISTIC)
+     {
+//       TODO
+     }
+     Eigen::Vector3f init_pos = init_SWINGfootpoint.block(0,i,3,1);
+     _statemachine.gait_swingLeg(_statemachine.phase[i],swing_time,init_pos,final_point);
+     _statemachine.target_pos = final_point;// magic change
+     target_swingpos.block(0,i,3,1) = _statemachine.target_pos;
+     target_swingvel.block(0,i,3,1) = _statemachine.target_vel;
+    }
+  }
 }
 
 

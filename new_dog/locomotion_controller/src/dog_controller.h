@@ -6,20 +6,24 @@
 #include"qp_solver.h"
 #include"gait_schedular.h"
 #include"math.h"
+#include<map>
 class dog_controller
 {
 private:
   Eigen::Vector3f g;
+  float start_phasetime;
+  int state_index;
 public:
   float body_mass = 10 + (0.3+0.6+0.5)* 4 ;
   float body_width;
   float body_lenth;
+  float hip_lenth;
 
   int is_moving = 0;
-
+  int set_schedule = 0;
   int state_estimation_mode;
 
-  state_machine _state_machine;
+  state_machine _statemachine;
   qp_solver _qp_solver;
 
   Eigen::Vector3f rpy = Eigen::Vector3f::Zero() ;
@@ -35,8 +39,10 @@ public:
   Eigen::Matrix<float,3,4> target_swingvel = Eigen::Matrix<float,3,4>::Zero();
   Eigen::Matrix<float,3,4> init_SWINGfootpoint = Eigen::Matrix<float,3,4>::Zero();
   Eigen::Matrix3f TF_mat = Eigen::Matrix<float,3,3>::Identity();
+  Eigen::Matrix<float,3,4> force_list = Eigen::Matrix<float,3,4>::Zero();
   int schedualgroundLeg[4] = {1,1,1,1};
   Eigen::Matrix<float,3,4> target_state = Eigen::Matrix<float,3,4>::Zero();
+  Eigen::Matrix<float,3,4> last_targetstate = Eigen::Matrix<float,3,4>::Zero();
   std::vector<Eigen::Matrix<float,3,4>> targetstates;
   Eigen::Vector3f target_force,target_torque;
 
@@ -49,6 +55,8 @@ public:
   void getTargetstate(float t,int n, Eigen::Matrix<float,3,4> last_targetstate = Eigen::Matrix<float,3,4>::Zero());
   void getTarget_Force();
   void statemachine_update();
+  void Force_calculation();
+  void swingleg_calculation();
 
 };
 

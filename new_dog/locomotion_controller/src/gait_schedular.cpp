@@ -97,7 +97,6 @@ for (int i=0;i<4;i++) {cout<<schedualgroundLeg[i]<<endl;}
 for (int i=0;i<4;i++) {cout<<nextschedualgroundLeg[i]<<endl;}
 }
 
-
 state_machine::state_machine(){}
 
 void state_machine::gait_swingLeg(float _phase, float Tf, Eigen::Vector3f &ini_pos, Eigen::Vector3f &fin_pos)

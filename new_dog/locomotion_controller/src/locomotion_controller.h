@@ -27,13 +27,10 @@ public:
   ros::Publisher swingleg_publisher;
   ros::Publisher leg_status_publisher;
 
-  std_msgs::Int32MultiArray status_msg;
+
   int time_index = 0;
 
   dog_controller *_Dog;
-
-  float body_lenth;
-  float body_width;
 
   locomotion_controller();
   ~locomotion_controller();
@@ -41,7 +38,15 @@ public:
   void footpoint_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg);
   void footvel_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg);
   void state_estimation_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg);
+
+  void status_publish();
+  void set_schedulegroundleg();
+  void force_publish();
+  void swing_publoish();
+
   void moving_init();
   void moving_func();
+
+  void visual();
 };
 #endif // LOCOMOTION_CONTROLLER_H

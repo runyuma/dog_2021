@@ -35,7 +35,7 @@ class state_machine
 public:
   std::vector<float> phase = {1,1,1,1};
   float time_step = 0.001;
-  gait_schedular _gait = gait_schedular();
+  gait_schedular _gait = gait_schedular("STANDING");
   float height = 0.15;
   Eigen::Vector3f target_pos,target_vel,target_acc;
   state_machine();

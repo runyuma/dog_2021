@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include "locomotion_controller.h"
-#define TEST_QP 1
+#define TEST_QP 0
 using namespace std;
 int main(int argc, char **argv)
 {
