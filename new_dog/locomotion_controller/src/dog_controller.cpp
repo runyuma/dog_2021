@@ -109,6 +109,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
             sin(_rpy(2)),cos(_rpy(2)),0,
             0,0,1;
     Eigen::Matrix3f target_TFmat = matr_z * matr_y * matr_x;
+
     if(ABS(vel_diff)>0.3)
     {
       float ay = SIGN(vel_diff) * MIN(ABS(vel_diff)/(n*t),0.8);
@@ -124,7 +125,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         Eigen::Vector3f dy_Vec,vy_Vec;
         dy_Vec<<0,dy,0;
         vy_Vec<<0,vy,0;
-        target_pos = last_targetstate.block(0,1,3,1) * target_TFmat * dy_Vec;
+        target_pos = last_targetstate.block(0,1,3,1) + target_TFmat * dy_Vec;
         if(ABS(target_rpy(2))>PI)
         {
           target_rpy(2) += -SIGN(target_rpy(2)) * 2 * PI;
@@ -159,6 +160,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         _state.block(0,3,3,1) = target_vel;
         states[i] = _state;
       }
+      targetstates = states;
     }
   }
 }
@@ -215,6 +217,7 @@ void dog_controller::statemachine_update()
   int _gait_index = _statemachine._gait.Gait_index;
   float _gait_time = _statemachine._gait.Gait_time[_gait_index];
 
+
   if(_statemachine._gait.Gait_currentTime == 0)
   {
     start_phasetime = ros_time.toSec();
@@ -244,8 +247,11 @@ void dog_controller::statemachine_update()
   for (int i = 0;i<4;i++) {
     if(schedualgroundLeg[i] != 1)
     {
-      float phase_diff = _statemachine._gait.Gait_phase[next_index][i] - _statemachine._gait.Gait_phase[_gait_time][i];
+      float phase_diff = _statemachine._gait.Gait_phase[next_index][i] - _statemachine._gait.Gait_phase[_gait_index][i];
       _statemachine.phase[i] += (ros_time - last_rostime).toSec() * phase_diff/_gait_time;
+//      std::cout<<"phase: "<<std::endl;
+//      for (int i = 0;i<4;i++) {std::cout<<_statemachine.phase[i]<<" ";}
+//      std::cout<<std::endl;
     }
   }
   if(_statemachine._gait.Gait_currentTime >= _gait_time)
@@ -261,8 +267,9 @@ void dog_controller::statemachine_update()
     last_gait = gait_num;
     _statemachine._gait.get_schedualgroundLeg();
     memcpy(schedualgroundLeg,_statemachine._gait.schedualgroundLeg,4*sizeof (int));
-    set_schedule = 1;
+
   }
+  set_schedule = 1;
   last_rostime = ros_time;
 }
 
@@ -305,14 +312,14 @@ void dog_controller::swingleg_calculation()
      float phase2 = next_phase[i];
      float swing_time = time/(phase2 - phase1);
      Eigen::Vector3f final_point;
-     final_point<<Xsidesign*(body_width + hip_lenth),Ysidesign*body_width + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),-DEFAULT_HEIGHT;
+     final_point<<Xsidesign*(body_width + hip_lenth),Ysidesign*body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),-DEFAULT_HEIGHT;
      if( USE_RAIBERT_HEURISTIC)
      {
 //       TODO
      }
      Eigen::Vector3f init_pos = init_SWINGfootpoint.block(0,i,3,1);
      _statemachine.gait_swingLeg(_statemachine.phase[i],swing_time,init_pos,final_point);
-     _statemachine.target_pos = final_point;// magic change
+     _statemachine.target_pos(0) = final_point(0);// magic change
      target_swingpos.block(0,i,3,1) = _statemachine.target_pos;
      target_swingvel.block(0,i,3,1) = _statemachine.target_vel;
     }

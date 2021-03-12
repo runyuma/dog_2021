@@ -29,7 +29,7 @@ public:
 
   Eigen::Matrix<float,3,4> foot_force= Eigen::Matrix<float,3,4>::Zero();
   Eigen::VectorXf Error = Eigen::VectorXf::Zero(6);
-  OsqpEigen::Solver solver;
+
   qp_solver();
   void updateHessian();
   void updateGradient();

@@ -13,9 +13,7 @@ qp_solver::qp_solver()
         0,  0,  0, 80,  0,  0,
         0,  0,  0,  0,120,  0,
         0,  0,  0,  0,  0, 30;
-  solver.settings()->setWarmStart(true);
 
-  // set the initial data of the QP solver
 
 }
 
@@ -78,6 +76,10 @@ void qp_solver::updateConstraints()
 }
 int qp_solver::solveQP(Eigen::Matrix<float,3,4> & _foot_point, int *_schedule_leg, Eigen::VectorXf &_ForceTorque)
 {
+  OsqpEigen::Solver solver;
+  solver.settings()->setWarmStart(true);
+  solver.settings()->setVerbosity(false);
+ // set the initial data of the QP solver
  int leg_num = getlegnum();
  ForceTorque = _ForceTorque;
  for(int i=0;i<4;i++)
@@ -134,8 +136,10 @@ int qp_solver::solveQP(Eigen::Matrix<float,3,4> & _foot_point, int *_schedule_le
  foot_force<<sol(0),sol(3),sol(6),sol(9),
             sol(1),sol(4),sol(7),sol(10),
             sol(2),sol(5),sol(8),sol(11);
- std::cout<<foot_force<<std::endl;
- std::cout<<Error<<std::endl;
+ solver.data()->clearHessianMatrix();
+
+// std::cout<<foot_force<<std::endl;
+// std::cout<<Error<<std::endl;
 }
 
 void qp_solver::test()

@@ -2,6 +2,7 @@
 locomotion_controller::locomotion_controller(){}
 void locomotion_controller::init()
 {
+  _Dog = new dog_controller();
   footpoint_subscriber = pnh->subscribe("/foot_points",10,&locomotion_controller::footpoint_callback,this);
   footvel_subscriber = pnh->subscribe("/foot_vel",10,&locomotion_controller::footvel_callback,this);
   state_estimation_subscriber = pnh->subscribe("/state",10,&locomotion_controller::state_estimation_callback,this);
@@ -64,6 +65,7 @@ void locomotion_controller::state_estimation_callback(const  std_msgs::Float32Mu
 void locomotion_controller::status_publish()
 {
   std_msgs::Int32MultiArray status_msg;
+  status_msg.data = {1,1,1,1};
   for (int i = 0;i<4;i++) {
     if(_Dog->schedualgroundLeg[i] == 1)
     {
@@ -80,7 +82,7 @@ void locomotion_controller::set_schedulegroundleg()
 {
   if(_Dog->set_schedule)
   {
-    std::vector<int> _scheduleleg;
+    std::vector<int> _scheduleleg(4);
     for (int i = 0;i<4;i++) {
       _scheduleleg[i] = _Dog->schedualgroundLeg[i];
     }
@@ -96,9 +98,9 @@ void locomotion_controller::force_publish()
   for (int i = 0;i<4;i++) {
     if(_Dog->schedualgroundLeg[i] == 1)
     {
-      groundforce_msg.data[3*i] = _Dog->force_list(0,i);
-      groundforce_msg.data[3*i + 1] = _Dog->force_list(1,i);
-      groundforce_msg.data[3*i + 2] = _Dog->force_list(2,i);
+      groundforce_msg.data[3*i] = -_Dog->force_list(0,i);
+      groundforce_msg.data[3*i + 1] = -_Dog->force_list(1,i);
+      groundforce_msg.data[3*i + 2] = -_Dog->force_list(2,i);
     }
     else {
       groundforce_msg.data[3*i] = 0;
@@ -139,7 +141,7 @@ void locomotion_controller::swing_publoish()
 //***************************************************************************************/visualize/***************************************************************************************//
 void locomotion_controller::visual()
 {
-  if(time_index%10 == 0)
+  if(time_index%50 == 0)
   {
     std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
     std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
@@ -168,7 +170,6 @@ void locomotion_controller::visual()
 //***************************************************************************************/action/***************************************************************************************//
 void locomotion_controller::moving_init()
 {
-  _Dog = new dog_controller();
   pnh->getParam("state_estimation_mode",_Dog->state_estimation_mode);
   pnh->setParam("current_gait",0);
   last_rostime =  ros::Time::now();
@@ -182,13 +183,14 @@ void locomotion_controller::moving_func()
   ros_time = ros::Time::now();
   loop_time = ros_time.toSec() - last_rostime.toSec();
   last_rostime = ros_time;
-  std::cout<<"loop_time"<<loop_time<<std::endl;
+//  std::cout<<"loop_time"<<loop_time<<std::endl;
   _Dog->ros_time = ros_time;
   float _vel,_omega;
   pnh->getParam("command_vel",_vel);
   pnh->getParam("command_omega",_omega);
   _Dog->command_vel<<0,_vel,0;
   _Dog->command_omega<<0,0,_omega;
+
   pnh->getParam("current_gait",_Dog->gait_num);
   _Dog->statemachine_update();
   _Dog->get_TFmat();
@@ -197,6 +199,7 @@ void locomotion_controller::moving_func()
     force_publish();
   }
   _Dog->swingleg_calculation();
+
   swing_publoish();
   set_schedulegroundleg();
   status_publish();
@@ -204,5 +207,6 @@ void locomotion_controller::moving_func()
   visual();
 
 }
+
 
 
