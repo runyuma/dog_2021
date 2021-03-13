@@ -63,6 +63,17 @@ int main(int argc, char **argv){
     ros::Rate loop_rate(SENDRATE);
     while(ros::ok()){
         pMotorDriver[FRONTINDEX]->UpdateMotorData();            // 刷新电机当前数据
+        // 显示下位机上发的数据
+        static int UpdateCount = 0;
+        if(++UpdateCount == 200){
+            UpdateCount = 0;
+            std::cout << "MotorData:";
+            for(int i = 0;i < 6;i ++){
+                std::cout << pMotorDriver[FRONTINDEX]->MotorData[i].CurPos << " ";
+            }
+            std::cout << std::endl;
+        }
+        // 显示下位机上发的数据
         pMotorDriver[BACKINDEX]->UpdateMotorData();
         Map_PublishMotorData(UpStreamPub);                      // 发布电机当前数据
         ros::spinOnce();                                        // 刷新控制数据(调用本函数之后，会直接调用CallBack函数，所以应该是不用担心数据还没来得及刷新的问题的)
