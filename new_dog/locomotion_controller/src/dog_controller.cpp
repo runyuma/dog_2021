@@ -178,16 +178,24 @@ void dog_controller::getTarget_Force()
   Torque_limit<<20,30,30;
   if(_statemachine._gait.name == "STANDING")
   {
-    Force_KP<<2500,0,0,0,800,0,0,0,800;
-    Force_KD<<600,0,0,0,350,0,0,0,150;
-    Torque_KP<<200,0,0,0,300,0,0,0,300;
-    Torque_KD<<30,0,0,0,12,0,0,0,50;
+//    Force_KP<<2500,0,0,0,800,0,0,0,800;
+//    Force_KD<<600,0,0,0,350,0,0,0,150;
+//    Torque_KP<<200,0,0,0,300,0,0,0,300;
+//    Torque_KD<<30,0,0,0,12,0,0,0,50;
+      Force_KP = stand_force_p;
+      Force_KD = stand_force_D;
+      Torque_KP = stand_troque_p;
+      Torque_KD = stand_troque_D;
   }
   else if (_statemachine._gait.name == "TROTING_WALKING" or _statemachine._gait.name == "TROTING_RUNING") {
-    Force_KP<<400,0,0,0,450,0,0,0,600;
-    Force_KD<<250,0,0,0,100,0,0,0,120;
-    Torque_KP<<400,0,0,0,600,0,0,0,500;
-    Torque_KD<<50,0,0,0,50,0,0,0,50;
+//    Force_KP<<400,0,0,0,450,0,0,0,600;
+//    Force_KD<<250,0,0,0,100,0,0,0,120;
+//    Torque_KP<<400,0,0,0,600,0,0,0,500;
+//    Torque_KD<<50,0,0,0,50,0,0,0,50;
+    Force_KP = trot_force_p;
+    Force_KD = trot_force_D;
+    Torque_KP = trot_troque_p;
+    Torque_KD = trot_troque_D;
   }
   else if (_statemachine._gait.name == "SLOW_WALKING") {
     Force_KP<<500,0,0,0,800,0,0,0,800;
@@ -212,7 +220,7 @@ void dog_controller::getTarget_Force()
 
 }
 
-void dog_controller::statemachine_update()
+int dog_controller::statemachine_update()
 {
   int _gait_index = _statemachine._gait.Gait_index;
   float _gait_time = _statemachine._gait.Gait_time[_gait_index];
@@ -254,23 +262,33 @@ void dog_controller::statemachine_update()
 //      std::cout<<std::endl;
     }
   }
+  int changed = 0;
   if(_statemachine._gait.Gait_currentTime >= _gait_time)
   {
-    _statemachine._gait.Gait_index = _statemachine._gait.get_nextindex();
-    _statemachine.phase = _statemachine._gait.Gait_phase[_statemachine._gait.Gait_index];
-    _statemachine._gait.Gait_currentTime = 0;
-    last_targetstate = targetstates[state_index];
-    if(gait_num != last_gait)
-    {
-      _statemachine._gait=gait_schedular(gait_map[gait_num]);
-    }
-    last_gait = gait_num;
-    _statemachine._gait.get_schedualgroundLeg();
-    memcpy(schedualgroundLeg,_statemachine._gait.schedualgroundLeg,4*sizeof (int));
+    int _permit = 1;
 
+//    for(int i = 0;i<4;i++) {
+//      if(_statemachine._gait.Gait_phase[next_index][i] == 1 and _statemachine._gait.Gait_phase[_gait_index][i] != 1){_permit = 0;}
+//    }
+    if(_permit or _statemachine._gait.Gait_currentTime >= 1.2 * _gait_time)
+    {
+      changed = 1;
+      _statemachine._gait.Gait_index = _statemachine._gait.get_nextindex();
+      _statemachine.phase = _statemachine._gait.Gait_phase[_statemachine._gait.Gait_index];
+      _statemachine._gait.Gait_currentTime = 0;
+      last_targetstate = targetstates[state_index];
+      if(gait_num != last_gait)
+      {
+        _statemachine._gait=gait_schedular(gait_map[gait_num]);
+      }
+      last_gait = gait_num;
+      _statemachine._gait.get_schedualgroundLeg();
+      memcpy(schedualgroundLeg,_statemachine._gait.schedualgroundLeg,4*sizeof (int));
+    }
   }
   set_schedule = 1;
   last_rostime = ros_time;
+  return changed;
 }
 
 void dog_controller::Force_calculation()

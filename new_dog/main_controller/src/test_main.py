@@ -8,8 +8,8 @@ from statemechine import *
 from std_msgs.msg import Float32MultiArray,Float32,Int32MultiArray
 test_upperconcle = 0
 test_singleleg = 1
-test_jacobian = 0
-test_swing_leg = 1
+test_jacobian = 1
+test_swing_leg = 0
 test_singleleg_two_point = 0
 test_swing_leg_singlepos = 0
 test_gravity = 0
@@ -23,7 +23,7 @@ def test_upperconcole():
     msg.data = [-1, -1, 3]+[-1 for i in range(9)] + [0. for i in range(12)]
     upperpub.publish(msg)
     while not rospy.is_shutdown():
-        msg.data = [0, 0, 0] + [-1 for i in range(9)] +[0,0.78,-1.57]+ [0 for i in range(9)]
+        msg.data = [-1, -1, -1]+ [0, 0, 0] + [-1 for i in range(6)] +[0,0.78,-1.57]+ [0,0.78,-1.57]+ [0 for i in range(6)]
         upperpub.publish(msg)
         rate.sleep()
 def test_singleleg():
@@ -42,8 +42,8 @@ def test_singleleg():
 
 
     _statemachine = [statemachine() for i in range(4)]
-    init_pos = [np.array([[0.1],[0],[-0.3]]),np.array([[-0.1],[0],[-0.26]]),np.array([[0.1],[0],[-0.26]]),np.array([[-0.1],[0],[-0.26]])]
-    final_pos =[np.array([[0.1],[0.1],[-0.3]]),np.array([[-0.1],[0.1],[-0.26]]),np.array([[0.1],[0.1],[-0.26]]),np.array([[-0.1],[0.1],[-0.26]])]
+    init_pos = [np.array([[0.1],[0],[-0.3]]),np.array([[-0.1],[0],[-0.3]]),np.array([[0.1],[0],[-0.26]]),np.array([[-0.1],[0],[-0.26]])]
+    final_pos =[np.array([[0.1],[0.1],[-0.3]]),np.array([[-0.1],[0.1],[-0.3]]),np.array([[0.1],[0.1],[-0.26]]),np.array([[-0.1],[0.1],[-0.26]])]
     while not rospy.is_shutdown():
         if test_jacobian:
             if time_index <=1000:
@@ -98,7 +98,7 @@ def test_singleleg():
                         _vel[i] = _statemachine[i].target_vel.T[0].tolist()
 
                         _statemachine[i].phase += 1/(1000*T)
-                    swingleg_msg.data = _pos[0] +[0.,0.,0.]*3+_vel[0]+[0.,0.,0.]*3
+                    # swingleg_msg.data = _pos[0] +[0.,0.,0.]*3+_vel[0]+[0.,0.,0.]*3
                     swingleg_msg.data = _pos[0] + _pos[1]+ _pos[2]+ _pos[3]+ _vel[0]+ _vel[1]+ _vel[2]+ _vel[3]
 
                     print(_statemachine[0].phase,_pos,_vel)

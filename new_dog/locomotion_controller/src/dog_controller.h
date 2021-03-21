@@ -22,6 +22,7 @@ public:
   int is_moving = 0;
   int set_schedule = 0;
   int state_estimation_mode;
+  std::vector<int> contact_state = {1,1,1,1};
 
   state_machine _statemachine;
   qp_solver _qp_solver;
@@ -46,6 +47,17 @@ public:
   std::vector<Eigen::Matrix<float,3,4>> targetstates;
   Eigen::Vector3f target_force,target_torque;
 
+  Eigen::Matrix3f stand_force_p = Eigen::Matrix3f::Zero();
+  Eigen::Matrix3f stand_force_D = Eigen::Matrix3f::Zero();
+  Eigen::Matrix3f stand_troque_p = Eigen::Matrix3f::Zero();
+  Eigen::Matrix3f stand_troque_D = Eigen::Matrix3f::Zero();
+
+  Eigen::Matrix3f trot_force_p = Eigen::Matrix3f::Zero();
+  Eigen::Matrix3f trot_force_D = Eigen::Matrix3f::Zero();
+  Eigen::Matrix3f trot_troque_p = Eigen::Matrix3f::Zero();
+  Eigen::Matrix3f trot_troque_D = Eigen::Matrix3f::Zero();
+
+
   ros::Time ros_time,last_rostime;
   double loop_time;
   int last_gait = 0;
@@ -54,7 +66,7 @@ public:
   void get_TFmat();
   void getTargetstate(float t,int n, Eigen::Matrix<float,3,4> last_targetstate = Eigen::Matrix<float,3,4>::Zero());
   void getTarget_Force();
-  void statemachine_update();
+  int statemachine_update();
   void Force_calculation();
   void swingleg_calculation();
 

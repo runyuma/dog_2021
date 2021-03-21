@@ -111,7 +111,7 @@ void state_machine::gait_swingLeg(float _phase, float Tf, Eigen::Vector3f &ini_p
     target_acc(2) = height * (6 - 6*(2*_phase))/float(pow(Tf/2,2));
   }
   else {
-    target_pos(2) = ini_pos(2) + height - height * (3 * float(pow(2*_phase -1,2)) - 2*float(pow(2*_phase -1,3)));
+    target_pos(2) = ini_pos(2) + height - height * (3 * float(pow(2*_phase -1,2)) - 2*float(pow(2*_phase -1,3))) - 0.03;
     target_vel(2) = - height * (6 * (2*_phase -1) - 6*float(pow(2*_phase - 1,2)))/(Tf/2);
     target_acc(2) = - height * (6 - 6*(2*_phase -1 ))/float(pow(Tf/2,2));
   }

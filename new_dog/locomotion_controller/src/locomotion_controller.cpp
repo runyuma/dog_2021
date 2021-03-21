@@ -18,6 +18,43 @@ void locomotion_controller::init()
   std::vector<int> leg_init(4,1);
   pnh->setParam("leg_enable",leg_init);
 
+  std::vector<float> stand_force_p,stand_force_D,stand_troque_p,stand_troque_D,trot_force_p,trot_force_D,trot_troque_p,trot_troque_D;
+  pnh->getParam("stand_force_p",stand_force_p);
+  pnh->getParam("stand_force_D",stand_force_D);
+  pnh->getParam("stand_troque_p",stand_troque_p);
+  pnh->getParam("stand_troque_D",stand_troque_D);
+
+  pnh->getParam("trot_force_p",trot_force_p);
+  pnh->getParam("trot_force_D",trot_force_D);
+  pnh->getParam("trot_troque_p",trot_troque_p);
+  pnh->getParam("trot_troque_D",trot_troque_D);
+
+  _Dog->stand_force_p(0,0) = stand_force_p[0];
+  _Dog->stand_force_p(1,1) = stand_force_p[1];
+  _Dog->stand_force_p(2,2) = stand_force_p[2];
+  _Dog->stand_force_D(0,0) = stand_force_D[0];
+  _Dog->stand_force_D(1,1) = stand_force_D[1];
+  _Dog->stand_force_D(2,2) = stand_force_D[2];
+  _Dog->stand_troque_p(0,0) = stand_troque_p[0];
+  _Dog->stand_troque_p(1,1) = stand_troque_p[1];
+  _Dog->stand_troque_p(2,2) = stand_troque_p[2];
+  _Dog->stand_troque_D(0,0) = stand_troque_D[0];
+  _Dog->stand_troque_D(1,1) = stand_troque_D[1];
+  _Dog->stand_troque_D(2,2) = stand_troque_D[2];
+
+  _Dog->trot_force_p(0,0) = trot_force_p[0];
+  _Dog->trot_force_p(1,1) = trot_force_p[1];
+  _Dog->trot_force_p(2,2) = trot_force_p[2];
+  _Dog->trot_force_D(0,0) = trot_force_D[0];
+  _Dog->trot_force_D(1,1) = trot_force_D[1];
+  _Dog->trot_force_D(2,2) = trot_force_D[2];
+  _Dog->trot_troque_p(0,0) = trot_troque_p[0];
+  _Dog->trot_troque_p(1,1) = trot_troque_p[1];
+  _Dog->trot_troque_p(2,2) = trot_troque_p[2];
+  _Dog->trot_troque_D(0,0) = trot_troque_D[0];
+  _Dog->trot_troque_D(1,1) = trot_troque_D[1];
+  _Dog->trot_troque_D(2,2) = trot_troque_D[2];
+
 }
 locomotion_controller::~locomotion_controller(){}
 
@@ -188,13 +225,14 @@ void locomotion_controller::moving_func()
   float _vel,_omega;
   pnh->getParam("command_vel",_vel);
   pnh->getParam("command_omega",_omega);
+  pnh->getParam("contact_state",_Dog->contact_state);
   _Dog->command_vel<<0,_vel,0;
   _Dog->command_omega<<0,0,_omega;
 
   pnh->getParam("current_gait",_Dog->gait_num);
-  _Dog->statemachine_update();
+  int changed = _Dog->statemachine_update();
   _Dog->get_TFmat();
-  if(time_index%8 == 0){
+  if(time_index%8 == 0 or changed){
     _Dog->Force_calculation();
     force_publish();
   }
