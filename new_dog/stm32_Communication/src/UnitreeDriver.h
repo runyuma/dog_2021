@@ -37,7 +37,7 @@ class UnitreeDriver
         UnitreeDriver(const std::string PortName = "Null");
         ~UnitreeDriver();
         void SendControlDataToSTM32(void);
-        void UpdateMotorData(void);
+        bool UpdateMotorData(void);
         void SetKPKD(uint8_t MotorID, float KP, float KD);
         UnitreeMotorData_t MotorData[6];            // 0 1 2 对应 左0 1 2；3 4 5对应右0 1 2；
     private:

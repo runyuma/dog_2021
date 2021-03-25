@@ -43,6 +43,8 @@ void DownStreamCallback(const std_msgs::Float32MultiArray::ConstPtr& DownStreamM
 void Map_PublishMotorData(ros::Publisher& Pub);
 void DebugTest();
 void NodeUserInit();
+void FrontLowerTimercallback(const ros::TimerEvent&);
+void BackLowerTimercallback(const ros::TimerEvent&);
 
 /** @brief 获取当前时间 */
 static double getCurrentTime(){
@@ -54,6 +56,8 @@ static double getCurrentTime(){
 int main(int argc, char **argv){
     ros::init(argc, argv, "STM32_Node");    // 创建Node
     ros::NodeHandle nh;                     // 和topic service param等交互的公共接口，是操作节点的凭据
+    ros::Timer FrontLowerTimer = nh.createTimer(ros::Duration(0.1), FrontLowerTimercallback);
+    ros::Timer BackLowerTimer = nh.createTimer(ros::Duration(0.1), BackLowerTimercallback);
 
     ros::Publisher UpStreamPub = nh.advertise<std_msgs::Float32MultiArray>("/upstream", UPQUEUESIZE);   // 发布12个电机的数据
     ros::Subscriber DownStreamSub = nh.subscribe("/downstream", DOWNQUEUESIZE, DownStreamCallback);     // 订阅
@@ -61,25 +65,22 @@ int main(int argc, char **argv){
     pMotorDriver[BACKINDEX] = new UnitreeDriver("/dev/ttyUSB1");
     NodeUserInit(); // 参数初始化
     ros::Rate loop_rate(SENDRATE);
+    FrontLowerTimer.start();
+    BackLowerTimer.start();
     while(ros::ok()){
-        pMotorDriver[FRONTINDEX]->UpdateMotorData();            // 刷新电机当前数据
-        // 显示下位机上发的数据
-        static int UpdateCount = 0;
-        if(++UpdateCount == 200){
-            UpdateCount = 0;
-            std::cout << "MotorData:";
-            for(int i = 0;i < 6;i ++){
-                std::cout << pMotorDriver[FRONTINDEX]->MotorData[i].CurPos << " ";
-            }
-            std::cout << std::endl;
+        if(pMotorDriver[FRONTINDEX]->UpdateMotorData()){
+            FrontLowerTimer.stop();
+            FrontLowerTimer.start();
         }
-        // 显示下位机上发的数据
-        pMotorDriver[BACKINDEX]->UpdateMotorData();
+        if(pMotorDriver[BACKINDEX]->UpdateMotorData()){
+            BackLowerTimer.stop();
+            BackLowerTimer.start();
+        }
         Map_PublishMotorData(UpStreamPub);                      // 发布电机当前数据
         ros::spinOnce();                                        // 刷新控制数据(调用本函数之后，会直接调用CallBack函数，所以应该是不用担心数据还没来得及刷新的问题的)
-        DebugTest();
+        // DebugTest();
         pMotorDriver[FRONTINDEX]->SendControlDataToSTM32();     // 下发新的数据到STM32
-        // pMotorDriver[BACKINDEX]->SendControlDataToSTM32();      //
+        pMotorDriver[BACKINDEX]->SendControlDataToSTM32();      // 
         loop_rate.sleep();
     }
 }
@@ -161,7 +162,6 @@ void Map_PublishMotorData(ros::Publisher& Pub){
         MotorDataArray.data[Count] = (pMotorDriver[Index]->MotorData[MotorIndex].CurPos - LogicZeroPosArray[Index][MotorIndex]) / MotorRatioArray[Index][MotorIndex];
         MotorDataArray.data[12 + Count] = pMotorDriver[Index]->MotorData[MotorIndex].CurVel / MotorRatioArray[Index][MotorIndex];
     }
-    // std::cout << MotorDataArray.data[0] << " " << MotorDataArray.data[1] << " " << MotorDataArray.data[2] << std::endl;
     Pub.publish(MotorDataArray);  // 发布
 }
 
@@ -169,3 +169,29 @@ void Map_PublishMotorData(ros::Publisher& Pub){
 void DebugTest(void){
     
 }
+
+/** @brief 前下位机看门狗回调函数 */
+void FrontLowerTimercallback(const ros::TimerEvent&){
+    ROS_ERROR_STREAM("Front Lower Disconnected!");
+    // 后续操作
+}
+
+/** @brief 后下位机看门狗回调函数 */
+void BackLowerTimercallback(const ros::TimerEvent&){
+    ROS_ERROR_STREAM("Back Lower Disconnected!");
+    // 后续操作
+}
+
+#if 0
+    // 显示下位机上发的数据
+    static int UpdateCount = 0;
+    if(++UpdateCount == 200){
+        UpdateCount = 0;
+        std::cout << "MotorData:";
+        for(int i = 0;i < 6;i ++){
+            std::cout << pMotorDriver[FRONTINDEX]->MotorData[i].CurPos << " ";
+        }
+        std::cout << std::endl;
+    }
+#endif
+

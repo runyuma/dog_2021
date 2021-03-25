@@ -35,11 +35,10 @@ UnitreeDriver::UnitreeDriver(const std::string PortName)
     }
     else{
         try{
-//            std::string Command = "sudo chmod 777 " + PortName;
-//            std::string Password = "456456456rr";
-//            std::string serial_commmand = "echo " + Password + "|sudo - S " + Command;
-//            system(serial_commmand.data());
-
+            std::string sudoPassword = "456456456rr";
+            std::string SerialCommand = "sudo chmod 777 " + PortName;
+            std::string FinalCommand = "echo " + sudoPassword + "|sudo -S " + SerialCommand;
+            system(FinalCommand.data());
             prvSerial.setPort(PortName);
             prvSerial.setBaudrate(DriverBaudRate);
             serial::Timeout to = serial::Timeout::simpleTimeout(1000);
@@ -89,8 +88,8 @@ void UnitreeDriver::SendControlDataToSTM32(){
     }
 }
 
-/** @brief 刷新电机数据 **/
-void UnitreeDriver::UpdateMotorData(){
+/** @brief 刷新电机数据，如果有数据则返回1，没有数据则返回0 **/
+bool UnitreeDriver::UpdateMotorData(){
     if(prvSerial.available()){  // 如果缓冲区有数据
         std::string NewData = prvSerial.read(prvSerial.available());
         RxBuffer.append(NewData);
@@ -108,9 +107,10 @@ void UnitreeDriver::UpdateMotorData(){
                 break;
             }
         }
+        return true;
     }
-    else{
-
+    else{   // 如果缓冲区没有数据，说明可能是跟下位机失联了
+        return false;
     }
 }
 
