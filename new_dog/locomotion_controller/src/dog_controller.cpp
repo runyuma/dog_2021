@@ -4,12 +4,36 @@
 #define SIGN(x) (x>0 ? 1 : -1)
 #define MIN(a,b) (a>b ? b : a)
 #define PI 3.14159f
-#define USE_RAIBERT_HEURISTIC 0
+
 
 std::map<int,std::string> gait_map= {
   { 0,"STANDING" },
   { 1,"TROTING_RUNING",}};
+void dog_controller::dog_reset()
+{
+  USE_RAIBERT_HEURISTIC = 0;
+  is_moving = 0;
+  set_schedule = 0;
+  contact_state = {1,1,1,1};
+  command_vel = Eigen::Vector3f::Zero();
+  command_omega = Eigen::Vector3f::Zero();
+  walking_height = 0.32;
+  target_swingpos = Eigen::Matrix<float,3,4>::Zero();
+  target_swingvel = Eigen::Matrix<float,3,4>::Zero();
+  init_SWINGfootpoint = Eigen::Matrix<float,3,4>::Zero();
+  TF_mat = Eigen::Matrix<float,3,3>::Identity();
+  force_list = Eigen::Matrix<float,3,4>::Zero();
+  last_gait = 0;
+  gait_num = 0;
 
+  int osqp_unsolved_error = 0;
+  int fallen_error = 0;
+  //error reset
+
+  _statemachine._gait=gait_schedular(gait_map[0]);
+  _statemachine.phase = {1,1,1,1};
+  //statemachine&phase reset
+}
 
 
 dog_controller::dog_controller()
@@ -196,6 +220,13 @@ void dog_controller::getTarget_Force()
     Force_KD = trot_force_D;
     Torque_KP = trot_troque_p;
     Torque_KD = trot_troque_D;
+    if( USE_RAIBERT_HEURISTIC)
+    {
+          Force_KP<<50,0,0,0,50,0,0,0,600;
+          Force_KD<<250,0,0,0,100,0,0,0,120;
+          Torque_KP<<400,0,0,0,600,0,0,0,500;
+          Torque_KD<<50,0,0,0,50,0,0,0,50;
+    }
   }
   else if (_statemachine._gait.name == "SLOW_WALKING") {
     Force_KP<<500,0,0,0,800,0,0,0,800;
@@ -203,9 +234,33 @@ void dog_controller::getTarget_Force()
     Torque_KP<<400,0,0,0,600,0,0,0,600;
     Torque_KD<<50,0,0,0,65,0,0,0,50;
   }
-
+  int USE_BODYHEIGHT = 1;
+  Eigen::Matrix3f _Force_KP = Force_KP;
+  if(USE_BODYHEIGHT)
+  {
+    _Force_KP(2,2) = 0;
+    float foot_height;
+    int num = 0;
+    for (int i = 0;i<4;i++) {
+      if (schedualgroundLeg[i] == 1)
+      {
+        foot_height += footpoint(2,i);
+        num += 1;
+      }
+    }
+    foot_height = - foot_height/num;
+//    std::cout<<foot_height<<std::endl;
+    float z_force = Force_KP(2,2)*(walking_height - foot_height);
+    cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl;
+    target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
+    target_force(2,0) = target_force(2,0) + z_force;
+  }
+  else {
+    target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
+  }
   target_force = Force_KP * (target_pos - body_pos) + Force_KD * (target_vel - body_vel) - body_mass * g;
   target_force = TF_mat.inverse() * target_force;
+  ;
   if(ABS(rpy(2))>= PI/2 and ABS(target_rpy(2))>= PI and rpy(2) * target_rpy(2) < 0)
   {
     target_rpy(2) += SIGN(target_rpy(2)) * 2 * PI ;//TODO:somthing wrong
@@ -215,7 +270,6 @@ void dog_controller::getTarget_Force()
     if(ABS(target_force(i))>= Force_limit(i)){target_force(i) = SIGN(target_force(i)) * Force_limit(i);}
     if(ABS(target_torque(i))>= Torque_limit(i)){target_torque(i) = SIGN(target_torque(i)) * Torque_limit(i);}
   }
-
 
 
 }
@@ -266,7 +320,6 @@ int dog_controller::statemachine_update()
   if(_statemachine._gait.Gait_currentTime >= _gait_time)
   {
     int _permit = 1;
-
 //    for(int i = 0;i<4;i++) {
 //      if(_statemachine._gait.Gait_phase[next_index][i] == 1 and _statemachine._gait.Gait_phase[_gait_index][i] != 1){_permit = 0;}
 //    }
@@ -276,7 +329,28 @@ int dog_controller::statemachine_update()
       _statemachine._gait.Gait_index = _statemachine._gait.get_nextindex();
       _statemachine.phase = _statemachine._gait.Gait_phase[_statemachine._gait.Gait_index];
       _statemachine._gait.Gait_currentTime = 0;
-      last_targetstate = targetstates[state_index];
+      if(_statemachine._gait.name == "STANDING")
+      {
+        last_targetstate = targetstates[state_index];
+//        last_targetstate(0,2) = rpy(2);
+//        last_targetstate.block(0,1,3,1) = body_pos;
+//        last_targetstate(2,2) = omega(2);
+//        last_targetstate.block(0,3,3,1) = body_vel;
+
+      }
+      else if(_statemachine._gait.name == "TROTING_WALKING" or _statemachine._gait.name == "TROTING_RUNING"){
+        if(not USE_RAIBERT_HEURISTIC)
+        {
+          last_targetstate = targetstates[state_index];
+        }
+        else {
+          last_targetstate.block(0,0,3,1) = rpy;
+          last_targetstate.block(0,1,3,1) = body_pos;
+          last_targetstate.block(0,2,3,1) = omega;
+          last_targetstate.block(0,3,3,1) = body_vel;
+        }
+      }
+
       if(gait_num != last_gait)
       {
         _statemachine._gait=gait_schedular(gait_map[gait_num]);
@@ -298,7 +372,14 @@ void dog_controller::Force_calculation()
   Eigen::VectorXf ForceTorque = Eigen::VectorXf::Zero(6);
   ForceTorque.block(0,0,3,1) = target_force;
   ForceTorque.block(3,0,3,1) = target_torque;
-  _qp_solver.solveQP(footpoint,schedualgroundLeg,ForceTorque);
+
+  try {
+    int a=_qp_solver.solveQP(footpoint,schedualgroundLeg,ForceTorque);
+    if(a == 1){throw 1;}
+  } catch (int) {
+    osqp_unsolved_error = 1;
+  }
+
   force_list = _qp_solver.foot_force;
   for (int i = 0;i<4;i++) {
     if(_statemachine.phase[i]>= 0.95 and _statemachine._gait.Gait_phase[_statemachine._gait.Gait_index][i] != 1)
@@ -337,11 +418,17 @@ void dog_controller::swingleg_calculation()
      }
      Eigen::Vector3f init_pos = init_SWINGfootpoint.block(0,i,3,1);
      _statemachine.gait_swingLeg(_statemachine.phase[i],swing_time,init_pos,final_point);
-     _statemachine.target_pos(0) = final_point(0);// magic change
+     if(use_sim)
+     {
+       _statemachine.target_pos(0) = final_point(0);// magic change
+     }
+
      target_swingpos.block(0,i,3,1) = _statemachine.target_pos;
      target_swingvel.block(0,i,3,1) = _statemachine.target_vel;
     }
   }
 }
+
+
 
 

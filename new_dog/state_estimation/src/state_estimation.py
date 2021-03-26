@@ -221,8 +221,7 @@ class state_estimation():
                                 if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
                                     self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
                                 elif self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
-                                    self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array(
-                                        [[0], [0], [0.0039]])
+                                    self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array([[0], [0], [0.0046]])
                             self.last_schedule_leg = self.schedule_leg
                             cal_array = np.array(copy.copy(self.last_schedule_leg))
 

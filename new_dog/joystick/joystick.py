@@ -4,6 +4,9 @@ import rospy
 import pygame
 import time
 from sensor_msgs.msg import Joy
+import sys
+import tty
+import termios
 JOYSTICK_NAME ="Microsoft X-Box 360 pad"
 GAIT_NUM = 1
 
@@ -49,11 +52,13 @@ class JoyStick():
             self.joystick = pygame.joystick.Joystick(0)
             self.joystick.init()
         self.gait_num = 0
-
+        self.joystick_connected = 1
         self.angular_velocity = 0
         self.velocity = 0
         if USE_ROSJOYSTICK:
             self.Joysubscriber = rospy.Subscriber("/joy",Joy,self.joycallback)
+        self.vel_factor = 0.2
+        self.angular_factor = 0.2
 
 
     def main(self):
@@ -70,6 +75,27 @@ class JoyStick():
                         if self.gait_num > GAIT_NUM:
                             self.gait_num = 0
                         time.sleep(0.3)
+            if not self.joystick_connected:
+                key = readkey()
+                if key == 'i':
+                    self.velocity =  - self.vel_factor
+                if key == 'k':
+                    self.velocity = 0
+                    self.angular_velocity = 0
+                if key == ',':
+                    self.velocity = self.vel_factor
+                if key == 'j':
+                    self.angular_velocity = self.angular_factor
+                if key == 'l':
+                    self.angular_velocity = - self.angular_factor
+                if key == '1':
+                    self.gait_num = 1
+                if key == '0':
+                    self.gait_num = 0
+
+                print(self.velocity)
+                print(self.angular_velocity)
+                print(self.gait_num)
             rospy.set_param("current_gait",self.gait_num)
             rospy.set_param("command_vel",self.velocity)
             rospy.set_param("command_omega", self.angular_velocity)
@@ -84,18 +110,43 @@ class JoyStick():
                 # Limit to 20 frames per second
                 clock.tick(20)
             rospy.Rate(20).sleep()
+            print("running")
 
     def joycallback(self,msg):
-        self.velocity = - msg.axes[4] * 0.6
-        self.angular_velocity = msg.axes[0] * 0.4
-        gait_button = msg.buttons[0]
-        if gait_button == 1:
-            self.gait_num += 1
-            if self.gait_num > GAIT_NUM:
-                self.gait_num = 0
-            time.sleep(0.3)
+        if msg.header.frame_id == "/dev/input/js0":
+            self.joystick_connected = 0
+        if self.joystick_connected:
+            self.velocity = - msg.axes[4] * 0.6
+            self.angular_velocity = msg.axes[0] * 0.4
+            gait_button = msg.buttons[0]
+            if gait_button == 1:
+                self.gait_num += 1
+                if self.gait_num > GAIT_NUM:
+                    self.gait_num = 0
+                time.sleep(0.3)
+        else:
+            pass
 
+def readchar():
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
 
+def readkey(getchar_fn=None):
+    getchar = getchar_fn or readchar
+    c1 = getchar()
+    if ord(c1) != 0x1b:
+        return c1
+    c2 = getchar()
+    if ord(c2) != 0x5b:
+        return c1
+    c3 = getchar()
+    return chr(0x10 + ord(c3) - 65)
 
 dog_joystick = JoyStick()
 dog_joystick.main()

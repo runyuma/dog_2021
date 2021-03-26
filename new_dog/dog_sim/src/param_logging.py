@@ -20,11 +20,20 @@ dic = {'totoal_weight':16,
        "current_gait": 0,# 0 is standing 1 is trot_runing
        "command_vel":0,
        "command_omega":0,
-       "state_estimation_mode":1, # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
+       "state_estimation_mode":0, # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
 	"body_lenth":0.255,
 	"body_width":0.055,
        "use_sim":1,
+	"walking_height": 0.32,
        }
+dic["osqp_unsolve_error"] = 0
+dic["motor_outofrange_error"] = 0
+dic["fallen_error"] = 0
+
+dic["dog_action"] = "idle"
+
+dic["locomotion_runing"] = 1;
+dic["state_estimation_running"] = 1;
 if dic["state_estimation_mode"] == 0:
     dic["stand_force_p"] = [2500,800,800]
     dic["stand_force_D"] = [600,350,150]
@@ -34,15 +43,15 @@ if dic["state_estimation_mode"] == 0:
     dic["trot_force_D"] = [250,100,120]
     dic["trot_troque_p"] = [400,600,500]
     dic["trot_troque_D"] = [50,65,50]
-elif dic["state_estimation_mode"] == 0:
-    dic["stand_force_p"] = [2500,800,800]
-    dic["stand_force_D"] = [600,350,150]
+elif dic["state_estimation_mode"] == 1:
+    dic["stand_force_p"] = [2000,800,800]
+    dic["stand_force_D"] = [300,350,150]
     dic["stand_troque_p"] = [200,300,300]
     dic["stand_troque_D"] = [30,12,50]
     dic["trot_force_p"] = [400,450,600]
-    dic["trot_force_D"] = [250,100,120]
-    dic["trot_troque_p"] = [400,600,500]
-    dic["trot_troque_D"] = [50,65,50]
+    dic["trot_force_D"] = [250,100,160]
+    dic["trot_troque_p"] = [400,600,500]#400,600,500
+    dic["trot_troque_D"] = [50,65,50]#50
 # "swingleg_P":[200,150,150],
 #        "swingleg_D":[10,20,10],
 def params_init():

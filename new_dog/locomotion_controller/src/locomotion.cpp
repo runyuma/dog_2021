@@ -22,11 +22,25 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
     ros::spinOnce();
+    _locomotion_controller.pnh->setParam("locomotion_runing",1);
+    bool error_inited = 0;
+    int start_timeindex;
     if(_locomotion_controller.time_index == 0)
     {
       _locomotion_controller.moving_init();
     }
-    _locomotion_controller.moving_func();
-    loop_rate.sleep();
+    if(_locomotion_controller.error_handle())
+    {
+      _locomotion_controller.moving_func();
+    }
+    else {
+      if (not error_inited)
+      {
+        start_timeindex = _locomotion_controller.time_index;
+        error_inited = 1;
+      }
+      _locomotion_controller.shrink(start_timeindex);
+    }
+
   }
 }

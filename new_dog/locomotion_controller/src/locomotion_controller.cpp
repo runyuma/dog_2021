@@ -1,8 +1,11 @@
 #include "locomotion_controller.h"
+#define ABS(x) (x>0 ? x : -x)
 locomotion_controller::locomotion_controller(){}
 void locomotion_controller::init()
 {
   _Dog = new dog_controller();
+  hz100 = new ros::Rate(100);
+  hz1000 = new ros::Rate(1000);
   footpoint_subscriber = pnh->subscribe("/foot_points",10,&locomotion_controller::footpoint_callback,this);
   footvel_subscriber = pnh->subscribe("/foot_vel",10,&locomotion_controller::footvel_callback,this);
   state_estimation_subscriber = pnh->subscribe("/state",10,&locomotion_controller::state_estimation_callback,this);
@@ -14,6 +17,9 @@ void locomotion_controller::init()
   pnh->getParam("body_lenth",_Dog->body_lenth);
   pnh->getParam("body_width",_Dog->body_width);
   pnh->getParam("hip_lenth",_Dog->hip_lenth);
+  pnh->getParam("walking_height",_Dog->walking_height);
+
+  pnh->getParam("use_sim",_Dog->use_sim);
 
   std::vector<int> leg_init(4,1);
   pnh->setParam("leg_enable",leg_init);
@@ -91,6 +97,10 @@ void locomotion_controller::state_estimation_callback(const  std_msgs::Float32Mu
   if(_Dog->is_moving)
   {
     _Dog->rpy<<msg->data[0],msg->data[1],msg->data[2];
+    if(ABS(_Dog->rpy(1))>=0.2)
+    {
+      pnh ->setParam("fallen_error",1);
+    }
     _Dog->body_pos<<msg->data[3],msg->data[4],msg->data[5];
     _Dog->omega<<msg->data[6],msg->data[7],msg->data[8];
     _Dog->body_vel<<msg->data[9],msg->data[10],msg->data[11];
@@ -125,6 +135,18 @@ void locomotion_controller::set_schedulegroundleg()
     }
     pnh->setParam("schedule_groundleg", _scheduleleg);
     _Dog->set_schedule = 0;
+  }
+}
+
+void locomotion_controller::set_error()
+{
+  if(_Dog->osqp_unsolved_error)
+  {
+    pnh->setParam("osqp_unsolve_error", 1);
+  }
+  if(_Dog->fallen_error)
+  {
+    pnh->setParam("fallen_error", 1);
   }
 }
 
@@ -175,10 +197,11 @@ void locomotion_controller::swing_publoish()
   }
   swingleg_publisher.publish(swingleg_msg);
 }
+
 //***************************************************************************************/visualize/***************************************************************************************//
 void locomotion_controller::visual()
 {
-  if(time_index%50 == 0)
+  if(time_index%100 == 0)
   {
     std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
     std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
@@ -238,13 +261,85 @@ void locomotion_controller::moving_func()
   }
   _Dog->swingleg_calculation();
 
+  std::string str_moving= "moving";
+  pnh->setParam("dog_action",str_moving);
   swing_publoish();
   set_schedulegroundleg();
+  set_error();
   status_publish();
   time_index += 1;
   visual();
-
+  hz1000->sleep();
 }
 
+bool locomotion_controller::shrink(int start_index)
+{
+  std::vector<float> joint_pos_target = {0,1.2,-2.4};
+  Eigen::Matrix<float,3,4> target_footpoint;
+  target_footpoint<< 0,0,0,0,
+                    0,0,0,0,
+                    -0.1,-0.1,-0.1,-0.1;
+  if(time_index - start_index <= 100 )
+  {
+    std_msgs::Int32MultiArray status_msg;
+    status_msg.data = {1,1,1,1};
+    leg_status_publisher.publish(status_msg);
+    std_msgs::Float32MultiArray swingleg_msg;
+    swingleg_msg.data = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
+    for (int i = 0;i<4;i++) {
+
+      swingleg_msg.data[3*i] = target_footpoint(0,i);
+      swingleg_msg.data[3*i + 1] = target_footpoint(1,i);
+      swingleg_msg.data[3*i + 2] = target_footpoint(2,i);
+
+
+      swingleg_msg.data[3*i + 12] = 0;
+      swingleg_msg.data[3*i + 13] = 0;
+      swingleg_msg.data[3*i + 14] = 0;
+      }
+    swingleg_publisher.publish(swingleg_msg);
+    time_index += 1;
+    hz100->sleep();
+    return 0;
+   }
+  else if(time_index - start_index < 200) {
+    std_msgs::Int32MultiArray status_msg;
+    status_msg.data = {5,5,5,5};
+    leg_status_publisher.publish(status_msg);
+    std_msgs::Float32MultiArray groundforce_msg;
+    groundforce_msg.data = {0,0,0,0,0,0,0,0,0,0,0,0,};
+    force_publisher.publish(groundforce_msg);
+    for (int i = 0;i<4;i++) {
+      groundforce_msg.data[3*i] = joint_pos_target[0];
+      groundforce_msg.data[3*i+1] = joint_pos_target[1];
+      groundforce_msg.data[3*i+2] = joint_pos_target[2];
+    }
+    time_index += 1;
+    hz100->sleep();
+    return 0;
+  }
+  else if(time_index - start_index == 200)
+  {
+    time_index += 1;
+    hz100->sleep();
+    return 1;
+  }
+}
+
+bool locomotion_controller::error_handle()
+{
+  int osqp_error=0;
+  int fallen_error = 0;
+  pnh->getParam("osqp_unsolve_error",osqp_error);
+  pnh->getParam("fallen_error",fallen_error);
+  if(osqp_error or fallen_error)
+  {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+  //TODO different ways
+}
 
 

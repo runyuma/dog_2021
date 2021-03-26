@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   message_generation
   roslaunch
-
+  Eigen3
 
 )
 find_package(osqp REQUIRED)

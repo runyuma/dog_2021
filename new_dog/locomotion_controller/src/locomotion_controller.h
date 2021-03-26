@@ -10,6 +10,8 @@ using namespace std;
 class locomotion_controller
 {
 private:
+  ros::Rate *hz100;
+  ros::Rate *hz1000;
 public:
   ros::NodeHandle *pnh;
   ros::Subscriber footpoint_subscriber;
@@ -29,7 +31,6 @@ public:
 
 
   int time_index = 0;
-
   dog_controller *_Dog;
 
   locomotion_controller();
@@ -41,9 +42,12 @@ public:
 
   void status_publish();
   void set_schedulegroundleg();
+  void set_error();
   void force_publish();
   void swing_publoish();
 
+  bool error_handle();
+  bool shrink(int start_index);
   void moving_init();
   void moving_func();
 

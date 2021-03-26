@@ -23,6 +23,8 @@ public:
   int set_schedule = 0;
   int state_estimation_mode;
   std::vector<int> contact_state = {1,1,1,1};
+  int USE_RAIBERT_HEURISTIC;
+  int use_sim = 0;
 
   state_machine _statemachine;
   qp_solver _qp_solver;
@@ -33,6 +35,7 @@ public:
   Eigen::Vector3f body_vel = Eigen::Vector3f::Zero();
   Eigen::Vector3f command_vel = Eigen::Vector3f::Zero();
   Eigen::Vector3f command_omega = Eigen::Vector3f::Zero();
+  float walking_height = 0.32;
 
   Eigen::Matrix<float,3,4> footpoint = Eigen::Matrix<float,3,4>::Zero();
   Eigen::Matrix<float,3,4> footvel = Eigen::Matrix<float,3,4>::Zero();
@@ -57,6 +60,8 @@ public:
   Eigen::Matrix3f trot_troque_p = Eigen::Matrix3f::Zero();
   Eigen::Matrix3f trot_troque_D = Eigen::Matrix3f::Zero();
 
+  int osqp_unsolved_error = 0;
+  int fallen_error = 0;/*TODO:// set error */
 
   ros::Time ros_time,last_rostime;
   double loop_time;
@@ -69,6 +74,7 @@ public:
   int statemachine_update();
   void Force_calculation();
   void swingleg_calculation();
+  void dog_reset();
 
 };
 
