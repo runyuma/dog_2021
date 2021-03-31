@@ -1,5 +1,7 @@
 #include "locomotion_controller.h"
 #define ABS(x) (x>0 ? x : -x)
+
+
 locomotion_controller::locomotion_controller(){}
 void locomotion_controller::init()
 {
@@ -203,25 +205,25 @@ void locomotion_controller::visual()
 {
   if(time_index%100 == 0)
   {
-    std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
-    std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
-    std::cout<<"rpy: "<<_Dog->rpy<<std::endl;
+//    std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
+//    std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
+//    std::cout<<"rpy: "<<_Dog->rpy<<std::endl;
     std::cout<<"xyz: "<<_Dog->body_pos<<std::endl;
-    std::cout<<"omega: "<<_Dog->omega<<std::endl;
-    std::cout<<"vel: "<<_Dog->body_vel<<std::endl;
-    std::cout<<"schedualgroundLeg: "<<std::endl;
-    for (int i = 0;i<4;i++) {std::cout<<_Dog->schedualgroundLeg[i]<<" ";}
-    std::cout<<std::endl;
-    std::cout<<"phase: "<<std::endl;
-    for (int i = 0;i<4;i++) {std::cout<<_Dog->_statemachine.phase[i]<<" ";}
-    std::cout<<std::endl;
-    std::cout<<"target_state: "<<_Dog->target_state<<std::endl;
-    std::cout<<"gait_time: "<<_Dog->_statemachine._gait.Gait_currentTime<<std::endl;
-    std::cout<<"loop_time: "<<_Dog->loop_time<<std::endl;
-    std::cout<<"target_force/Torque: "<<_Dog->target_force<<_Dog->target_torque<<std::endl;
+//    std::cout<<"omega: "<<_Dog->omega<<std::endl;
+//    std::cout<<"vel: "<<_Dog->body_vel<<std::endl;
+//    std::cout<<"schedualgroundLeg: "<<std::endl;
+//    for (int i = 0;i<4;i++) {std::cout<<_Dog->schedualgroundLeg[i]<<" ";}
+//    std::cout<<std::endl;
+//    std::cout<<"phase: "<<std::endl;
+//    for (int i = 0;i<4;i++) {std::cout<<_Dog->_statemachine.phase[i]<<" ";}
+//    std::cout<<std::endl;
+//    std::cout<<"target_state: "<<_Dog->target_state<<std::endl;
+//    std::cout<<"gait_time: "<<_Dog->_statemachine._gait.Gait_currentTime<<std::endl;
+//    std::cout<<"loop_time: "<<_Dog->loop_time<<std::endl;
+    std::cout<<"target_force/Torque: "<<_Dog->target_force<<std::endl<<_Dog->target_torque<<std::endl;
     std::cout<<"force_list: "<<_Dog->force_list<<std::endl;
-    std::cout<<"swing_pos: "<<_Dog->target_swingpos<<std::endl;
-    std::cout<<"swing_vel: "<<_Dog->target_swingvel<<std::endl;
+//    std::cout<<"swing_pos: "<<_Dog->target_swingpos<<std::endl;
+//    std::cout<<"swing_vel: "<<_Dog->target_swingvel<<std::endl;
   }
 }
 
@@ -341,5 +343,16 @@ bool locomotion_controller::error_handle()
   }
   //TODO different ways
 }
-
-
+//***************************************************************************************//***************************************************************************************//
+void locomotion_controller::cout_matrix(std::string strings, Eigen::MatrixXf matrix)
+{
+  std::cout<<strings<<": "<<std::endl;
+  int rows = matrix.rows();
+  int cols = matrix.cols();
+  for (int row = 0;row < rows;row ++) {
+    for (int col = 0;col < cols;col++) {
+      std::cout<<matrix(col,row)<<" ";
+    }
+    std::cout<<std::endl;
+  }
+}

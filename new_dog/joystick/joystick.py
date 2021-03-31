@@ -52,7 +52,11 @@ class JoyStick():
             self.joystick = pygame.joystick.Joystick(0)
             self.joystick.init()
         self.gait_num = 0
-        self.joystick_connected = 1
+        dev = rospy.get_param("/joy_node/dev_name")
+        if dev == "key_board":
+            self.joystick_connected = 0
+        else:
+            self.joystick_connected = 1
         self.angular_velocity = 0
         self.velocity = 0
         if USE_ROSJOYSTICK:
@@ -110,11 +114,8 @@ class JoyStick():
                 # Limit to 20 frames per second
                 clock.tick(20)
             rospy.Rate(20).sleep()
-            print("running")
 
     def joycallback(self,msg):
-        if msg.header.frame_id == "/dev/input/js0":
-            self.joystick_connected = 0
         if self.joystick_connected:
             self.velocity = - msg.axes[4] * 0.6
             self.angular_velocity = msg.axes[0] * 0.4

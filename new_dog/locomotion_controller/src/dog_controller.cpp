@@ -65,7 +65,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
   {
     if(DEFAULT_HEIGHT - body_pos(2)>= 0.05)
     {
-      for (int i;i<n;i++) {
+      for (int i=0;i<n;i++) {
         Eigen::Matrix<float,3,4> _state;
         Eigen::Vector3f target_rpy =  Eigen::Vector3f::Zero();
         target_rpy(2) = rpy(2);
@@ -89,7 +89,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
       targetstates = states;
     }
     else {
-      for (int i;i<n;i++)
+      for (int i=0;i<n;i++)
       {
         Eigen::Matrix<float,3,4> _state;
         Eigen::Vector3f target_rpy =  Eigen::Vector3f::Zero();
@@ -137,7 +137,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
     if(ABS(vel_diff)>0.3)
     {
       float ay = SIGN(vel_diff) * MIN(ABS(vel_diff)/(n*t),0.8);
-      for (int i;i<n;i++)
+      for (int i=0;i<n;i++)
       {
         Eigen::Matrix<float,3,4> _state;
         Eigen::Vector3f target_rpy =  last_targetstate.block(0,0,3,1) + t * i * command_omega;
@@ -164,7 +164,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
       targetstates = states;
     }
     else{
-      for (int i;i<n;i++)
+      for (int i=0;i<n;i++)
       {
         Eigen::Matrix<float,3,4> _state;
         float dy =  t * i * command_vel(1);
@@ -236,9 +236,11 @@ void dog_controller::getTarget_Force()
   }
   int USE_BODYHEIGHT = 1;
   Eigen::Matrix3f _Force_KP = Force_KP;
+  Eigen::Matrix3f _Force_KD = Force_KD;
   if(USE_BODYHEIGHT)
   {
     _Force_KP(2,2) = 0;
+    _Force_KD(2,2) =  _Force_KD(2,2);
     float foot_height;
     int num = 0;
     for (int i = 0;i<4;i++) {
@@ -251,9 +253,10 @@ void dog_controller::getTarget_Force()
     foot_height = - foot_height/num;
 //    std::cout<<foot_height<<std::endl;
     float z_force = Force_KP(2,2)*(walking_height - foot_height);
-    cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl;
-    target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
+
+    target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + _Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
     target_force(2,0) = target_force(2,0) + z_force;
+    cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
   }
   else {
     target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
@@ -420,7 +423,8 @@ void dog_controller::swingleg_calculation()
      _statemachine.gait_swingLeg(_statemachine.phase[i],swing_time,init_pos,final_point);
      if(use_sim)
      {
-       _statemachine.target_pos(0) = final_point(0);// magic change
+       _statemachine.target_pos(0) = final_point(0);
+       _statemachine.target_pos(1) = final_point(1);// magic change
      }
 
      target_swingpos.block(0,i,3,1) = _statemachine.target_pos;

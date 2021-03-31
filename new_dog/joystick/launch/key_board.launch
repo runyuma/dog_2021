@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+  <param name="/joy_node/dev_name" value="key_board" />
+  <node name="joystick" pkg="joy_stick" type="joystick.py" />
+</launch>
+
+

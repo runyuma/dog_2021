@@ -8,7 +8,7 @@ import time
 from std_msgs.msg import Float32MultiArray, Float32, Int32MultiArray
 TEST = 1
 USE_SIM = 1
-USE_TOUCHSENSOR = 1
+
 if TEST:
     import pandas as pd
 if USE_SIM:
@@ -40,7 +40,7 @@ class state_estimation():
         self.foot_vel_received = 0
         self.got_imu = 0
         self.current_gait = rospy.get_param("current_gait")
-        rospy.set_param("USE_TOUCHSENSOR",USE_TOUCHSENSOR)
+        self.USE_TOUCHSENSOR = rospy.get_param("USE_TOUCHSENSOR")
         self.time_index = 0
         if TEST:
             self.df_colomn = ["time",
@@ -97,7 +97,7 @@ class state_estimation():
         while not rospy.is_shutdown():
             if self.state_estimation_mode == 0:
                 self.state_publish()
-                if USE_TOUCHSENSOR:
+                if self.USE_TOUCHSENSOR:
                     rospy.set_param("contact_state", self.contact_state)
                 if TEST:
                     if not self.initialed:
@@ -170,7 +170,7 @@ class state_estimation():
         self.schedule_leg = rospy.get_param("schedule_groundleg")
         C_mat = self.get_TFmat()
         self.footpoint_W = np.dot(C_mat, self.footpoint)
-        if USE_TOUCHSENSOR:
+        if self.USE_TOUCHSENSOR:
             rospy.set_param("contact_state", self.contact_state)
         # update contact point
         if self.state_estimation_mode == 1:
@@ -193,6 +193,8 @@ class state_estimation():
                 self.last_body_pos = copy.deepcopy(self.body_pos)
             elif plan4:
                 cal_array = np.array(copy.copy(self.last_schedule_leg))
+                if not self.USE_TOUCHSENSOR:
+                    self.contact_state = self.schedule_leg
                 if self.last_schedule_leg != self.schedule_leg:
                     if self.contact_state == [0, 0, 0, 0]:
                         self.body_vel += (self.looptime) * (

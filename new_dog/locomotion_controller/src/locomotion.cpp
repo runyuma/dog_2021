@@ -29,18 +29,19 @@ int main(int argc, char **argv)
     {
       _locomotion_controller.moving_init();
     }
-    if(_locomotion_controller.error_handle())
-    {
-      _locomotion_controller.moving_func();
-    }
-    else {
-      if (not error_inited)
-      {
-        start_timeindex = _locomotion_controller.time_index;
-        error_inited = 1;
-      }
-      _locomotion_controller.shrink(start_timeindex);
-    }
+    _locomotion_controller.moving_func();
+//    if(_locomotion_controller.error_handle())
+//    {
+//      _locomotion_controller.moving_func();
+//    }
+//    else {
+//      if (not error_inited)
+//      {
+//        start_timeindex = _locomotion_controller.time_index;
+//        error_inited = 1;
+//      }
+//      _locomotion_controller.shrink(start_timeindex);
+//    }
 
   }
 }

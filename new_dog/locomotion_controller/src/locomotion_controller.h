@@ -12,6 +12,7 @@ class locomotion_controller
 private:
   ros::Rate *hz100;
   ros::Rate *hz1000;
+  void cout_matrix(std::string strings,Eigen::MatrixXf matrix);
 public:
   ros::NodeHandle *pnh;
   ros::Subscriber footpoint_subscriber;
