@@ -256,14 +256,11 @@ void dog_controller::getTarget_Force()
 
     target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + _Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
     target_force(2,0) = target_force(2,0) + z_force;
-    cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
+    cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
   }
   else {
     target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
   }
-  target_force = Force_KP * (target_pos - body_pos) + Force_KD * (target_vel - body_vel) - body_mass * g;
-  target_force = TF_mat.inverse() * target_force;
-  ;
   if(ABS(rpy(2))>= PI/2 and ABS(target_rpy(2))>= PI and rpy(2) * target_rpy(2) < 0)
   {
     target_rpy(2) += SIGN(target_rpy(2)) * 2 * PI ;//TODO:somthing wrong
