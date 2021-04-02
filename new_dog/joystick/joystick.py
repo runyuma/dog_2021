@@ -67,6 +67,10 @@ class JoyStick():
 
     def main(self):
         while not rospy.is_shutdown():
+            move_reset = rospy.get_param("move_reset")
+            if move_reset:
+                self.gait_num = 0
+                rospy.set_param("move_reset",0)
             if USE_PYGAME:
                 if self.joystick.get_name() == JOYSTICK_NAME:
                     pygame.event.get()
@@ -81,6 +85,9 @@ class JoyStick():
                         time.sleep(0.3)
             if not self.joystick_connected:
                 key = readkey()
+                if key == 'a':
+                    if rospy.get_param("start_move") == 0:
+                        rospy.set_param("start_move",1)
                 if key == 'i':
                     self.velocity =  - self.vel_factor
                 if key == 'k':
@@ -124,6 +131,12 @@ class JoyStick():
                 self.gait_num += 1
                 if self.gait_num > GAIT_NUM:
                     self.gait_num = 0
+                time.sleep(0.3)
+            gait_button = msg.buttons[1]
+            if gait_button == 1:
+                if rospy.get_param("start_move") == 0:
+                    rospy.set_param("start_move",1)
+
                 time.sleep(0.3)
         else:
             pass

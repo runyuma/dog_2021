@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
   <include
-    file="$(find gazebo_ros)/launch/empty_world.launch" />
+    file="$(find dog_sim)/launch/empty_world.launch" />
   <param name="robot_description" textfile="$(find dog_sim)/urdf/big_dog.SLDASM.urdf" />
   <rosparam file="$(find dog_sim)/config/joint_names_big_dog.SLDASM.yaml" command="load"/>
   <node

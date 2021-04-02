@@ -825,6 +825,7 @@
       xyz="0 0 1" />
     <dynamics damping="1"/>
   </joint>
+
   <gazebo reference="left_front_part_C">
       <mu1>2000</mu1>
       <mu2>2000</mu2>

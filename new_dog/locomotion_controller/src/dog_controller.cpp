@@ -33,6 +33,7 @@ void dog_controller::dog_reset()
   _statemachine._gait=gait_schedular(gait_map[0]);
   _statemachine.phase = {1,1,1,1};
   //statemachine&phase reset
+  is_moving = 1;
 }
 
 
@@ -234,10 +235,10 @@ void dog_controller::getTarget_Force()
     Torque_KP<<400,0,0,0,600,0,0,0,600;
     Torque_KD<<50,0,0,0,65,0,0,0,50;
   }
-  int USE_BODYHEIGHT = 1;
+  int USE_BODYHEIGHT = 0;
   Eigen::Matrix3f _Force_KP = Force_KP;
   Eigen::Matrix3f _Force_KD = Force_KD;
-  if(USE_BODYHEIGHT)
+  if(state_estimation_mode == 1)
   {
     _Force_KP(2,2) = 0;
     _Force_KD(2,2) =  _Force_KD(2,2);
@@ -256,7 +257,8 @@ void dog_controller::getTarget_Force()
 
     target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + _Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
     target_force(2,0) = target_force(2,0) + z_force;
-    cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
+    //cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
+
   }
   else {
     target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
@@ -266,6 +268,9 @@ void dog_controller::getTarget_Force()
     target_rpy(2) += SIGN(target_rpy(2)) * 2 * PI ;//TODO:somthing wrong
   }
   target_torque = Torque_KP * (target_rpy - rpy) + Torque_KD * (target_omega - omega);
+//  cout<<"pos error : "<<std::endl<<target_pos - body_pos<<std::endl;
+//  cout<<"rpy error : "<<std::endl<<target_rpy - rpy<<std::endl;
+
   for (int i = 0;i<3;i++) {
     if(ABS(target_force(i))>= Force_limit(i)){target_force(i) = SIGN(target_force(i)) * Force_limit(i);}
     if(ABS(target_torque(i))>= Torque_limit(i)){target_torque(i) = SIGN(target_torque(i)) * Torque_limit(i);}
@@ -421,7 +426,7 @@ void dog_controller::swingleg_calculation()
      if(use_sim)
      {
        _statemachine.target_pos(0) = final_point(0);
-       _statemachine.target_pos(1) = final_point(1);// magic change
+//       _statemachine.target_pos(1) = final_point(1);// magic change
      }
 
      target_swingpos.block(0,i,3,1) = _statemachine.target_pos;

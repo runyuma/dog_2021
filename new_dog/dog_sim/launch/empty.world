@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+    <physics type='ode'>
+      <max_step_size>0.001</max_step_size>
+       <real_time_factor>0.3</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate> 
+      <gravity>0 0 -9.8</gravity>
+    </physics>
+  <world name="default">
+    <include>
+      <physics type='ode'>
+      <max_step_size>0.001</max_step_size>
+       <real_time_factor>0.3</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate> 
+      <gravity>0 0 -9.8</gravity>
+    </physics>
+    </include>
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+  </world>
+</sdf>

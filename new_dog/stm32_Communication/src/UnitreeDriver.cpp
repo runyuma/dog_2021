@@ -35,7 +35,7 @@ UnitreeDriver::UnitreeDriver(const std::string PortName)
     }
     else{
         try{
-            std::string sudoPassword = "456456456rr";
+            std::string sudoPassword = "jqrmmd07";
             std::string SerialCommand = "sudo chmod 777 " + PortName;
             std::string FinalCommand = "echo " + sudoPassword + "|sudo -S " + SerialCommand;
             system(FinalCommand.data());

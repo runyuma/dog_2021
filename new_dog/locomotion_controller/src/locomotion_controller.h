@@ -48,10 +48,11 @@ public:
   void swing_publoish();
 
   bool error_handle();
-  bool shrink(int start_index);
+  bool shrink(int start_index,Eigen::Vector3f rpy );
   void moving_init();
   void moving_func();
-
+  void moving_reset();
+  void idle();
   void visual();
 };
 #endif // LOCOMOTION_CONTROLLER_H

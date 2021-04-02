@@ -145,10 +145,12 @@ void locomotion_controller::set_error()
   if(_Dog->osqp_unsolved_error)
   {
     pnh->setParam("osqp_unsolve_error", 1);
+    _Dog->osqp_unsolved_error = 0;
   }
   if(_Dog->fallen_error)
   {
     pnh->setParam("fallen_error", 1);
+    _Dog->fallen_error = 0;
   }
 }
 
@@ -205,25 +207,25 @@ void locomotion_controller::visual()
 {
   if(time_index%100 == 0)
   {
-//    std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
-//    std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
-//    std::cout<<"rpy: "<<_Dog->rpy<<std::endl;
+    std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
+    std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
+    std::cout<<"rpy: "<<_Dog->rpy<<std::endl;
     std::cout<<"xyz: "<<_Dog->body_pos<<std::endl;
-//    std::cout<<"omega: "<<_Dog->omega<<std::endl;
-//    std::cout<<"vel: "<<_Dog->body_vel<<std::endl;
-//    std::cout<<"schedualgroundLeg: "<<std::endl;
-//    for (int i = 0;i<4;i++) {std::cout<<_Dog->schedualgroundLeg[i]<<" ";}
-//    std::cout<<std::endl;
-//    std::cout<<"phase: "<<std::endl;
-//    for (int i = 0;i<4;i++) {std::cout<<_Dog->_statemachine.phase[i]<<" ";}
-//    std::cout<<std::endl;
-//    std::cout<<"target_state: "<<_Dog->target_state<<std::endl;
-//    std::cout<<"gait_time: "<<_Dog->_statemachine._gait.Gait_currentTime<<std::endl;
-//    std::cout<<"loop_time: "<<_Dog->loop_time<<std::endl;
+    std::cout<<"omega: "<<_Dog->omega<<std::endl;
+    std::cout<<"vel: "<<_Dog->body_vel<<std::endl;
+    std::cout<<"schedualgroundLeg: "<<std::endl;
+    for (int i = 0;i<4;i++) {std::cout<<_Dog->schedualgroundLeg[i]<<" ";}
+    std::cout<<std::endl;
+    std::cout<<"phase: "<<std::endl;
+    for (int i = 0;i<4;i++) {std::cout<<_Dog->_statemachine.phase[i]<<" ";}
+    std::cout<<std::endl;
+    std::cout<<"target_state: "<<_Dog->target_state<<std::endl;
+    std::cout<<"gait_time: "<<_Dog->_statemachine._gait.Gait_currentTime<<std::endl;
+    std::cout<<"loop_time: "<<_Dog->loop_time<<std::endl;
     std::cout<<"target_force/Torque: "<<_Dog->target_force<<std::endl<<_Dog->target_torque<<std::endl;
     std::cout<<"force_list: "<<_Dog->force_list<<std::endl;
-//    std::cout<<"swing_pos: "<<_Dog->target_swingpos<<std::endl;
-//    std::cout<<"swing_vel: "<<_Dog->target_swingvel<<std::endl;
+    std::cout<<"swing_pos: "<<_Dog->target_swingpos<<std::endl;
+    std::cout<<"swing_vel: "<<_Dog->target_swingvel<<std::endl;
   }
 }
 
@@ -257,7 +259,7 @@ void locomotion_controller::moving_func()
   pnh->getParam("current_gait",_Dog->gait_num);
   int changed = _Dog->statemachine_update();
   _Dog->get_TFmat();
-  if(time_index%8 == 0 or changed){
+  if(time_index%1 == 0 or changed){
     _Dog->Force_calculation();
     force_publish();
   }
@@ -274,14 +276,19 @@ void locomotion_controller::moving_func()
   hz1000->sleep();
 }
 
-bool locomotion_controller::shrink(int start_index)
+bool locomotion_controller::shrink(int start_index,Eigen::Vector3f rpy)
 {
   std::vector<float> joint_pos_target = {0,1.2,-2.4};
   Eigen::Matrix<float,3,4> target_footpoint;
   target_footpoint<< 0,0,0,0,
                     0,0,0,0,
                     -0.1,-0.1,-0.1,-0.1;
-  if(time_index - start_index <= 100 )
+  std::vector<int> _scheduleleg = {0,0,0,0};
+  for (int i = 0;i<4;i++) {
+    _scheduleleg[i] = _Dog->schedualgroundLeg[i];
+  }
+  pnh->setParam("schedule_groundleg", _scheduleleg);
+  if(time_index - start_index <= 20 )
   {
     std_msgs::Int32MultiArray status_msg;
     status_msg.data = {1,1,1,1};
@@ -310,21 +317,26 @@ bool locomotion_controller::shrink(int start_index)
     leg_status_publisher.publish(status_msg);
     std_msgs::Float32MultiArray groundforce_msg;
     groundforce_msg.data = {0,0,0,0,0,0,0,0,0,0,0,0,};
-    force_publisher.publish(groundforce_msg);
     for (int i = 0;i<4;i++) {
       groundforce_msg.data[3*i] = joint_pos_target[0];
       groundforce_msg.data[3*i+1] = joint_pos_target[1];
       groundforce_msg.data[3*i+2] = joint_pos_target[2];
     }
+    force_publisher.publish(groundforce_msg);
     time_index += 1;
     hz100->sleep();
     return 0;
   }
-  else if(time_index - start_index == 200)
+  else if(time_index - start_index == 300)
   {
     time_index += 1;
     hz100->sleep();
-    return 1;
+    if(ABS(rpy(0)<0.1) and ABS(rpy(1))<0.1)
+    {
+     return 1;
+    }
+
+
   }
 }
 
@@ -336,12 +348,26 @@ bool locomotion_controller::error_handle()
   pnh->getParam("fallen_error",fallen_error);
   if(osqp_error or fallen_error)
   {
+    pnh->setParam("start_move", 0);
     return 1;
   }
   else {
     return 0;
   }
   //TODO different ways
+}
+void locomotion_controller::moving_reset()
+{
+  _Dog->dog_reset();
+  pnh->setParam("move_reset", 1);//TODO: not reset
+  pnh->setParam("osqp_unsolve_error",0);
+  pnh->setParam("fallen_error",0);
+}
+void locomotion_controller::idle()
+{
+  hz100->sleep();
+  last_rostime =  ros::Time::now();
+  _Dog->last_rostime = ros::Time::now();
 }
 //***************************************************************************************//***************************************************************************************//
 void locomotion_controller::cout_matrix(std::string strings, Eigen::MatrixXf matrix)
