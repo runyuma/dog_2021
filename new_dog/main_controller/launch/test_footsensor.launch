@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+    <node pkg="main_controller" name="test_footsensor" type="test_footsensor.py"/>
+
+    <node pkg="main_controller" name="Serialport" type="Serialport_data.py" output="screen"/>
+
+</launch>
