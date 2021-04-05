@@ -7,7 +7,7 @@
   <gazebo>
       <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"/>
   </gazebo>
- <link name="world"/>
+  <link name="world"/> 
     <joint
     name="world_joint"
     type="fixed">

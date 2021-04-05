@@ -20,7 +20,7 @@ dic = {'total_weight':16,
        "current_gait": 0,# 0 is standing 1 is trot_runing
        "command_vel":0,
        "command_omega":0,
-       "state_estimation_mode":0, # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
+       "state_estimation_mode":1, # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
         "USE_TOUCHSENSOR": 0,
 	"body_lenth":0.255,
 	"body_width":0.055,

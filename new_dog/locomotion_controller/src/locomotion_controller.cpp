@@ -22,7 +22,8 @@ void locomotion_controller::init()
   pnh->getParam("walking_height",_Dog->walking_height);
   pnh->getParam("walking_height",_Dog->walking_height);
   pnh->getParam("use_sim",_Dog->use_sim);
-  pnh->getParam("total_mass",_Dog->body_mass);
+  pnh->getParam("total_weight",_Dog->body_mass);
+
 
   std::vector<int> leg_init(4,1);
   pnh->setParam("leg_enable",leg_init);
