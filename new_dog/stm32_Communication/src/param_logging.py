@@ -2,13 +2,13 @@
 # coding:utf-8
 import rospy
 import numpy as np
-dic = {'totoal_weight':16,
+dic = {'total_weight':16,
        'hip_mass': 0.605,
        'upper_link_mass': 0.7,
        'lower_link_mass': 0.07,
        'hip_lenth':0.1,
        'upper_link_lenth':0.215,
-       'lower_link_lenth':0.215,
+       'lower_link_lenth':0.21,
        'coma_lenth':0.06,
        'comb_lenth':0.005,
        'comc_lenth':0.05,
@@ -21,8 +21,8 @@ dic = {'totoal_weight':16,
        "command_omega": 0,
        "state_estimation_mode":1, # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
        "USE_TOUCHSENSOR": 0,
-	"body_lenth":0.255,
-	"body_width":0.06,
+	"body_lenth":0.22,
+	"body_width":0.07,
        "use_sim":0,
        "damping_compensation":[0.05,0.00,0.5],
        "walking_height": 0.32,

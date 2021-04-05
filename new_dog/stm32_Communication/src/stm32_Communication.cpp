@@ -61,8 +61,8 @@ int main(int argc, char **argv){
 
     ros::Publisher UpStreamPub = nh.advertise<std_msgs::Float32MultiArray>("/upstream", UPQUEUESIZE);   // 发布12个电机的数据
     ros::Subscriber DownStreamSub = nh.subscribe("/downstream", DOWNQUEUESIZE, DownStreamCallback);     // 订阅
-    pMotorDriver[FRONTINDEX] = new UnitreeDriver("/dev/ttyUSB0");
-    pMotorDriver[BACKINDEX] = new UnitreeDriver("/dev/ttyUSB1");
+    pMotorDriver[FRONTINDEX] = new UnitreeDriver("/dev/front");
+    pMotorDriver[BACKINDEX] = new UnitreeDriver("/dev/back");
     NodeUserInit(); // 参数初始化
     ros::Rate loop_rate(SENDRATE);
     FrontLowerTimer.start();

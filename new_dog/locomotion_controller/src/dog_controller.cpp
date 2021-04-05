@@ -399,6 +399,8 @@ void dog_controller::Force_calculation()
 
 }
 
+
+
 void dog_controller::swingleg_calculation()
 {
   target_state = targetstates[state_index];

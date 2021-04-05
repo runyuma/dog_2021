@@ -16,6 +16,7 @@
 #define BACKFRAMELENGTH     11
 #define CONTROLFRAMELENGTH  7
 #define DriverBaudRate      921600  // 驱动板使用的串口波特率
+#define USERPASSWORD        "jqrmmd07"
 
 /**
  * @brief   构造函数
@@ -35,7 +36,7 @@ UnitreeDriver::UnitreeDriver(const std::string PortName)
     }
     else{
         try{
-            std::string sudoPassword = "jqrmmd07";
+            std::string sudoPassword = USERPASSWORD;
             std::string SerialCommand = "sudo chmod 777 " + PortName;
             std::string FinalCommand = "echo " + sudoPassword + "|sudo -S " + SerialCommand;
             system(FinalCommand.data());

@@ -49,6 +49,8 @@ if __name__ == '__main__':
     import struct
     Result = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     RawData = bytes([0x14, 0x23, 0x7E ,0x01 ,0xB6 ,0xF3 ,0x9D ,0x3F ,0x2D ,0xB2 ,0xB5 ,0x40 ,0x27 ,0x31 ,0x10 ,0x41 ,0xB6 ,0xF3 ,0x9D ,0x3F ,0x2D,0xB2 ,0xB5 ,0x40 ,0x27 ,0x31 ,0x10 ,0x41 ,0xB6 ,0xF3 ,0x9D ,0x3F ,0x2D ,0xB2 ,0xB5 ,0x40 ,0x27 ,0x31 ,0x10 ,0x41 ,0x32, 0x05])   # 接收缓冲区
+    RawData = b'\x99\x02(~\x81r\x1c\x97=\xf12&\x02]~\xa1\x8e\xe3x=\xc8\xfb2\x02\x7f~\x01UU\x95\xbd_\xb2\xab\x02n~!UU\x15\xbd,\xc7\xff\x02y~A9\x8e\xe3\xba\x8f\xad\x01\x02)~ar\x1c\x87\xbcJ\xb8\x99\x02(~\x81r\x1c\x97=\xf12&\x02]~\xa1\x8e\xe3x=\xc8\xfb2\x02\x7f~\x01UU\x95\xbd_\xb2\xab\x02n~!UU\x15\xbd,\xc7\xff\x02y~A9\x8e\xe3\xba\x8f\xad\x01\x02)~ar\x1c\x87\xbc'
+
     FrameHeadIndex = RawData.find(0x7E)
     if FrameHeadIndex != -1:
         PossibleFrame = RawData[FrameHeadIndex:FrameHeadIndex + 39] # 完整的一帧长度为39个字节

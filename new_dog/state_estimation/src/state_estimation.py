@@ -21,6 +21,9 @@ else:
     import serial.tools.list_ports
     import os
     from IMUDecode import *
+
+
+
 class state_estimation():
     def __init__(self):
         rospy.init_node("state_estimation",anonymous= True)
@@ -97,7 +100,7 @@ class state_estimation():
                 self.touchsensors[i] = rospy.Subscriber(topic_name[i], ContactsState, callback_fun[i])
         else:
             command = "sudo chmod 777 " + "/dev/ttyACM0"
-            sudoPassword = "456456456rr"
+            sudoPassword = "jqrmmd07"
             os.system('echo %s|sudo -S %s' % (sudoPassword, command))
             port_list = list(serial.tools.list_ports.comports())
             print(port_list)
@@ -107,7 +110,7 @@ class state_estimation():
             else:
                 print(port_list[0])
                 self.port = port_list[0]
-                self.port_name = "/dev/" + port_list[0].name
+                self.port_name =  "/dev/ttyACM0"
                 self.bps = 921600
                 timex = None
                 self.ser = serial.Serial(self.port_name, self.bps, timeout=timex)
@@ -118,6 +121,7 @@ class state_estimation():
 
     def main(self):
         while not rospy.is_shutdown():
+
             if self.state_estimation_mode == 0:
                 self.state_publish()
                 if self.USE_TOUCHSENSOR:
@@ -140,6 +144,7 @@ class state_estimation():
                 #     print(self.linear_acceleration)
             elif self.state_estimation_mode == 1:
                 if not USE_SIM:
+
                     self.get_imu()
                 if not self.initialed:
                     if self.foot_point_received and self.got_imu :
@@ -152,9 +157,10 @@ class state_estimation():
                     self.leg_dynamic_estimation()
                     self.state_publish()
 
-                    # print("loop_time:", self.looptime)
+
+                    print("loop_time:", self.looptime)
                     # print("body_pos:", self.body_pos)
-                    # print("body_vel", self.body_vel)
+                    # `print("body_vel", self.body_vel)
                 if TEST:
                     if self.time_index%5 == 0:
                         self.restore_df_data()
@@ -429,11 +435,13 @@ class state_estimation():
             count = self.ser.inWaiting()
             if count > 0:
                 rec_str = self.ser.read(count)
-                if len(rec_str)>=39:
+
+                if len(rec_str) >= 39:
                     FrameHeadIndex = rec_str.find(0x7E)
                     if FrameHeadIndex != -1:
                         PossibleFrame = rec_str[FrameHeadIndex:FrameHeadIndex + 39]  # 完整的一帧长度为39个字节
-                        if FrameHeadIndex + 39<= len(rec_str) and CRC8Calculate(PossibleFrame, 39) == 0:
+                        print(PossibleFrame.hex())
+                        if FrameHeadIndex + 39 <= len(rec_str) and CRC8Calculate(PossibleFrame, 39) == 0:
                             IMUDataDecode(PossibleFrame, Result)
                             self.got_imu = 1
                             self.omega[0][0] = Result[3]
@@ -441,17 +449,17 @@ class state_estimation():
                             self.omega[2][0] = Result[5]
 
                             # Read the linear acceleration of the robot IMU
-                            self.linear_acceleration[0][0] = Result[2]
-                            self.linear_acceleration[1][0] = Result[2]
-                            self.linear_acceleration[2][0] = Result[2]
+                            self.linear_acceleration[0][0] = Result[6]
+                            self.linear_acceleration[1][0] = Result[7]
+                            self.linear_acceleration[2][0] = Result[8]
 
                             # Convert Quaternions to Euler-Angles Z-Y-X
                             self.rpy[0][0] = Result[0]
                             self.rpy[1][0] = Result[1]
                             self.rpy[2][0] = Result[2]
-                            print("rpy",self.rpy)
-                            print("omega",self.omega)
-                            print("acc",self.linear_acceleration)
+                            print("rpy", self.rpy)
+                            print("omega", self.omega)
+                            print("acc", self.linear_acceleration)
     def get_touchsensor(self):
         pass # TODO:touchsensor real_robot
     def left_front_callback(self,effort_message):

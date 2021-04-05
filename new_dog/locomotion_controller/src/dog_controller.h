@@ -14,7 +14,7 @@ private:
   float start_phasetime;
   int state_index;
 public:
-  float body_mass = 10 + (0.3+0.6+0.5)* 4 ;
+  float body_mass  ;
   float body_width;
   float body_lenth;
   float hip_lenth;

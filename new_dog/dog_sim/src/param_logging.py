@@ -2,7 +2,7 @@
 # coding:utf-8
 import rospy
 import numpy as np
-dic = {'totoal_weight':16,
+dic = {'total_weight':16,
        'body_mass':10,
        'hip_mass': 0.5,
        'upper_link_mass': 0.6,
