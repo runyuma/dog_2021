@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+  <include
+    file="$(find dog_sim)/launch/empty_world.launch" >
+	<arg name="world_name" default="$(find dog_sim)/launch/ISCAS.world"/>
+	</include>
+  <param name="robot_description" textfile="$(find dog_sim)/urdf/big_dog.SLDASM.urdf" />
+  <rosparam file="$(find dog_sim)/config/joint_names_big_dog.SLDASM.yaml" command="load"/>
+  <node
+    name="spawn_model"
+    pkg="gazebo_ros"
+    type="spawn_model"
+    args="-file $(find dog_sim)/urdf/big_dog.SLDASM.urdf -urdf -model big_dog -z 0.4 "
+    output="screen" />
+<!--   <node
+    name="spawn_model2"
+    pkg="gazebo_ros"
+    type="spawn_model"
+    args="-file $(find dog_sim)/urdf/world.urdf -urdf -model world "
+    output="screen" /> -->
+  <param name="/joint_state_controller/publish_rate" value="1000" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner"
+      output="screen" args="joint_state_controller
+                Pos_controller1
+                Pos_controller2
+                Pos_controller3
+                Pos_controller4
+                Pos_controller5
+                Pos_controller6
+                Pos_controller7
+                Pos_controller8
+                Pos_controller9
+                Pos_controller10
+                Pos_controller11
+                Pos_controller12 "/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+	respawn="false" output="screen">
+  </node>
+  <node name="set_parameters" pkg="dog_sim" type="param_logging.py" output="screen"/>
+  <node name="basecontrol" pkg="dog_sim" type="basecontrol" output="screen"/>
+  <!-- <node name="leg_control" pkg="leg_controller" type="leg_controller" output="screen"/> 
+  <node name="state_estimation" pkg="state_estimation" type="state_estimation.py" output="screen"/>-->
+</launch>
+
+

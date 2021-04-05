@@ -7,7 +7,7 @@
     default="Ture" />
   <param
     name="robot_description"
-    textfile="$(find dog_sim)/urdf/big_dog_fixed.SLDASM.urdf" />
+    textfile="$(find dog_sim)/urdf/big_dog.SLDASM.urdf" />
   <param
     name="use_gui"
     value="$(arg gui)" />
