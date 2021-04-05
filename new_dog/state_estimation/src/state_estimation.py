@@ -6,7 +6,7 @@ import copy
 import time
 
 from std_msgs.msg import Float32MultiArray, Float32, Int32MultiArray
-TEST = 0
+TEST = 1
 USE_SIM = rospy.get_param("use_sim")
 TEST_SER = 0
 
@@ -21,7 +21,11 @@ else:
     import serial.tools.list_ports
     import os
     from IMUDecode import *
-
+plan1 = 0
+plan2 = 0
+plan3 = 0  # pure imu
+plan4 = 1  # pure legdynamic + when not contact pure imu
+plan5 = 0  # trust imu + legdynamic kailam filter
 
 
 class state_estimation():
@@ -84,6 +88,24 @@ class state_estimation():
             self.test_body_vel = np.zeros((3, 1))
             self.test_rpy = np.zeros((3, 1))
             self.test_omega = np.zeros((3, 1))
+        if plan5:
+            #x = {pos vel p1 p2 p3 p4}
+            self.x = np.zeros((18,1))
+            self.Qp = np.diag([0.001,0.001,0.005]) ** 2 # noise of foot point 3*3
+            self.Qf = np.diag([0.01,0.01,0.05]) ** 2 # noise of acc 3*3
+            self.Q = np.zeros((18,18))
+            self.F = np.eye(18)
+            self.y = np.zeros((15,1)) #leg0123 vel
+            self.H = np.zeros((15,18))
+            self.Qr = np.kron(np.eye(5),np.dot(np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,-0.17]]),np.dot(np.diag([0.001,0.001,0.001])**2,np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,-0.17]]).T)))
+            self.P = np.zeros((18,18))
+            self.S = np.zeros((18,18))
+            self.K = np.zeros((18,18))# kalman increment
+            self.yv = np.zeros((3,1))
+
+
+
+
 
 
         if USE_SIM:
@@ -185,6 +207,11 @@ class state_estimation():
         self.body_pos_memory = [copy.deepcopy(self.body_pos)]
         self.time_intervals = [rospy.get_time()]
         self.memory_lenth = 20
+        if plan5:
+            self.memory_lenth = 10
+            self.x[0:3,0:1] = self.body_pos
+            self.x[3:6,0:1] = self.body_vel
+            self.x[6:,0:1] = self.foot_contactpoint.reshape(12,1)
         if TEST:
             self.test_body_pos = np.zeros((3, 1))
             self.test_body_vel = np.zeros((3, 1))
@@ -193,10 +220,7 @@ class state_estimation():
 
     def leg_dynamic_estimation(self):
         # cauculate pos
-        plan1 = 0
-        plan2 = 0
-        plan3 = 0
-        plan4 = 1
+
 
         self.schedule_leg = rospy.get_param("schedule_groundleg")
         C_mat = self.get_TFmat()
@@ -205,7 +229,7 @@ class state_estimation():
             rospy.set_param("contact_state", self.contact_state)
         # update contact point
         if self.state_estimation_mode == 1:
-            if not plan4:
+            if not plan4 and not plan5:
                 if self.last_schedule_leg != self.schedule_leg:
                     still_contact = np.array(self.last_schedule_leg) * np.array(self.schedule_leg)
                     new_contact = np.array([1,1,1,1]) - still_contact
@@ -254,7 +278,10 @@ class state_estimation():
                                 if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
                                     self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
                                 elif self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
-                                    self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array([[0], [0], [0.0046]])
+                                    self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1]
+                                    # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array([[0], [0], [0.0046]])
+                                    # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array(
+                                    #     [[0], [0], [0.005]])
                             self.last_schedule_leg = self.schedule_leg
                             cal_array = np.array(copy.copy(self.last_schedule_leg))
 
@@ -287,6 +314,80 @@ class state_estimation():
                     self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
 
                 self.last_body_pos = copy.deepcopy(self.body_pos)
+            elif plan5:
+                if self.last_schedule_leg != self.schedule_leg:
+                    permit = 1
+                    for i in range(4):
+                        if self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
+                            if self.contact_state[i] == 1:
+                                point = self.foot_contactpoint[:, i:i + 1]
+                                if (point == np.zeros((3, 1))).all():
+                                    self.foot_contactpoint[:, i:i + 1] = self.body_pos + self.footpoint_W[:,
+                                                                                              i:i + 1]
+                                    self.x[6 + i*3: 9+i*3,:] = self.foot_contactpoint[:, i:i + 1]
+                                    print("contact")
+                            else:
+                                permit = 0
+                        if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
+                            if self.contact_state[i] == 0:
+                                self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
+                                self.x[6 + i * 3: 9 + i * 3, :] = self.foot_contactpoint[:, i:i + 1]
+                                print("loss conract")
+                    if permit:
+                        for i in range(4):
+                            if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
+                                self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
+                            elif self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
+                                self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1]
+                                # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array([[0], [0], [0.0046]])
+                                # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array(
+                                #     [[0], [0], [0.005]])
+                        self.last_schedule_leg = self.schedule_leg
+                # prio x
+                self.F[0:3,3:6] = self.looptime * np.eye(3)
+                acc = np.dot(C_mat, self.linear_acceleration) + np.array([[0], [0], [-9.81]])
+                self.x = np.dot(self.F,self.x)
+                self.x[0:3,0:1] += 0.5 * self.looptime**2 * acc
+                self.x[3:6,0:1] += self.looptime * acc
+                self.Q[0:3,0:3] = 0.33 * self.looptime**3 * self.Qf
+                self.Q[0:3, 3:6] = 0.5 * self.looptime ** 2 * self.Qf
+                self.Q[3:6, 0:3] = 0.5 * self.looptime ** 2 * self.Qf
+                self.Q[3:6, 3:6] = self.looptime * self.Qf
+                for i in range(4):
+                    if self.schedule_leg[i] == 1:
+                        self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = self.Qf
+                    else:
+                        self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = np.zeros((3,3))
+                self.P = np.dot(self.F,np.dot(self.P,self.F.T)) + self.Q
+
+                # post
+                self.y[12:15,0:1] = self.yv - self.x[3:6,0:1]
+                for i in range(4):
+                    if self.schedule_leg[i] == 1 and self.contact_state[i] == 1:
+                        self.y[3*i:3*i+3,0:1] = self.footpoint_W[0:3,i:i+1] - (self.x[6 + i*3: 9+i*3,0:1] - self.x[0:3,0:1])
+                    else:
+                        self.y[3 * i:3 * i + 3, 0:1] = np.zeros((3,1))
+                    self.H[3 * i:3 * i + 3,0:3] = - np.eye(3)
+                    self.H[3 * i:3 * i + 3,6 + i*3: 9+i*3] = np.eye(3)
+                self.H[12:15,3: 6] = np.eye(3)
+                self.Qr[12:15,12:15] = self.P[0:3,0:3]/max(self.looptime,1./self.Hz)
+                self.S = self.Qr + np.dot(self.H,np.dot(self.P,self.H.T))
+                self.K = np.dot(self.P,np.dot(self.H.T,np.linalg.inv(self.S)))
+                dx = np.dot(self.K,self.y)
+                self.x += dx
+                self.P = np.dot((np.eye(18) - np.dot(self.K,self.H)),self.P)
+                self.body_pos = self.x[0:3,0:1]
+                self.body_vel = self.x[3:6,0:1]
+
+                #calculate houyan v
+                if len(self.body_pos_memory) < self.memory_lenth:
+                    self.body_pos_memory.append(copy.deepcopy(self.body_pos))
+                    self.time_intervals.append(rospy.get_time())
+                else:
+                    self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.body_pos)]
+                    self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
+                self.yv = (self.body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
+
         elif TEST and self.state_estimation_mode == 0:
             if not plan4:
                 if self.last_schedule_leg != self.schedule_leg:

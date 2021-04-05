@@ -49,6 +49,21 @@
       </geometry>
     </collision>
   </link>
+
+  <link
+    name="odom">
+  </link>
+  <joint
+    name="odomjoint"
+    type="fixed">
+    <origin
+      xyz="0.0 -0.0 -0.05"
+      rpy="0 0 0" />
+    <parent
+      link="body" />
+    <child
+      link="odom" />
+  </joint>
   <link
     name="hokuyo_link">
     <inertial>
@@ -78,7 +93,7 @@
   <gazebo reference="hokuyo_link">
     <sensor type="ray" name="head_hokuyo_sensor">
       <pose>0 0 0 0 0 0</pose>
-      <visualize>true</visualize>
+      <visualize>false</visualize>
       <update_rate>40</update_rate>
       <ray>
         <scan>
@@ -91,7 +106,7 @@
         </scan>
         <range>
           <min>0.10</min>
-          <max>1.0</max>
+          <max>10.0</max>
           <resolution>0.01</resolution>
         </range>
         <noise>

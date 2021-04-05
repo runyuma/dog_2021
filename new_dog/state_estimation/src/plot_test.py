@@ -5,7 +5,7 @@ import numpy
 import matplotlib.pyplot as plt
 import pandas as pd
 
-path = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/"+"Wed Mar 24 23:52:41 2021.csv"
+path = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/"+"Mon Apr  5 20:44:04 2021.csv"
 df=pd.read_csv(open(path))
 
 a = df.plot(x = "time",y = "gazebo_vx")
