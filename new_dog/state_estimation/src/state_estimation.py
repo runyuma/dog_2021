@@ -24,8 +24,8 @@ else:
 plan1 = 0
 plan2 = 0
 plan3 = 0  # pure imu
-plan4 = 1  # pure legdynamic + when not contact pure imu
-plan5 = 0  # trust imu + legdynamic kailam filter
+plan4 = 0  # pure legdynamic + when not contact pure imu
+plan5 = 1  # trust imu + legdynamic kailam filter
 
 
 class state_estimation():
@@ -91,13 +91,13 @@ class state_estimation():
         if plan5:
             #x = {pos vel p1 p2 p3 p4}
             self.x = np.zeros((18,1))
-            self.Qp = np.diag([0.001,0.001,0.005]) ** 2 # noise of foot point 3*3
-            self.Qf = np.diag([0.01,0.01,0.05]) ** 2 # noise of acc 3*3
+            self.Qp = np.diag([0.001,0.001,0.001]) ** 2 # noise of foot point 3*3
+            self.Qf = np.diag([0.01,0.01,0.01]) ** 2 # noise of acc 3*3
             self.Q = np.zeros((18,18))
             self.F = np.eye(18)
             self.y = np.zeros((15,1)) #leg0123 vel
             self.H = np.zeros((15,18))
-            self.Qr = np.kron(np.eye(5),np.dot(np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,-0.17]]),np.dot(np.diag([0.001,0.001,0.001])**2,np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,-0.17]]).T)))
+            self.Qr = np.kron(np.eye(5),np.dot(np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,0.17]]),np.dot(np.diag([0.001,0.001,0.001])**2,np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,0.17]]).T)))
             self.P = np.zeros((18,18))
             self.S = np.zeros((18,18))
             self.K = np.zeros((18,18))# kalman increment
@@ -347,6 +347,7 @@ class state_estimation():
                 self.F[0:3,3:6] = self.looptime * np.eye(3)
                 acc = np.dot(C_mat, self.linear_acceleration) + np.array([[0], [0], [-9.81]])
                 self.x = np.dot(self.F,self.x)
+                print("acc",acc)
                 self.x[0:3,0:1] += 0.5 * self.looptime**2 * acc
                 self.x[3:6,0:1] += self.looptime * acc
                 self.Q[0:3,0:3] = 0.33 * self.looptime**3 * self.Qf
@@ -355,29 +356,37 @@ class state_estimation():
                 self.Q[3:6, 3:6] = self.looptime * self.Qf
                 for i in range(4):
                     if self.schedule_leg[i] == 1:
-                        self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = self.Qf
+                        self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = self.Qp
                     else:
                         self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = np.zeros((3,3))
                 self.P = np.dot(self.F,np.dot(self.P,self.F.T)) + self.Q
 
                 # post
-                self.y[12:15,0:1] = self.yv - self.x[3:6,0:1]
-                for i in range(4):
-                    if self.schedule_leg[i] == 1 and self.contact_state[i] == 1:
-                        self.y[3*i:3*i+3,0:1] = self.footpoint_W[0:3,i:i+1] - (self.x[6 + i*3: 9+i*3,0:1] - self.x[0:3,0:1])
-                    else:
-                        self.y[3 * i:3 * i + 3, 0:1] = np.zeros((3,1))
-                    self.H[3 * i:3 * i + 3,0:3] = - np.eye(3)
-                    self.H[3 * i:3 * i + 3,6 + i*3: 9+i*3] = np.eye(3)
-                self.H[12:15,3: 6] = np.eye(3)
-                self.Qr[12:15,12:15] = self.P[0:3,0:3]/max(self.looptime,1./self.Hz)
-                self.S = self.Qr + np.dot(self.H,np.dot(self.P,self.H.T))
-                self.K = np.dot(self.P,np.dot(self.H.T,np.linalg.inv(self.S)))
-                dx = np.dot(self.K,self.y)
-                self.x += dx
-                self.P = np.dot((np.eye(18) - np.dot(self.K,self.H)),self.P)
+                # self.y[12:15,0:1] = self.yv - self.x[3:6,0:1]
+                # for i in range(4):
+                #     if self.schedule_leg[i] == 1 and self.contact_state[i] == 1:
+                #         self.y[3*i:3*i+3,0:1] = self.footpoint_W[0:3,i:i+1] - (self.x[6 + i*3: 9+i*3,0:1] - self.x[0:3,0:1])
+                #     else:
+                #         self.y[3 * i:3 * i + 3, 0:1] = np.zeros((3,1))
+                #     self.H[3 * i:3 * i + 3,0:3] = - np.eye(3)
+                #     self.H[3 * i:3 * i + 3,6 + i*3: 9+i*3] = np.eye(3)
+                # self.H[12:15,3: 6] = np.eye(3)
+                # self.Qr[12:15,12:15] = self.P[0:3,0:3]/max(self.looptime,1./self.Hz)
+                # self.S = self.Qr + np.dot(self.H,np.dot(self.P,self.H.T))
+                #
+                # self.K = np.dot(np.dot(self.P,self.H.T),np.fabs(np.linalg.inv(self.S)))
+                # print(self.H.T)
+                # # print(np.dot(self.P,self.H.T))
+                # print(self.K)
+                # dx = np.dot(self.K,self.y)
+                # self.x += dx
+                # self.P = np.dot((np.eye(18) - np.dot(self.K,self.H)),self.P)
                 self.body_pos = self.x[0:3,0:1]
                 self.body_vel = self.x[3:6,0:1]
+                print("foot_point: ",self.footpoint_W)
+                print("x: ",self.x)
+                # print("dx: ", dx)
+                print("y: ", self.y)
 
                 #calculate houyan v
                 if len(self.body_pos_memory) < self.memory_lenth:
