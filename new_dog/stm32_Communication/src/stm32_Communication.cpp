@@ -30,10 +30,10 @@
 #define MOTOR2KD        5.0f
 // 逻辑零点实际位置数组：下发命令的时候，加上本数组；接收的时候，减掉本数组；第一排是前面的电机，第二排是后面的电机
 #define LOGIZZEROPOSARRAY   {{0.406718f, -1.11269f, 3.47613f, 0.444301f, 1.59018f, -3.08786f},  \
-                            {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
+                            {0.338669f, -1.12057f, 3.97569f, 0.316852f, 1.44965f, -3.17641f}}
 // 正反 + 减速比数组：下发命令时乘本数组，接收的时候除以本数组
 #define MOTORDIRARRAY       {{1, 1, 1.2727272727f, -1, -1, -1.2727272727f},    \
-                            {1, 1, 1.2727272727f, 1, 1, 1.2727272727f}}
+                            {1, 1, 1.2727272727f, -1, -1, -1.2727272727f}}
 /* User Config */
 
 static UnitreeDriver *pMotorDriver[2] = {nullptr, nullptr};     // 0 前驱动板 1 后驱动板
@@ -76,6 +76,20 @@ int main(int argc, char **argv){
             BackLowerTimer.stop();
             BackLowerTimer.start();
         }
+
+#if 1
+    // 显示下位机上发的数据
+    static int UpdateCount = 0;
+    if(++UpdateCount == 200){
+        UpdateCount = 0;
+        std::cout << "MotorData:";
+        for(int i = 0;i < 6;i ++){
+            std::cout << pMotorDriver[BACKINDEX]->MotorData[i].CurPos << " ";
+        }
+        std::cout << std::endl;
+    }
+#endif
+
         Map_PublishMotorData(UpStreamPub);                      // 发布电机当前数据
         ros::spinOnce();                                        // 刷新控制数据(调用本函数之后，会直接调用CallBack函数，所以应该是不用担心数据还没来得及刷新的问题的)
         // DebugTest();
@@ -172,7 +186,7 @@ void DebugTest(void){
 
 /** @brief 前下位机看门狗回调函数 */
 void FrontLowerTimercallback(const ros::TimerEvent&){
-    ROS_ERROR_STREAM("Front Lower Disconnected!");
+    //ROS_ERROR_STREAM("Front Lower Disconnected!");
     // 后续操作
 }
 
