@@ -4,7 +4,7 @@ import rospy
 import numpy as np
 import copy
 import time
-
+import os
 from std_msgs.msg import Float32MultiArray, Float32, Int32MultiArray
 TEST = 1
 USE_SIM = rospy.get_param("use_sim")
@@ -56,48 +56,67 @@ class state_estimation():
         self.USE_TOUCHSENSOR = rospy.get_param("USE_TOUCHSENSOR")
         self.time_index = 0
         if TEST:
-            self.df_colomn = ["time",
-                              "gait",
-                              "gazebo_r",
-                              "gazebo_p",
-                              "gazebo_y",
-                              "gazebo_x",
-                              "gazebo_y",
-                              "gazebo_z",
-                              "gazebo_wx",
-                              "gazebo_wy",
-                              "gazebo_wz",
-                              "gazebo_vx",
-                              "gazebo_vy",
-                              "gazebo_vz",
-                              "r",
-                              "p",
-                              "y",
-                              "x",
-                              "y",
-                              "z",
-                              "wx",
-                              "wy",
-                              "wz",
-                              "vx",
-                              "vy",
-                              "vz",
-                              ]
-            self.df_data = np.zeros((1,26))
-            self.test_body_pos = np.zeros((3, 1))
-            self.test_body_vel = np.zeros((3, 1))
-            self.test_rpy = np.zeros((3, 1))
-            self.test_omega = np.zeros((3, 1))
+            if USE_SIM:
+                self.df_colomn = ["time",
+                                  "gait",
+                                  "gazebo_r",
+                                  "gazebo_p",
+                                  "gazebo_y",
+                                  "gazebo_x",
+                                  "gazebo_y",
+                                  "gazebo_z",
+                                  "gazebo_wx",
+                                  "gazebo_wy",
+                                  "gazebo_wz",
+                                  "gazebo_vx",
+                                  "gazebo_vy",
+                                  "gazebo_vz",
+                                  "r",
+                                  "p",
+                                  "y",
+                                  "x",
+                                  "y",
+                                  "z",
+                                  "wx",
+                                  "wy",
+                                  "wz",
+                                  "vx",
+                                  "vy",
+                                  "vz",
+                                  ]
+                self.df_data = np.zeros((1,26))
+                self.test_body_pos = np.zeros((3, 1))
+                self.test_body_vel = np.zeros((3, 1))
+                self.test_rpy = np.zeros((3, 1))
+                self.test_omega = np.zeros((3, 1))
+            else:
+                self.df_colomn = ["time",
+                                  "gait",
+                                  "r",
+                                  "p",
+                                  "y",
+                                  "x",
+                                  "y",
+                                  "z",
+                                  "wx",
+                                  "wy",
+                                  "wz",
+                                  "vx",
+                                  "vy",
+                                  "vz",
+                                  ]
+                self.df_data = np.zeros((1, 14))
+                self.df_data[0][0] = rospy.get_time()
         if plan5:
             #x = {pos vel p1 p2 p3 p4}
             self.x = np.zeros((18,1))
-            self.Qp = np.diag([0.001,0.001,0.005]) ** 2 # noise of foot point 3*3
-            self.Qf = np.diag([0.01,0.01,0.05]) ** 2 # noise of acc 3*3
+            self.Qp = np.diag([0.001,0.001,0.001]) ** 2 # noise of foot point 3*3
+            self.Qf = np.diag([0.01,0.01,0.01]) ** 2 # noise of acc 3*3
             self.Q = np.zeros((18,18))
             self.F = np.eye(18)
             self.y = np.zeros((15,1)) #leg0123 vel
             self.H = np.zeros((15,18))
-            self.Qr = np.kron(np.eye(5),np.dot(np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,-0.17]]),np.dot(np.diag([0.001,0.001,0.001])**2,np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,-0.17]]).T)))
+            self.Qr = np.kron(np.eye(5),np.dot(np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,0.17]]),np.dot(np.diag([0.001,0.001,0.001])**2,np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,0.17]]).T)))
             self.P = np.zeros((18,18))
             self.S = np.zeros((18,18))
             self.K = np.zeros((18,18))# kalman increment
@@ -180,7 +199,7 @@ class state_estimation():
                     self.state_publish()
 
 
-                    print("loop_time:", self.looptime)
+                    # print("loop_time:", self.looptime)
                     # print("body_pos:", self.body_pos)
                     # `print("body_vel", self.body_vel)
                 if TEST:
@@ -347,6 +366,7 @@ class state_estimation():
                 self.F[0:3,3:6] = self.looptime * np.eye(3)
                 acc = np.dot(C_mat, self.linear_acceleration) + np.array([[0], [0], [-9.81]])
                 self.x = np.dot(self.F,self.x)
+                print("acc",acc)
                 self.x[0:3,0:1] += 0.5 * self.looptime**2 * acc
                 self.x[3:6,0:1] += self.looptime * acc
                 self.Q[0:3,0:3] = 0.33 * self.looptime**3 * self.Qf
@@ -355,29 +375,37 @@ class state_estimation():
                 self.Q[3:6, 3:6] = self.looptime * self.Qf
                 for i in range(4):
                     if self.schedule_leg[i] == 1:
-                        self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = self.Qf
+                        self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = self.Qp
                     else:
                         self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = np.zeros((3,3))
                 self.P = np.dot(self.F,np.dot(self.P,self.F.T)) + self.Q
 
                 # post
-                self.y[12:15,0:1] = self.yv - self.x[3:6,0:1]
-                for i in range(4):
-                    if self.schedule_leg[i] == 1 and self.contact_state[i] == 1:
-                        self.y[3*i:3*i+3,0:1] = self.footpoint_W[0:3,i:i+1] - (self.x[6 + i*3: 9+i*3,0:1] - self.x[0:3,0:1])
-                    else:
-                        self.y[3 * i:3 * i + 3, 0:1] = np.zeros((3,1))
-                    self.H[3 * i:3 * i + 3,0:3] = - np.eye(3)
-                    self.H[3 * i:3 * i + 3,6 + i*3: 9+i*3] = np.eye(3)
-                self.H[12:15,3: 6] = np.eye(3)
-                self.Qr[12:15,12:15] = self.P[0:3,0:3]/max(self.looptime,1./self.Hz)
-                self.S = self.Qr + np.dot(self.H,np.dot(self.P,self.H.T))
-                self.K = np.dot(self.P,np.dot(self.H.T,np.linalg.inv(self.S)))
-                dx = np.dot(self.K,self.y)
-                self.x += dx
-                self.P = np.dot((np.eye(18) - np.dot(self.K,self.H)),self.P)
+                # self.y[12:15,0:1] = self.yv - self.x[3:6,0:1]
+                # for i in range(4):
+                #     if self.schedule_leg[i] == 1 and self.contact_state[i] == 1:
+                #         self.y[3*i:3*i+3,0:1] = self.footpoint_W[0:3,i:i+1] - (self.x[6 + i*3: 9+i*3,0:1] - self.x[0:3,0:1])
+                #     else:
+                #         self.y[3 * i:3 * i + 3, 0:1] = np.zeros((3,1))
+                #     self.H[3 * i:3 * i + 3,0:3] = - np.eye(3)
+                #     self.H[3 * i:3 * i + 3,6 + i*3: 9+i*3] = np.eye(3)
+                # self.H[12:15,3: 6] = np.eye(3)
+                # self.Qr[12:15,12:15] = self.P[0:3,0:3]/max(self.looptime,1./self.Hz)
+                # self.S = self.Qr + np.dot(self.H,np.dot(self.P,self.H.T))
+                #
+                # self.K = np.dot(np.dot(self.P,self.H.T),np.fabs(np.linalg.inv(self.S)))
+                # print(self.H.T)
+                # # print(np.dot(self.P,self.H.T))
+                # print(self.K)
+                # dx = np.dot(self.K,self.y)
+                # self.x += dx
+                # self.P = np.dot((np.eye(18) - np.dot(self.K,self.H)),self.P)
                 self.body_pos = self.x[0:3,0:1]
                 self.body_vel = self.x[3:6,0:1]
+                print("foot_point: ",self.footpoint_W)
+                print("x: ",self.x)
+                # print("dx: ", dx)
+                print("y: ", self.y)
 
                 #calculate houyan v
                 if len(self.body_pos_memory) < self.memory_lenth:
@@ -477,22 +505,37 @@ class state_estimation():
 
                 self.last_body_pos = copy.deepcopy(self.test_body_pos)
     def restore_df_data(self):
-        _data = np.zeros(26)
-        _data[0] = rospy.get_time()
-        _data[1] = self.current_gait
-        _data[2:5] = self.test_rpy.reshape(3)
-        _data[5:8] = self.test_body_pos.reshape(3)
-        _data[8:11] = self.test_omega.reshape(3)
-        _data[11:14] = self.test_body_vel.reshape(3)
-        _data[14:17] = self.rpy.reshape(3)
-        _data[17:20] = self.body_pos.reshape(3)
-        _data[20:23] = self.omega.reshape(3)
-        _data[23:26] = self.body_vel.reshape(3)
-        self.df_data = np.vstack([self.df_data,_data.reshape((1,26))])
+        if USE_SIM:
+            _data = np.zeros(26)
+            _data[0] = rospy.get_time()
+            _data[1] = self.current_gait
+            _data[2:5] = self.test_rpy.reshape(3)
+            _data[5:8] = self.test_body_pos.reshape(3)
+            _data[8:11] = self.test_omega.reshape(3)
+            _data[11:14] = self.test_body_vel.reshape(3)
+            _data[14:17] = self.rpy.reshape(3)
+            _data[17:20] = self.body_pos.reshape(3)
+            _data[20:23] = self.omega.reshape(3)
+            _data[23:26] = self.body_vel.reshape(3)
+            self.df_data = np.vstack([self.df_data,_data.reshape((1,26))])
+        else:
+            _data = np.zeros(14)
+            _data[0] = rospy.get_time()
+            _data[1] = self.current_gait
+            _data[2:5] = self.rpy.reshape(3)
+            _data[5:8] = self.body_pos.reshape(3)
+            _data[8:11] = self.omega.reshape(3)
+            _data[11:14] = self.body_vel.reshape(3)
+            self.df_data = np.vstack([self.df_data, _data.reshape((1, 14))])
 
     def restore_dataframe(self):
         self.data_frame = pd.DataFrame(self.df_data,columns=self.df_colomn)
-        name = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/"+str(time.asctime())+".csv"
+        if USE_SIM:
+            name = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/" + str(time.asctime()) + ".csv"
+        else:
+            name = "/home/marunyu/catkin_ws/src//dog_2021//new_dog/state_estimation/datas/" + str(time.asctime()) + ".csv"
+            # name = str(time.asctime()) + ".csv"
+            # print(self.data_frame)
         self.data_frame.to_csv(name)
         print("saved")
 
@@ -538,12 +581,22 @@ class state_estimation():
                 rec_str = self.ser.read(count)
 
                 if len(rec_str) >= 39:
-                    FrameHeadIndex = rec_str.find(0x7E)
-                    if FrameHeadIndex != -1:
+                    FrameHeadIndex = None
+                    for i in range(len(rec_str) - 1):
+                        if rec_str[i] == 0x7E:
+                            if rec_str[i + 1] == 0x01:
+                                FrameHeadIndex = i
+                                break
+
+                    if FrameHeadIndex != None:
                         PossibleFrame = rec_str[FrameHeadIndex:FrameHeadIndex + 39]  # 完整的一帧长度为39个字节
-                        print(PossibleFrame.hex())
-                        if FrameHeadIndex + 39 <= len(rec_str) and CRC8Calculate(PossibleFrame, 39) == 0:
+                        if CRC8Calculate(PossibleFrame, 39) == 0:
                             IMUDataDecode(PossibleFrame, Result)
+                    # FrameHeadIndex = rec_str.find(0x7E)
+                    # if FrameHeadIndex != -1:
+                    #     PossibleFrame = rec_str[FrameHeadIndex:FrameHeadIndex + 39]  # 完整的一帧长度为39个字节
+                    #     if FrameHeadIndex + 39 <= len(rec_str) and CRC8Calculate(PossibleFrame, 39) == 0:
+                    #         IMUDataDecode(PossibleFrame, Result)
                             self.got_imu = 1
                             self.omega[0][0] = Result[3]
                             self.omega[1][0] = Result[4]
@@ -558,9 +611,18 @@ class state_estimation():
                             self.rpy[0][0] = Result[0]
                             self.rpy[1][0] = Result[1]
                             self.rpy[2][0] = Result[2]
-                            print("rpy", self.rpy)
-                            print("omega", self.omega)
-                            print("acc", self.linear_acceleration)
+                            # print(1)
+                            # print("rpy", self.rpy)
+                            # print("omega", self.omega)
+                            # print("acc", self.linear_acceleration)
+            #             else:
+            #                 print("imu CRC not pass*******************************")
+            #         else:
+            #             print("imu no head*******************************")
+            #     else:
+            #         print("imu lenth not enough*******************************")
+            # else:
+            #     print("imu not received*******************************")
     def get_touchsensor(self):
         pass # TODO:touchsensor real_robot
     def left_front_callback(self,effort_message):

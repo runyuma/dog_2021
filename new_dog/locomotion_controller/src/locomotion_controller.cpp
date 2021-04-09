@@ -207,7 +207,7 @@ void locomotion_controller::swing_publoish()
 //***************************************************************************************/visualize/***************************************************************************************//
 void locomotion_controller::visual()
 {
-  if(time_index%100 == 0)
+  if(time_index%1 == 0)
   {
     std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
     std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;

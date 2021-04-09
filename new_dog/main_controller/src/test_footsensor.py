@@ -108,26 +108,38 @@ def test_singleleg():
         elif test_footsensor:
             if time_index <= 1000:
                 status_msg.data = [5, 5, 5, 5]
-                footforce_msg.data = [0, 0.83, -1.52] * 4
+                footforce_msg.data = [0, 1.21, -1.68] * 4
             else:
-                if 1000 < time_index <= 30000:
+                if 1000 < time_index <= 5000:
                     force_max = -20.
-                    force_z = force_max / 2 * np.sin(time_index / 1000 * np.pi * 2) + force_max / 2 - 1.
+                    force_z = force_max * time_index / 5000
                     if force_z > 0: force_z = 0
-                    force_x = force_z * friction
-                    force_y = - force_z * friction
-                elif 30000 < time_index <= 50000:
+                    force_x = 0.
+                    force_y = 0.
+                elif 5000 < time_index <= 10000:
+                    force_max = -20.
+                    force_z = force_max
+                    if force_z > 0: force_z = 0
+                    force_x = 1
+                    force_y = 0.
+                elif 10000 < time_index <= 15000:
                     force_max = -30.
-                    force_z = force_max / 2 * np.sin(time_index / 1000 * np.pi * 2) + force_max / 2 - 1.
+                    force_z = force_max
+                    if force_z > 0: force_z = 0
+                    force_x = 0
+                    force_y = 8
+                elif 15000 < time_index <= 20000:
+                    force_max = -25.
+                    force_z = force_max
+                    if force_z > 0: force_z = 0
+                    force_x = 1.
+                    force_y = 5.
+                elif time_index > 20000:
+                    force_max = -15.
+                    force_z = force_max
                     if force_z > 0: force_z = 0
                     force_x = force_z * friction
-                    force_y = - force_z * friction
-                elif time_index > 50000:
-                    force_max = -15.
-                    force_z = force_max / 2 * np.sin(time_index / 1000 * np.pi * 2) + force_max / 2 - 1.
-                    if force_z > 0: force_z = 0
-                    force_x = - force_z * friction
-                    force_y = force_z * friction
+                    force_y = 0
                     
                 status_msg.data = [0, 0, 0, 0]
                 footforce_msg.data = [force_x, force_y, force_z] * 4
@@ -271,9 +283,9 @@ def test_savedata(name1, data1, name2=None, data2=None, form=None):
     dic1 = zip(name1, data1)
     dataF_1 = pd.DataFrame(dic1)
     if form == 'csv':
-        dataF_1.to_csv('name1' + '_Framework.csv')
+        dataF_1.to_csv('/home/marunyu/name1' + '_Framework.csv')
     else:
-        np.save('name1' + '_Framework.npy', dataF_1)
+        np.save('/home/marunyu/name1' + '_Framework.npy', dataF_1)
 
     # if data2 is not None:
     #     dic2 = {name2: data2}

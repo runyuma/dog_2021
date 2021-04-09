@@ -29,11 +29,11 @@
 #define MOTOR2KP        0.03f    // 2号KP
 #define MOTOR2KD        5.0f
 // 逻辑零点实际位置数组：下发命令的时候，加上本数组；接收的时候，减掉本数组；第一排是前面的电机，第二排是后面的电机
-#define LOGIZZEROPOSARRAY   {{0.406718f, -1.11269f, 3.47613f, 0.444301f, 1.59018f, -3.08786f},  \
+#define LOGIZZEROPOSARRAY   {{0.406718f, -1.11269f, 3.47613f, 0.032f, 1.7018f, -3.08786f},  \
                             {0.338669f, -1.12057f, 3.97569f, 0.316852f, 1.44965f, -3.17641f}}
 // 正反 + 减速比数组：下发命令时乘本数组，接收的时候除以本数组
 #define MOTORDIRARRAY       {{1, 1, 1.2727272727f, -1, -1, -1.2727272727f},    \
-                            {1, 1, 1.2727272727f, -1, -1, -1.2727272727f}}
+                            {-1, 1, 1.2727272727f, 1, -1, -1.2727272727f}}
 /* User Config */
 
 static UnitreeDriver *pMotorDriver[2] = {nullptr, nullptr};     // 0 前驱动板 1 后驱动板
@@ -84,7 +84,7 @@ int main(int argc, char **argv){
         UpdateCount = 0;
         std::cout << "MotorData:";
         for(int i = 0;i < 6;i ++){
-            std::cout << pMotorDriver[BACKINDEX]->MotorData[i].CurPos << " ";
+            std::cout << pMotorDriver[FRONTINDEX]->MotorData[i].CurPos << " ";
         }
         std::cout << std::endl;
     }
@@ -192,7 +192,7 @@ void FrontLowerTimercallback(const ros::TimerEvent&){
 
 /** @brief 后下位机看门狗回调函数 */
 void BackLowerTimercallback(const ros::TimerEvent&){
-    ROS_ERROR_STREAM("Back Lower Disconnected!");
+//    ROS_ERROR_STREAM("Back Lower Disconnected!");
     // 后续操作
 }
 
