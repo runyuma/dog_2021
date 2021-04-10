@@ -20,7 +20,6 @@ void locomotion_controller::init()
   pnh->getParam("body_width",_Dog->body_width);
   pnh->getParam("hip_lenth",_Dog->hip_lenth);
   pnh->getParam("walking_height",_Dog->walking_height);
-  pnh->getParam("walking_height",_Dog->walking_height);
   pnh->getParam("use_sim",_Dog->use_sim);
   pnh->getParam("total_weight",_Dog->body_mass);
 
@@ -207,7 +206,7 @@ void locomotion_controller::swing_publoish()
 //***************************************************************************************/visualize/***************************************************************************************//
 void locomotion_controller::visual()
 {
-  if(time_index%1 == 0)
+  if(time_index%2 == 0)
   {
     std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
     std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;

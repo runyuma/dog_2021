@@ -24,9 +24,9 @@
 // KP KD
 #define MOTOR0KP        0.03f    // 0号KP
 #define MOTOR0KD        5.0f
-#define MOTOR1KP        0.03f    // 1号KP
+#define MOTOR1KP        0.05f    // 1号KP
 #define MOTOR1KD        5.0f
-#define MOTOR2KP        0.03f    // 2号KP
+#define MOTOR2KP        0.1f    // 2号KP
 #define MOTOR2KD        5.0f
 // 逻辑零点实际位置数组：下发命令的时候，加上本数组；接收的时候，减掉本数组；第一排是前面的电机，第二排是后面的电机
 #define LOGIZZEROPOSARRAY   {{0.406718f, -1.11269f, 3.47613f, 0.032f, 1.7018f, -3.08786f},  \

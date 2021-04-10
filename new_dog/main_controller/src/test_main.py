@@ -8,11 +8,12 @@ from statemechine import *
 from std_msgs.msg import Float32MultiArray,Float32,Int32MultiArray
 test_upperconcle = 0
 test_singleleg = 1
-test_jacobian = 0
-test_swing_leg = 1
+test_jacobian = 1
+test_swing_leg = 0
 test_singleleg_two_point = 0
 test_swing_leg_singlepos = 0
 test_gravity = 0
+test_pos = 0
 recovery = 0
 def test_upperconcole():
     rospy.init_node("uppernode")
@@ -48,10 +49,13 @@ def test_singleleg():
         if test_jacobian:
             if time_index <=1000:
                 status_msg.data = [5, 5, 5, 5]
-                footforce_msg.data = [0, 1., -2.] * 4
+                footforce_msg.data = [0, 0.78, -1.57] * 4
             else:
                 status_msg.data = [0, 0 ,0 , 0]
-                footforce_msg.data = [0,0,-50] * 4
+                footforce_msg.data = [0,0,-40] * 4
+        elif test_pos:
+            status_msg.data = [5, 5, 5, 5]
+            footforce_msg.data = [0, 0.78, -1.57] * 4
         elif test_singleleg_two_point:
             if time_index <= 1000:
                 status_msg.data = [5, 5, 5, 5]

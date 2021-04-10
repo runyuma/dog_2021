@@ -17,7 +17,6 @@ void dog_controller::dog_reset()
   contact_state = {1,1,1,1};
   command_vel = Eigen::Vector3f::Zero();
   command_omega = Eigen::Vector3f::Zero();
-  walking_height = 0.32;
   target_swingpos = Eigen::Matrix<float,3,4>::Zero();
   target_swingvel = Eigen::Matrix<float,3,4>::Zero();
   init_SWINGfootpoint = Eigen::Matrix<float,3,4>::Zero();
@@ -242,7 +241,7 @@ void dog_controller::getTarget_Force()
   {
     _Force_KP(2,2) = 0;
     _Force_KD(2,2) =  _Force_KD(2,2);
-    float foot_height;
+    float foot_height = 0;
     int num = 0;
     for (int i = 0;i<4;i++) {
       if (schedualgroundLeg[i] == 1)
@@ -257,8 +256,7 @@ void dog_controller::getTarget_Force()
 
     target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + _Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
     target_force(2,0) = target_force(2,0) + z_force;
-    //cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
-
+    cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
   }
   else {
     target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
@@ -386,6 +384,7 @@ void dog_controller::Force_calculation()
   }
 
   force_list = _qp_solver.foot_force;
+  cout<<"error"<<_qp_solver.Error<<endl;
   for (int i = 0;i<4;i++) {
     if(_statemachine.phase[i]>= 0.95 and _statemachine._gait.Gait_phase[_statemachine._gait.Gait_index][i] != 1)
     {

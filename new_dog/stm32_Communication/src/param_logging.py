@@ -25,7 +25,7 @@ dic = {'total_weight':16,
 	"body_width":0.055,
        "use_sim":0,
        "damping_compensation":[0.05,0.00,0.5],
-       "walking_height": 0.32,
+       "walking_height": 0.30,
        }
 dic["move_reset"] = 0
 dic["start_move"] = 0
@@ -48,10 +48,10 @@ if dic["state_estimation_mode"] == 0:
     dic["trot_troque_p"] = [400,600,500]
     dic["trot_troque_D"] = [50,65,50]
 elif dic["state_estimation_mode"] == 1:
-    dic["stand_force_p"] = [200,200,200]
-    dic["stand_force_D"] = [50,50,50]
-    dic["stand_troque_p"] = [100,100,100]
-    dic["stand_troque_D"] = [10,10,10]
+    dic["stand_force_p"] = [1,1,1]
+    dic["stand_force_D"] = [1,1,1]
+    dic["stand_troque_p"] = [2,50,2]
+    dic["stand_troque_D"] = [1,5,1]
     dic["trot_force_p"] = [400,450,600]
     dic["trot_force_D"] = [200,100,160]
     dic["trot_troque_p"] = [450,650,500]#400,600,500

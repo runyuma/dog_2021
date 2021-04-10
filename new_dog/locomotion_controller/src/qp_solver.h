@@ -6,7 +6,7 @@
 class qp_solver
 {
 private:
-  float miu = 0.4;
+  float miu = 0.3;
   int getlegnum();
   Eigen::Matrix<float,6,6> D2 = Eigen::Matrix<float,6,6>::Identity();
   Eigen::Matrix<float,6,6> D4 = Eigen::Matrix<float,6,6>::Identity();
