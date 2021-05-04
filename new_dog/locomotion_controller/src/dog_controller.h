@@ -35,7 +35,7 @@ public:
   Eigen::Vector3f body_vel = Eigen::Vector3f::Zero();
   Eigen::Vector3f command_vel = Eigen::Vector3f::Zero();
   Eigen::Vector3f command_omega = Eigen::Vector3f::Zero();
-  float walking_height = 0.3;
+  float walking_height;
 
   Eigen::Matrix<float,3,4> footpoint = Eigen::Matrix<float,3,4>::Zero();
   Eigen::Matrix<float,3,4> footvel = Eigen::Matrix<float,3,4>::Zero();
@@ -43,6 +43,7 @@ public:
   Eigen::Matrix<float,3,4> target_swingvel = Eigen::Matrix<float,3,4>::Zero();
   Eigen::Matrix<float,3,4> init_SWINGfootpoint = Eigen::Matrix<float,3,4>::Zero();
   Eigen::Matrix3f TF_mat = Eigen::Matrix<float,3,3>::Identity();
+  Eigen::Matrix3f posture_mat = Eigen::Matrix<float,3,3>::Identity();
   Eigen::Matrix<float,3,4> force_list = Eigen::Matrix<float,3,4>::Zero();
   int schedualgroundLeg[4] = {1,1,1,1};
   Eigen::Matrix<float,3,4> target_state = Eigen::Matrix<float,3,4>::Zero();

@@ -49,12 +49,14 @@ void leg_controller::groundforce_callback(const  std_msgs::Float32MultiArray::Co
 }
 void leg_controller::swingleg_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg)
 {
+    
     if (msg->data.size() == 24)
     {
         for( int i=0;i<24;i++ )
         {
         target_swing[i] = msg->data[i];
         }
+        // cout<<"  "<<target_swing[0]<<endl;
     }
  }
 void leg_controller::leg_status_callback(const  std_msgs::Int32MultiArray::ConstPtr& msg)
@@ -64,6 +66,7 @@ void leg_controller::leg_status_callback(const  std_msgs::Int32MultiArray::Const
         for( int i=0;i<4;i++ )
         {
             leg_status[i] = msg->data[i];
+            // cout<< leg_status[i];
         }
     }
     

@@ -6,11 +6,14 @@
 class qp_solver
 {
 private:
-  float miu = 0.3;
+  float miu = 0.25;
   int getlegnum();
   Eigen::Matrix<float,6,6> D2 = Eigen::Matrix<float,6,6>::Identity();
   Eigen::Matrix<float,6,6> D4 = Eigen::Matrix<float,6,6>::Identity();
+  Eigen::Matrix<float,12,12>R4 = Eigen::Matrix<float,12,12>::Identity();
+  Eigen::Matrix<float,12,12>R2 = Eigen::Matrix<float,12,12>::Identity();
 public:
+  Eigen::Matrix3f R_mat;
   Eigen::SparseMatrix<float> P ;
   Eigen::Matrix<float,6,12> A = Eigen::Matrix<float,6,12>::Zero();;
   Eigen::Matrix<float,6,6> D = Eigen::Matrix<float,6,6>::Identity();
@@ -34,7 +37,7 @@ public:
   void updateHessian();
   void updateGradient();
   void updateConstraints();
-  int solveQP(Eigen::Matrix<float,3,4> & _foot_point, int *_schedule_leg, Eigen::VectorXf &ForceTorque);
+  int solveQP(Eigen::Matrix<float,3,4> & _foot_point, int *_schedule_leg, Eigen::VectorXf &ForceTorque,Eigen::Matrix<float,3,3> &R_mat,Eigen::Matrix<float,3,3> &_posture_mat);
   void test();
 };
 #endif // QP_SOLVER_H

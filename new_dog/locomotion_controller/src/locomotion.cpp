@@ -52,7 +52,7 @@ int main(int argc, char **argv)
       int recover = _locomotion_controller.shrink(start_timeindex,_locomotion_controller._Dog->rpy);
       if(recover)
       {
-        _locomotion_controller.moving_reset();
+        // _locomotion_controller.moving_reset();
       }
     }
 

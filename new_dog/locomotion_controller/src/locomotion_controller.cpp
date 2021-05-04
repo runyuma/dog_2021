@@ -100,7 +100,7 @@ void locomotion_controller::state_estimation_callback(const  std_msgs::Float32Mu
   if(_Dog->is_moving)
   {
     _Dog->rpy<<msg->data[0],msg->data[1],msg->data[2];
-    if(ABS(_Dog->rpy(1))>=0.2)
+    if(ABS(_Dog->rpy(1))>=0.3)
     {
       pnh ->setParam("fallen_error",1);
     }
@@ -206,7 +206,7 @@ void locomotion_controller::swing_publoish()
 //***************************************************************************************/visualize/***************************************************************************************//
 void locomotion_controller::visual()
 {
-  if(time_index%2 == 0)
+  if(time_index%5 == 0)
   {
     std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
     std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
@@ -224,6 +224,7 @@ void locomotion_controller::visual()
     std::cout<<"gait_time: "<<_Dog->_statemachine._gait.Gait_currentTime<<std::endl;
     std::cout<<"loop_time: "<<_Dog->loop_time<<std::endl;
     std::cout<<"target_force/Torque: "<<_Dog->target_force<<std::endl<<_Dog->target_torque<<std::endl;
+    std::cout<<"Error: "<<_Dog->_qp_solver.Error<<std::endl;
     std::cout<<"force_list: "<<_Dog->force_list<<std::endl;
     std::cout<<"swing_pos: "<<_Dog->target_swingpos<<std::endl;
     std::cout<<"swing_vel: "<<_Dog->target_swingvel<<std::endl;

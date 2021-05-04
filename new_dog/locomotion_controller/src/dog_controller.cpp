@@ -55,6 +55,7 @@ void dog_controller::get_TFmat()
           sin(rpy(2)),cos(rpy(2)),0,
           0,0,1;
   TF_mat = matr_z*matr_y*matr_x;
+  posture_mat = matr_y*matr_x;
 
 }
 
@@ -198,8 +199,8 @@ void dog_controller::getTarget_Force()
 
   Eigen::Matrix3f Force_KP,Force_KD,Torque_KP,Torque_KD;
   Eigen::Vector3f Force_limit,Torque_limit;
-  Force_limit<<50,50,200;
-  Torque_limit<<20,30,30;
+  Force_limit<<20,20,200;
+  Torque_limit<<10,15,10;
   if(_statemachine._gait.name == "STANDING")
   {
 //    Force_KP<<2500,0,0,0,800,0,0,0,800;
@@ -251,15 +252,16 @@ void dog_controller::getTarget_Force()
       }
     }
     foot_height = - foot_height/num;
-//    std::cout<<foot_height<<std::endl;
     float z_force = Force_KP(2,2)*(walking_height - foot_height);
-
-    target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + _Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
+    Eigen::Vector3f gravity_balance;
+    gravity_balance = - TF_mat.inverse() *body_mass * g;
+    target_force = _Force_KP *TF_mat.inverse() *  (target_pos - body_pos) + _Force_KD *  TF_mat.inverse() *(target_vel - body_vel) + gravity_balance;
     target_force(2,0) = target_force(2,0) + z_force;
-    cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
+    // cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
   }
   else {
-    target_force = _Force_KP * TF_mat.inverse() * (target_pos - body_pos) + Force_KD * TF_mat.inverse() * (target_vel - body_vel) - TF_mat.inverse() *body_mass * g;
+    target_force = _Force_KP  * (target_pos - body_pos) + Force_KD  * (target_vel - body_vel) - body_mass * g;
+    target_force = TF_mat.inverse() * target_force;
   }
   if(ABS(rpy(2))>= PI/2 and ABS(target_rpy(2))>= PI and rpy(2) * target_rpy(2) < 0)
   {
@@ -377,14 +379,14 @@ void dog_controller::Force_calculation()
   ForceTorque.block(3,0,3,1) = target_torque;
 
   try {
-    int a=_qp_solver.solveQP(footpoint,schedualgroundLeg,ForceTorque);
+    int a=_qp_solver.solveQP(footpoint,schedualgroundLeg,ForceTorque,TF_mat,posture_mat);
     if(a == 1){throw 1;}
   } catch (int) {
     osqp_unsolved_error = 1;
   }
 
   force_list = _qp_solver.foot_force;
-  cout<<"error"<<_qp_solver.Error<<endl;
+  // cout<<"error"<<_qp_solver.Error<<endl;
   for (int i = 0;i<4;i++) {
     if(_statemachine.phase[i]>= 0.95 and _statemachine._gait.Gait_phase[_statemachine._gait.Gait_index][i] != 1)
     {

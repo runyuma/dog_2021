@@ -22,18 +22,18 @@
 #define FRONTINDEX      0       // 前驱动板下标
 #define BACKINDEX       1       // 后驱动板下标
 // KP KD
-#define MOTOR0KP        0.03f    // 0号KP
-#define MOTOR0KD        5.0f
+#define MOTOR0KP        0.00f    // 0号KP
+#define MOTOR0KD        2.50f
 #define MOTOR1KP        0.05f    // 1号KP
 #define MOTOR1KD        5.0f
 #define MOTOR2KP        0.1f    // 2号KP
 #define MOTOR2KD        5.0f
 // 逻辑零点实际位置数组：下发命令的时候，加上本数组；接收的时候，减掉本数组；第一排是前面的电机，第二排是后面的电机
-#define LOGIZZEROPOSARRAY   {{0.406718f, -1.11269f, 3.47613f, 0.032f, 1.7018f, -3.08786f},  \
-                            {0.338669f, -1.12057f, 3.97569f, 0.316852f, 1.44965f, -3.17641f}}
+#define LOGIZZEROPOSARRAY   {{0.f, -0.f, 0.f, 0.f, 0.f, 0.f},  \
+                            {0.f,0.f, 0.f, 0.f, 0.f, 0.f}}
 // 正反 + 减速比数组：下发命令时乘本数组，接收的时候除以本数组
-#define MOTORDIRARRAY       {{1, 1, 1.2727272727f, -1, -1, -1.2727272727f},    \
-                            {-1, 1, 1.2727272727f, 1, -1, -1.2727272727f}}
+#define MOTORDIRARRAY       {{1, 1, 1, 1, 1, 1},    \
+                            {1, 1, 1, 1, 1, 1}}
 /* User Config */
 
 static UnitreeDriver *pMotorDriver[2] = {nullptr, nullptr};     // 0 前驱动板 1 后驱动板
@@ -82,12 +82,18 @@ int main(int argc, char **argv){
     static int UpdateCount = 0;
     if(++UpdateCount == 200){
         UpdateCount = 0;
-        std::cout << "MotorData:";
+        std::cout << "MotorData front :";
         for(int i = 0;i < 6;i ++){
             std::cout << pMotorDriver[FRONTINDEX]->MotorData[i].CurPos << " ";
         }
         std::cout << std::endl;
+        std::cout << "MotorData back :";
+        for(int i = 0;i < 6;i ++){
+            std::cout << pMotorDriver[BACKINDEX]->MotorData[i].CurPos << " ";
+        }
+        std::cout << std::endl;
     }
+    
 #endif
 
         Map_PublishMotorData(UpStreamPub);                      // 发布电机当前数据
@@ -177,6 +183,7 @@ void Map_PublishMotorData(ros::Publisher& Pub){
         MotorDataArray.data[12 + Count] = pMotorDriver[Index]->MotorData[MotorIndex].CurVel / MotorRatioArray[Index][MotorIndex];
     }
     Pub.publish(MotorDataArray);  // 发布
+
 }
 
 /** @brief 调试用的一个函数 */
