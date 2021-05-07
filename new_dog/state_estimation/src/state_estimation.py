@@ -530,10 +530,10 @@ class state_estimation():
 
     def restore_dataframe(self):
         self.data_frame = pd.DataFrame(self.df_data,columns=self.df_colomn)
-        # if USE_SIM:
-        #     name = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/" + str(time.asctime()) + ".csv"
-        # else:
-        name = "/home/marunyu/catkin_ws/src//dog_2021//new_dog/state_estimation/datas/" + str(time.asctime()) + ".csv"
+        if USE_SIM:
+            name = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/" + str(time.asctime()) + ".csv"
+        else:
+            name = "/home/marunyu/catkin_ws/src//dog_2021//new_dog/state_estimation/datas/" + str(time.asctime()) + ".csv"
             # name = str(time.asctime()) + ".csv"
             # print(self.data_frame)
         self.data_frame.to_csv(name)

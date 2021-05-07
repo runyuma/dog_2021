@@ -210,6 +210,34 @@ void leg_controller::main()
                     target_value[3*i+j] = _joint_torque.data()[j];
                 }
             }
+             else if(leg_status[i] == 2)//force&position
+            {
+                Eigen::Matrix3f KP,KD;
+                KP = Eigen::Matrix3f::Zero();
+                KD = Eigen::Matrix3f::Zero();
+                std::vector<float> _kp, _kd;
+                pnh-> getParam("groundleg_P",_kp);
+                pnh-> getParam("groundleg_D",_kd);
+                KP(0,0) = _kp[0];
+                KP(1,1) = _kp[1];
+                KP(2,2) = _kp[2];
+                KD(0,0) = _kd[0];
+                KD(1,1) = _kd[1];
+                KD(2,2) = _kd[2];
+            
+                Eigen::Vector3f _target_pos, _target_vel ,_joint_torque,_Force;
+                _target_pos<<target_swing[3*i], target_swing[3*i+1], target_swing[3*i+2];
+                _target_vel<<target_swing[3*i + 12], target_swing[3*i+1 + 12], target_swing[3*i+2 + 12];
+                Eigen::Vector3f taubf= jacobian * get_feedbackward(KP ,KD , _foot_point, _foot_vel, _target_pos,_target_vel);
+                _Force<<target_force[3*i+0],target_force[3*i+1],target_force[3*i+2];
+                _joint_torque = jacobian.transpose() * _Force + taubf;
+                // cout<<getCurrentTime() - start_time<<endl;
+                for( int j=0;j<3;j++ )
+                {  
+                    target_mode[3*i+j] = 2;
+                    target_value[3*i+j] = _joint_torque.data()[j];
+                }
+            }
             else if(leg_status[i] == 5)
             {
                 Eigen::Vector3f _Force,_joint_torque;

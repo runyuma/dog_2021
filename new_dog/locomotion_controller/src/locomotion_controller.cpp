@@ -1,6 +1,6 @@
 #include "locomotion_controller.h"
 #define ABS(x) (x>0 ? x : -x)
-
+#define FORCEANDPOS 1
 
 locomotion_controller::locomotion_controller(){}
 void locomotion_controller::init()
@@ -119,7 +119,15 @@ void locomotion_controller::status_publish()
   for (int i = 0;i<4;i++) {
     if(_Dog->schedualgroundLeg[i] == 1)
     {
-      status_msg.data[i] = 0;
+      if(FORCEANDPOS)
+      {
+        status_msg.data[i] = 2;
+      }
+      else
+      {
+        status_msg.data[i] = 0;
+      }
+      
     }
     else {
       status_msg.data[i]= 1;
@@ -192,9 +200,9 @@ void locomotion_controller::swing_publoish()
       swingleg_msg.data[3*i + 14] = _Dog->target_swingvel(2,i);
     }
     else {
-      swingleg_msg.data[3*i] = 0;
-      swingleg_msg.data[3*i + 1] = 0;
-      swingleg_msg.data[3*i + 2] = 0;
+      swingleg_msg.data[3*i] = _Dog->target_groundleg(0,i) - Xside_sign * _Dog->body_width;
+      swingleg_msg.data[3*i + 1] = _Dog->target_groundleg(1,i) - Yside_sign * _Dog->body_lenth;
+      swingleg_msg.data[3*i + 2] = _Dog->target_groundleg(2,i);
       swingleg_msg.data[3*i + 12] = 0;
       swingleg_msg.data[3*i + 13] = 0;
       swingleg_msg.data[3*i + 14] = 0;
@@ -209,6 +217,7 @@ void locomotion_controller::visual()
   if(time_index%5 == 0)
   {
     std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
+    std::cout<<"target_groundleg: "<<_Dog->target_groundleg<<std::endl;
     std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
     std::cout<<"rpy: "<<_Dog->rpy<<std::endl;
     std::cout<<"xyz: "<<_Dog->body_pos<<std::endl;
@@ -266,6 +275,7 @@ void locomotion_controller::moving_func()
     force_publish();
   }
   _Dog->swingleg_calculation();
+  _Dog->targetfootpoint_calculation();
 
   std::string str_moving= "moving";
   pnh->setParam("dog_action",str_moving);
