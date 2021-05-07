@@ -64,7 +64,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
   std::vector<Eigen::Matrix<float,3,4>> states(n);
   if(_statemachine._gait.name == "STANDING")
   {
-    if(DEFAULT_HEIGHT - body_pos(2)>= 0.05)
+    if(walking_height - body_pos(2)>= 0.05)
     {
       for (int i=0;i<n;i++) {
         Eigen::Matrix<float,3,4> _state;
@@ -74,12 +74,12 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         Eigen::Vector3f target_pos = body_pos;
         Eigen::Vector3f target_vel = Eigen::Vector3f::Zero();
         if(i<= n/2){
-          target_vel(2) = 4*(DEFAULT_HEIGHT - body_pos(2)) * i /(n*n*t);
-          target_pos(2) = 2*(DEFAULT_HEIGHT - body_pos(2)) *i* i /(n*n) + body_pos(2);
+          target_vel(2) = 4*(walking_height - body_pos(2)) * i /(n*n*t);
+          target_pos(2) = 2*(walking_height - body_pos(2)) *i* i /(n*n) + body_pos(2);
         }
         else {
-          target_vel(2) = 4*(DEFAULT_HEIGHT - body_pos(2)) * (n - i) /(n*n*t);
-          target_pos(2) =  - 2*(DEFAULT_HEIGHT - body_pos(2)) *(n-i)* (n-i) /(n*n) + DEFAULT_HEIGHT;
+          target_vel(2) = 4*(walking_height - body_pos(2)) * (n - i) /(n*n*t);
+          target_pos(2) =  - 2*(walking_height - body_pos(2)) *(n-i)* (n-i) /(n*n) + walking_height;
         }
         _state.block(0,0,3,1) = target_rpy;
         _state.block(0,1,3,1) = target_pos;
@@ -101,12 +101,12 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         {
           target_rpy(2) = rpy(2);
           target_pos = body_pos;
-          target_pos(2) = DEFAULT_HEIGHT;
+          target_pos(2) = walking_height;
         }
         else {
           target_rpy(2) = last_targetstate(2,0);
           target_pos = last_targetstate.block(0,1,3,1);
-          target_pos(2) = DEFAULT_HEIGHT;
+          target_pos(2) = walking_height;
         }
         _state.block(0,0,3,1) = target_rpy;
         _state.block(0,1,3,1) = target_pos;
@@ -419,7 +419,7 @@ void dog_controller::swingleg_calculation()
      float phase2 = next_phase[i];
      float swing_time = time/(phase2 - phase1);
      Eigen::Vector3f final_point;
-     final_point<<Xsidesign*(body_width + hip_lenth),Ysidesign*body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),-DEFAULT_HEIGHT;
+     final_point<<Xsidesign*(body_width + hip_lenth),Ysidesign*body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),-walking_height;
      if( USE_RAIBERT_HEURISTIC)
      {
 //       TODO
