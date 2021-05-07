@@ -36,6 +36,10 @@ public:
   Eigen::Vector3f command_vel = Eigen::Vector3f::Zero();
   Eigen::Vector3f command_omega = Eigen::Vector3f::Zero();
   float walking_height;
+  float foot_height = 0;//the hight of  robot according to the height of foot
+  Eigen::Matrix<float,3,4>ground_point = Eigen::Matrix<float,3,4>::Zero();
+  Eigen::Matrix<float,3,4>target_groundleg = Eigen::Matrix<float,3,4>::Zero();
+  Eigen::Matrix3f target_mat = Eigen::Matrix<float,3,3>::Identity();
 
   Eigen::Matrix<float,3,4> footpoint = Eigen::Matrix<float,3,4>::Zero();
   Eigen::Matrix<float,3,4> footvel = Eigen::Matrix<float,3,4>::Zero();
@@ -75,8 +79,10 @@ public:
   int statemachine_update();
   void Force_calculation();
   void swingleg_calculation();
+  void targetfootpoint_calculation();
+  void get_groundpoint();
   void dog_reset();
 
 };
-
+Eigen::Matrix3f get_tfmat(Eigen::Vector3f & _rpy);
 #endif // DOG_CONTROLLER_H

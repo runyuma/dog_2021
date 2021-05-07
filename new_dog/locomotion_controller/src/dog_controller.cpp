@@ -242,8 +242,8 @@ void dog_controller::getTarget_Force()
   {
     _Force_KP(2,2) = 0;
     _Force_KD(2,2) =  _Force_KD(2,2);
-    float foot_height = 0;
     int num = 0;
+    foot_height = 0;
     for (int i = 0;i<4;i++) {
       if (schedualgroundLeg[i] == 1)
       {
@@ -251,17 +251,21 @@ void dog_controller::getTarget_Force()
         num += 1;
       }
     }
+
     foot_height = - foot_height/num;
+    
     float z_force = Force_KP(2,2)*(walking_height - foot_height);
     Eigen::Vector3f gravity_balance;
     gravity_balance = - TF_mat.inverse() *body_mass * g;
     target_force = _Force_KP *TF_mat.inverse() *  (target_pos - body_pos) + _Force_KD *  TF_mat.inverse() *(target_vel - body_vel) + gravity_balance;
     target_force(2,0) = target_force(2,0) + z_force;
+     
     // cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;
   }
   else {
     target_force = _Force_KP  * (target_pos - body_pos) + Force_KD  * (target_vel - body_vel) - body_mass * g;
     target_force = TF_mat.inverse() * target_force;
+    foot_height = body_pos(2);
   }
   if(ABS(rpy(2))>= PI/2 and ABS(target_rpy(2))>= PI and rpy(2) * target_rpy(2) < 0)
   {
@@ -300,6 +304,7 @@ int dog_controller::statemachine_update()
         init_SWINGfootpoint.block(0,i,3,1) = footpoint.block(0,i,3,1);
       }
     }
+    get_groundpoint();
   }
   loop_time = (ros_time-last_rostime).toSec();
   _statemachine._gait.gaittime_update((ros_time-last_rostime).toSec());
@@ -437,7 +442,52 @@ void dog_controller::swingleg_calculation()
     }
   }
 }
+void dog_controller::targetfootpoint_calculation()
+{
+ Eigen::Vector3f target_rpy = target_state.block(0,0,3,1);
+ Eigen::Vector3f target_pos = target_state.block(0,1,3,1);
+target_mat = get_tfmat(target_rpy);
+for (int i = 0; i < 4; i++)
+{
+  if(schedualgroundLeg[i] == 1)
+  {
+    target_groundleg.block(0,i,3,1) = target_mat.inverse() *(ground_point.block(0,i,3,1) - target_pos);
+  }
+  else
+  {
+    target_groundleg.block(0,i,3,1) = Eigen::Vector3f::Zero(3);
+  }
+}
+}
 
 
+void dog_controller::get_groundpoint()
+{
+   Eigen::Matrix<float,3,4> footpoint_W;
+    footpoint_W = TF_mat*footpoint;
+    Eigen::Vector3f _body_pos = body_pos;
+    body_pos(2) = foot_height;
+  for (int i = 0; i < 4; i++)
+  {
+    ground_point.block(0,i,3,1) = body_pos +  footpoint_W.block(0,i,3,1);
+  }
+}
+
+Eigen::Matrix3f get_tfmat(Eigen::Vector3f & _rpy)
+{
+  Eigen::Matrix3f matr_y,matr_x,matr_z,TF_mat;
+
+  matr_y<<cos(_rpy(1)),0,sin(_rpy(1)),
+          0,1,0,
+          -sin(_rpy(1)),0,cos(_rpy(1));
+  matr_x<<1,0,0,
+          0,cos(_rpy(0)),-sin(_rpy(0)),
+          0,sin(_rpy(0)),cos(_rpy(0));
+  matr_z<<cos(_rpy(2)),-sin(_rpy(2)),0,
+          sin(_rpy(2)),cos(_rpy(2)),0,
+          0,0,1;
+  TF_mat = matr_z*matr_y*matr_x;
+  return TF_mat;
+}
 
 

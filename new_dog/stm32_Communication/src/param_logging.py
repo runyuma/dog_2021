@@ -15,6 +15,8 @@ dic = {'total_weight':15,
        "body_inertia":[0.3,0.1,0.4],
        "swingleg_P":[80,100,150],   # 150
        "swingleg_D":[5,15,18],      # 18
+        "groundleg_P":[100,100,200],
+       "groundleg_D":[5,5,5],
        "schedule_groundleg": [1, 1, 1, 1],
        "current_gait": 0,  # 0 is standing 1 is trot_runing
        "command_vel": 0,
