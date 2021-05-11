@@ -466,10 +466,11 @@ void dog_controller::get_groundpoint()
    Eigen::Matrix<float,3,4> footpoint_W;
     footpoint_W = TF_mat*footpoint;
     Eigen::Vector3f _body_pos = body_pos;
-    body_pos(2) = foot_height;
+    _body_pos(2) = foot_height;
   for (int i = 0; i < 4; i++)
   {
     ground_point.block(0,i,3,1) = body_pos +  footpoint_W.block(0,i,3,1);
+    ground_point(2,i) = 0;
   }
 }
 

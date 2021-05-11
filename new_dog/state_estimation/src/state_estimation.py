@@ -159,7 +159,17 @@ class state_estimation():
         self.footpoint_subscriber = rospy.Subscriber("/foot_points", Float32MultiArray, self.footpoint_callback)
         self.footvel_subscriber = rospy.Subscriber("/foot_vel", Float32MultiArray, self.footvel_callback)
         self.state_publisher = rospy.Publisher("/state", Float32MultiArray, queue_size=10)
-
+        self.get_schedule_leg = 0
+        self.leg_status_subscriber = rospy.Subscriber('/leg_status', Int32MultiArray, self.leg_status_callback)
+    def leg_status_callback(self,msg):
+        self.schedule_leg = [1,1,1,1]
+        if self.get_schedule_leg == 1:
+            for i in range(4):
+                if msg.data[i] == 1:
+                    self.schedule_leg[i] = 0
+                else:
+                    self.schedule_leg[i] = 1
+        print("sche", self.schedule_leg)
     def main(self):
         while not rospy.is_shutdown():
 
@@ -177,6 +187,7 @@ class state_estimation():
                         self.looptime = self.current_time - self.last_rostime
                         self.last_rostime = self.current_time
                         self.leg_dynamic_estimation()
+
                     if self.time_index%5 == 0:
                         self.restore_df_data()
                     if self.time_index % 5000 == 0:
@@ -196,6 +207,7 @@ class state_estimation():
                     self.looptime = self.current_time - self.last_rostime
                     self.last_rostime = self.current_time
                     self.leg_dynamic_estimation()
+
                     self.state_publish()
 
 
@@ -241,34 +253,34 @@ class state_estimation():
         # cauculate pos
 
 
-        self.schedule_leg = rospy.get_param("schedule_groundleg")
+        self.get_schedule_leg = 1
         C_mat = self.get_TFmat()
         self.footpoint_W = np.dot(C_mat, self.footpoint)
         if self.USE_TOUCHSENSOR:
             rospy.set_param("contact_state", self.contact_state)
         # update contact point
         if self.state_estimation_mode == 1:
-            if not plan4 and not plan5:
-                if self.last_schedule_leg != self.schedule_leg:
-                    still_contact = np.array(self.last_schedule_leg) * np.array(self.schedule_leg)
-                    new_contact = np.array([1,1,1,1]) - still_contact
-                    self.foot_contactpoint = self.foot_contactpoint * still_contact + (np.dot(self.body_pos ,np.ones((1,4))) + self.footpoint_W) * new_contact
-                    self.last_schedule_leg = self.schedule_leg
-                # cauculate pos
-
-                self.body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * np.array(self.schedule_leg),axis=1).reshape((3,1))/sum(self.schedule_leg)
-                self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
-                if len(self.body_pos_memory)< self.memory_lenth:
-                    self.body_pos_memory.append(copy.deepcopy(self.body_pos))
-                    self.time_intervals.append(rospy.get_time())
-                else:
-                    self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.body_pos)]
-                    self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
-                self.last_body_pos = copy.deepcopy(self.body_pos)
-            elif plan4:
+            # if not plan4 and not plan5:
+            #     if self.last_schedule_leg != self.schedule_leg:
+            #         still_contact = np.array(self.last_schedule_leg) * np.array(self.schedule_leg)
+            #         new_contact = np.array([1,1,1,1]) - still_contact
+            #         self.foot_contactpoint = self.foot_contactpoint * still_contact + (np.dot(self.body_pos ,np.ones((1,4))) + self.footpoint_W) * new_contact
+            #         self.last_schedule_leg = self.schedule_leg
+            #     # cauculate pos
+            #
+            #     self.body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * np.array(self.schedule_leg),axis=1).reshape((3,1))/sum(self.schedule_leg)
+            #     self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
+            #     if len(self.body_pos_memory)< self.memory_lenth:
+            #         self.body_pos_memory.append(copy.deepcopy(self.body_pos))
+            #         self.time_intervals.append(rospy.get_time())
+            #     else:
+            #         self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.body_pos)]
+            #         self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
+            #     self.last_body_pos = copy.deepcopy(self.body_pos)
+            if plan4:
                 cal_array = np.array(copy.copy(self.last_schedule_leg))
                 if not self.USE_TOUCHSENSOR:
-                    self.contact_state = self.schedule_leg
+                    self.contact_state = copy.copy(self.schedule_leg)
                 if self.last_schedule_leg != self.schedule_leg:
                     if self.contact_state == [0, 0, 0, 0]:
                         self.body_vel += (self.looptime) * (
@@ -284,14 +296,14 @@ class state_estimation():
                                     if (point == np.zeros((3, 1))).all():
                                         self.foot_contactpoint[:, i:i + 1] = self.body_pos + self.footpoint_W[:,
                                                                                                   i:i + 1]
-                                        print("contact")
+                                        # print("contact")
                                 else:
                                     permit = 0
                             if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
                                 if self.contact_state[i] == 0:
                                     self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
                                     cal_array[i] = 0
-                                    print("loss conract")
+                                    # print("loss conract")
                         if permit:
                             for i in range(4):
                                 if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
@@ -301,7 +313,7 @@ class state_estimation():
                                     # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array([[0], [0], [0.0046]])
                                     # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array(
                                     #     [[0], [0], [0.005]])
-                            self.last_schedule_leg = self.schedule_leg
+                            self.last_schedule_leg = copy.copy(self.schedule_leg)
                             cal_array = np.array(copy.copy(self.last_schedule_leg))
 
                             print("*************************change")
@@ -316,6 +328,7 @@ class state_estimation():
                                     rospy.get_time() - self.time_intervals[0])
 
                 else:
+                    print("*****calarray",cal_array,rospy.get_time())
                     self.body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * cal_array,
                                                 axis=1).reshape((3, 1)) / sum(cal_array.tolist())
                     self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
@@ -333,177 +346,177 @@ class state_estimation():
                     self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
 
                 self.last_body_pos = copy.deepcopy(self.body_pos)
-            elif plan5:
-                if self.last_schedule_leg != self.schedule_leg:
-                    permit = 1
-                    for i in range(4):
-                        if self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
-                            if self.contact_state[i] == 1:
-                                point = self.foot_contactpoint[:, i:i + 1]
-                                if (point == np.zeros((3, 1))).all():
-                                    self.foot_contactpoint[:, i:i + 1] = self.body_pos + self.footpoint_W[:,
-                                                                                              i:i + 1]
-                                    self.x[6 + i*3: 9+i*3,:] = self.foot_contactpoint[:, i:i + 1]
-                                    print("contact")
-                            else:
-                                permit = 0
-                        if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
-                            if self.contact_state[i] == 0:
-                                self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
-                                self.x[6 + i * 3: 9 + i * 3, :] = self.foot_contactpoint[:, i:i + 1]
-                                print("loss conract")
-                    if permit:
-                        for i in range(4):
-                            if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
-                                self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
-                            elif self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
-                                self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1]
-                                # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array([[0], [0], [0.0046]])
-                                # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array(
-                                #     [[0], [0], [0.005]])
-                        self.last_schedule_leg = self.schedule_leg
-                # prio x
-                self.F[0:3,3:6] = self.looptime * np.eye(3)
-                acc = np.dot(C_mat, self.linear_acceleration) + np.array([[0], [0], [-9.81]])
-                self.x = np.dot(self.F,self.x)
-                print("acc",acc)
-                self.x[0:3,0:1] += 0.5 * self.looptime**2 * acc
-                self.x[3:6,0:1] += self.looptime * acc
-                self.Q[0:3,0:3] = 0.33 * self.looptime**3 * self.Qf
-                self.Q[0:3, 3:6] = 0.5 * self.looptime ** 2 * self.Qf
-                self.Q[3:6, 0:3] = 0.5 * self.looptime ** 2 * self.Qf
-                self.Q[3:6, 3:6] = self.looptime * self.Qf
-                for i in range(4):
-                    if self.schedule_leg[i] == 1:
-                        self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = self.Qp
-                    else:
-                        self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = np.zeros((3,3))
-                self.P = np.dot(self.F,np.dot(self.P,self.F.T)) + self.Q
-
-                # post
-                # self.y[12:15,0:1] = self.yv - self.x[3:6,0:1]
-                # for i in range(4):
-                #     if self.schedule_leg[i] == 1 and self.contact_state[i] == 1:
-                #         self.y[3*i:3*i+3,0:1] = self.footpoint_W[0:3,i:i+1] - (self.x[6 + i*3: 9+i*3,0:1] - self.x[0:3,0:1])
-                #     else:
-                #         self.y[3 * i:3 * i + 3, 0:1] = np.zeros((3,1))
-                #     self.H[3 * i:3 * i + 3,0:3] = - np.eye(3)
-                #     self.H[3 * i:3 * i + 3,6 + i*3: 9+i*3] = np.eye(3)
-                # self.H[12:15,3: 6] = np.eye(3)
-                # self.Qr[12:15,12:15] = self.P[0:3,0:3]/max(self.looptime,1./self.Hz)
-                # self.S = self.Qr + np.dot(self.H,np.dot(self.P,self.H.T))
-                #
-                # self.K = np.dot(np.dot(self.P,self.H.T),np.fabs(np.linalg.inv(self.S)))
-                # print(self.H.T)
-                # # print(np.dot(self.P,self.H.T))
-                # print(self.K)
-                # dx = np.dot(self.K,self.y)
-                # self.x += dx
-                # self.P = np.dot((np.eye(18) - np.dot(self.K,self.H)),self.P)
-                self.body_pos = self.x[0:3,0:1]
-                self.body_vel = self.x[3:6,0:1]
-                print("foot_point: ",self.footpoint_W)
-                print("x: ",self.x)
-                # print("dx: ", dx)
-                print("y: ", self.y)
-
-                #calculate houyan v
-                if len(self.body_pos_memory) < self.memory_lenth:
-                    self.body_pos_memory.append(copy.deepcopy(self.body_pos))
-                    self.time_intervals.append(rospy.get_time())
-                else:
-                    self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.body_pos)]
-                    self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
-                self.yv = (self.body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
-
-        elif TEST and self.state_estimation_mode == 0:
-            if not plan4:
-                if self.last_schedule_leg != self.schedule_leg:
-                    still_contact = np.array(self.last_schedule_leg) * np.array(self.schedule_leg)
-                    new_contact = np.array([1, 1, 1, 1]) - still_contact
-                    self.foot_contactpoint = self.foot_contactpoint * still_contact + (
-                                np.dot(self.test_body_pos, np.ones((1, 4))) + self.footpoint_W) * new_contact
-                    self.last_schedule_leg = self.schedule_leg
-
-                if not plan3:
-                    self.test_body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * np.array(self.schedule_leg),
-                                           axis=1).reshape((3, 1)) / sum(self.schedule_leg)
-
-                if plan1:
-                    self.test_body_vel = (self.test_body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
-                    if len(self.body_pos_memory) < self.memory_lenth:
-                        self.body_pos_memory.append(copy.deepcopy(self.test_body_pos))
-                        self.time_intervals.append(rospy.get_time())
-                    else:
-                        self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.test_body_pos)]
-                        self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
-                elif plan2:
-                    self.foot_vel_B = np.dot(omega_matrix(self.omega),self.footpoint) + self.foot_vel
-                    self.test_body_vel = - np.sum(np.dot(C_mat, self.footpoint_W) * np.array(self.contact_state),
-                                                axis=1).reshape((3, 1)) / sum(self.contact_state)
-                elif plan3:
-                    self.test_body_vel  += (self.looptime) * (np.dot(C_mat,self.linear_acceleration) + np.array([[0],[0],[-9.81]]))
-                    self.test_body_pos += (self.looptime) * self.test_body_vel
-
-                self.last_body_pos = copy.deepcopy(self.test_body_pos)
-            if plan4:
-                cal_array = np.array(copy.copy(self.last_schedule_leg))
-                if self.last_schedule_leg != self.schedule_leg:
-                    if self.contact_state == [0,0,0,0]:
-                        self.test_body_vel += (self.looptime) * (np.dot(C_mat,self.linear_acceleration) + np.array([[0],[0],[-9.81]]))
-                        self.test_body_pos += (self.looptime) * self.test_body_pos
-                    else:
-                        permit = 1
-                        for i in range(4):
-                            if self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
-                                if self.contact_state[i] == 1 :
-                                    cal_array[i] = 1
-                                    point = self.foot_contactpoint[:,i:i+1]
-                                    if  (point == np.zeros((3,1))).all():
-                                        self.foot_contactpoint[:,i:i+1] = self.test_body_pos + self.footpoint_W[:,i:i+1]
-                                        print("contact")
-                                else:
-                                    permit = 0
-                            if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
-                                if self.contact_state[i] == 0:
-                                    self.foot_contactpoint[:, i:i + 1] = np.zeros((3,1))
-                                    cal_array[i] = 0
-                                    print("loss conract")
-                        if permit:
-                            for i in range(4):
-                                if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
-                                    self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
-                                elif self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
-                                    self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array([[0],[0],[0.0039]])
-                            self.last_schedule_leg = self.schedule_leg
-                            cal_array = np.array(copy.copy(self.last_schedule_leg))
-
-                            print("*************************change")
-                            print(self.test_body_pos)
-                            print("cal_array: ",cal_array,self.schedule_leg)
-                            print("contact_point:",self.foot_contactpoint)
-                            print("foot_point",self.footpoint_W)
-                            print("TF",C_mat,self.rpy)
-                        self.test_body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * cal_array,axis=1).reshape((3, 1)) / sum(cal_array.tolist())
-                        self.test_body_vel = (self.test_body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
-
-                else:
-                    self.test_body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * cal_array,
-                                                axis=1).reshape((3, 1)) / sum(cal_array.tolist())
-                    self.test_body_vel = (self.test_body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
-                if self.last_schedule_leg != self.schedule_leg:
-                    print(cal_array)
-                    print(self.foot_contactpoint)
-                    print("pos",self.test_body_pos)
-                    print("vel: ",self.test_body_vel)
-                if len(self.body_pos_memory) < self.memory_lenth:
-                    self.body_pos_memory.append(copy.deepcopy(self.test_body_pos))
-                    self.time_intervals.append(rospy.get_time())
-                else:
-                    self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.test_body_pos)]
-                    self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
-
-                self.last_body_pos = copy.deepcopy(self.test_body_pos)
+        #     elif plan5:
+        #         if self.last_schedule_leg != self.schedule_leg:
+        #             permit = 1
+        #             for i in range(4):
+        #                 if self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
+        #                     if self.contact_state[i] == 1:
+        #                         point = self.foot_contactpoint[:, i:i + 1]
+        #                         if (point == np.zeros((3, 1))).all():
+        #                             self.foot_contactpoint[:, i:i + 1] = self.body_pos + self.footpoint_W[:,
+        #                                                                                       i:i + 1]
+        #                             self.x[6 + i*3: 9+i*3,:] = self.foot_contactpoint[:, i:i + 1]
+        #                             print("contact")
+        #                     else:
+        #                         permit = 0
+        #                 if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
+        #                     if self.contact_state[i] == 0:
+        #                         self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
+        #                         self.x[6 + i * 3: 9 + i * 3, :] = self.foot_contactpoint[:, i:i + 1]
+        #                         print("loss conract")
+        #             if permit:
+        #                 for i in range(4):
+        #                     if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
+        #                         self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
+        #                     elif self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
+        #                         self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1]
+        #                         # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array([[0], [0], [0.0046]])
+        #                         # self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array(
+        #                         #     [[0], [0], [0.005]])
+        #                 self.last_schedule_leg = self.schedule_leg
+        #         # prio x
+        #         self.F[0:3,3:6] = self.looptime * np.eye(3)
+        #         acc = np.dot(C_mat, self.linear_acceleration) + np.array([[0], [0], [-9.81]])
+        #         self.x = np.dot(self.F,self.x)
+        #         print("acc",acc)
+        #         self.x[0:3,0:1] += 0.5 * self.looptime**2 * acc
+        #         self.x[3:6,0:1] += self.looptime * acc
+        #         self.Q[0:3,0:3] = 0.33 * self.looptime**3 * self.Qf
+        #         self.Q[0:3, 3:6] = 0.5 * self.looptime ** 2 * self.Qf
+        #         self.Q[3:6, 0:3] = 0.5 * self.looptime ** 2 * self.Qf
+        #         self.Q[3:6, 3:6] = self.looptime * self.Qf
+        #         for i in range(4):
+        #             if self.schedule_leg[i] == 1:
+        #                 self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = self.Qp
+        #             else:
+        #                 self.Q[6 + i*3: 9+i*3,6 + i*3: 9+i*3] = np.zeros((3,3))
+        #         self.P = np.dot(self.F,np.dot(self.P,self.F.T)) + self.Q
+        #
+        #         # post
+        #         # self.y[12:15,0:1] = self.yv - self.x[3:6,0:1]
+        #         # for i in range(4):
+        #         #     if self.schedule_leg[i] == 1 and self.contact_state[i] == 1:
+        #         #         self.y[3*i:3*i+3,0:1] = self.footpoint_W[0:3,i:i+1] - (self.x[6 + i*3: 9+i*3,0:1] - self.x[0:3,0:1])
+        #         #     else:
+        #         #         self.y[3 * i:3 * i + 3, 0:1] = np.zeros((3,1))
+        #         #     self.H[3 * i:3 * i + 3,0:3] = - np.eye(3)
+        #         #     self.H[3 * i:3 * i + 3,6 + i*3: 9+i*3] = np.eye(3)
+        #         # self.H[12:15,3: 6] = np.eye(3)
+        #         # self.Qr[12:15,12:15] = self.P[0:3,0:3]/max(self.looptime,1./self.Hz)
+        #         # self.S = self.Qr + np.dot(self.H,np.dot(self.P,self.H.T))
+        #         #
+        #         # self.K = np.dot(np.dot(self.P,self.H.T),np.fabs(np.linalg.inv(self.S)))
+        #         # print(self.H.T)
+        #         # # print(np.dot(self.P,self.H.T))
+        #         # print(self.K)
+        #         # dx = np.dot(self.K,self.y)
+        #         # self.x += dx
+        #         # self.P = np.dot((np.eye(18) - np.dot(self.K,self.H)),self.P)
+        #         self.body_pos = self.x[0:3,0:1]
+        #         self.body_vel = self.x[3:6,0:1]
+        #         print("foot_point: ",self.footpoint_W)
+        #         print("x: ",self.x)
+        #         # print("dx: ", dx)
+        #         print("y: ", self.y)
+        #
+        #         #calculate houyan v
+        #         if len(self.body_pos_memory) < self.memory_lenth:
+        #             self.body_pos_memory.append(copy.deepcopy(self.body_pos))
+        #             self.time_intervals.append(rospy.get_time())
+        #         else:
+        #             self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.body_pos)]
+        #             self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
+        #         self.yv = (self.body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
+        #
+        # elif TEST and self.state_estimation_mode == 0:
+        #     if not plan4:
+        #         if self.last_schedule_leg != self.schedule_leg:
+        #             still_contact = np.array(self.last_schedule_leg) * np.array(self.schedule_leg)
+        #             new_contact = np.array([1, 1, 1, 1]) - still_contact
+        #             self.foot_contactpoint = self.foot_contactpoint * still_contact + (
+        #                         np.dot(self.test_body_pos, np.ones((1, 4))) + self.footpoint_W) * new_contact
+        #             self.last_schedule_leg = self.schedule_leg
+        #
+        #         if not plan3:
+        #             self.test_body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * np.array(self.schedule_leg),
+        #                                    axis=1).reshape((3, 1)) / sum(self.schedule_leg)
+        #
+        #         if plan1:
+        #             self.test_body_vel = (self.test_body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
+        #             if len(self.body_pos_memory) < self.memory_lenth:
+        #                 self.body_pos_memory.append(copy.deepcopy(self.test_body_pos))
+        #                 self.time_intervals.append(rospy.get_time())
+        #             else:
+        #                 self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.test_body_pos)]
+        #                 self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
+        #         elif plan2:
+        #             self.foot_vel_B = np.dot(omega_matrix(self.omega),self.footpoint) + self.foot_vel
+        #             self.test_body_vel = - np.sum(np.dot(C_mat, self.footpoint_W) * np.array(self.contact_state),
+        #                                         axis=1).reshape((3, 1)) / sum(self.contact_state)
+        #         elif plan3:
+        #             self.test_body_vel  += (self.looptime) * (np.dot(C_mat,self.linear_acceleration) + np.array([[0],[0],[-9.81]]))
+        #             self.test_body_pos += (self.looptime) * self.test_body_vel
+        #
+        #         self.last_body_pos = copy.deepcopy(self.test_body_pos)
+        #     if plan4:
+        #         cal_array = np.array(copy.copy(self.last_schedule_leg))
+        #         if self.last_schedule_leg != self.schedule_leg:
+        #             if self.contact_state == [0,0,0,0]:
+        #                 self.test_body_vel += (self.looptime) * (np.dot(C_mat,self.linear_acceleration) + np.array([[0],[0],[-9.81]]))
+        #                 self.test_body_pos += (self.looptime) * self.test_body_pos
+        #             else:
+        #                 permit = 1
+        #                 for i in range(4):
+        #                     if self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
+        #                         if self.contact_state[i] == 1 :
+        #                             cal_array[i] = 1
+        #                             point = self.foot_contactpoint[:,i:i+1]
+        #                             if  (point == np.zeros((3,1))).all():
+        #                                 self.foot_contactpoint[:,i:i+1] = self.test_body_pos + self.footpoint_W[:,i:i+1]
+        #                                 print("contact")
+        #                         else:
+        #                             permit = 0
+        #                     if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
+        #                         if self.contact_state[i] == 0:
+        #                             self.foot_contactpoint[:, i:i + 1] = np.zeros((3,1))
+        #                             cal_array[i] = 0
+        #                             print("loss conract")
+        #                 if permit:
+        #                     for i in range(4):
+        #                         if self.last_schedule_leg[i] == 1 and self.schedule_leg[i] == 0:
+        #                             self.foot_contactpoint[:, i:i + 1] = np.zeros((3, 1))
+        #                         elif self.last_schedule_leg[i] == 0 and self.schedule_leg[i] == 1:
+        #                             self.foot_contactpoint[:, i:i + 1] = self.foot_contactpoint[:, i:i + 1] - np.array([[0],[0],[0.0039]])
+        #                     self.last_schedule_leg = self.schedule_leg
+        #                     cal_array = np.array(copy.copy(self.last_schedule_leg))
+        #
+        #                     print("*************************change")
+        #                     print(self.test_body_pos)
+        #                     print("cal_array: ",cal_array,self.schedule_leg)
+        #                     print("contact_point:",self.foot_contactpoint)
+        #                     print("foot_point",self.footpoint_W)
+        #                     print("TF",C_mat,self.rpy)
+        #                 self.test_body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * cal_array,axis=1).reshape((3, 1)) / sum(cal_array.tolist())
+        #                 self.test_body_vel = (self.test_body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
+        #
+        #         else:
+        #             self.test_body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * cal_array,
+        #                                         axis=1).reshape((3, 1)) / sum(cal_array.tolist())
+        #             self.test_body_vel = (self.test_body_pos - self.body_pos_memory[0]) / (rospy.get_time() - self.time_intervals[0])
+        #         if self.last_schedule_leg != self.schedule_leg:
+        #             print(cal_array)
+        #             print(self.foot_contactpoint)
+        #             print("pos",self.test_body_pos)
+        #             print("vel: ",self.test_body_vel)
+        #         if len(self.body_pos_memory) < self.memory_lenth:
+        #             self.body_pos_memory.append(copy.deepcopy(self.test_body_pos))
+        #             self.time_intervals.append(rospy.get_time())
+        #         else:
+        #             self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.test_body_pos)]
+        #             self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
+        #
+        #         self.last_body_pos = copy.deepcopy(self.test_body_pos)
     def restore_df_data(self):
         if USE_SIM:
             _data = np.zeros(26)

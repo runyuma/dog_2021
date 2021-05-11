@@ -4,6 +4,7 @@ import rospy
 import pygame
 import time
 from sensor_msgs.msg import Joy
+from std_msgs.msg import Float32MultiArray
 import sys
 import tty
 import termios
@@ -63,6 +64,7 @@ class JoyStick():
             self.Joysubscriber = rospy.Subscriber("/joy",Joy,self.joycallback)
         self.vel_factor = 0.2
         self.angular_factor = 0.2
+        self.command_publisher = rospy.Publisher("/command", Float32MultiArray, queue_size=10)
 
 
     def main(self):
@@ -110,6 +112,7 @@ class JoyStick():
             rospy.set_param("current_gait",self.gait_num)
             rospy.set_param("command_vel",self.velocity)
             rospy.set_param("command_omega", self.angular_velocity)
+            self.command_publish()
             if USE_SCREEN:
                 screen.fill(WHITE)
                 self.textPrint.reset()
@@ -140,7 +143,10 @@ class JoyStick():
                 time.sleep(0.3)
         else:
             pass
-
+    def command_publish(self):
+        msg = Float32MultiArray()
+        msg.data = [self.gait_num,self.velocity,self.angular_velocity]
+        self.command_publisher.publish(msg)
 def readchar():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)

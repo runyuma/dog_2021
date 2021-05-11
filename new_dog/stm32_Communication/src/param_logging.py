@@ -15,8 +15,8 @@ dic = {'total_weight':15,
        "body_inertia":[0.3,0.1,0.4],
        "swingleg_P":[80,100,150],   # 150
        "swingleg_D":[5,15,18],      # 18
-        "groundleg_P":[100,100,200],
-       "groundleg_D":[5,5,5],
+        "groundleg_P":[80,50,200],
+       "groundleg_D":[15,10,10],
        "schedule_groundleg": [1, 1, 1, 1],
        "current_gait": 0,  # 0 is standing 1 is trot_runing
        "command_vel": 0,
@@ -27,7 +27,7 @@ dic = {'total_weight':15,
 	"body_width":0.055,
        "use_sim":0,
        "damping_compensation":[0.05,0.00,0.5],
-       "walking_height": 0.281,
+       "walking_height": 0.3,
        }
 dic["move_reset"] = 0
 dic["start_move"] = 0
@@ -53,15 +53,15 @@ elif dic["state_estimation_mode"] == 1:
     dic["stand_force_p"] = [850,400,400]
     dic["stand_force_D"] = [80,40,40]
     dic["stand_troque_p"] = [150,350,150]
-    dic["stand_troque_D"] = [10,10,10]
+    dic["stand_troque_D"] = [10,5,10]
     # dic["stand_force_p"] = [800, 400, 400]
     # dic["stand_force_D"] = [50, 50, 50]
     # dic["stand_troque_p"] = [150, 300, 150]
     # dic["stand_troque_D"] = [10, 15, 10]
-    dic["trot_force_p"] = [400,450,600]
-    dic["trot_force_D"] = [200,100,160]
-    dic["trot_troque_p"] = [450,650,500]#400,600,500
-    dic["trot_troque_D"] = [50,70,50]#50,65
+    dic["trot_force_p"] = [600,450,600]
+    dic["trot_force_D"] = [80,50,50]
+    dic["trot_troque_p"] = [250,450,400]#400,600,500
+    dic["trot_troque_D"] = [10,20,40]#50,65
 # "damping_compensation":[0.05,0.05,0.85 0r 0.72],
 def params_init():
     rospy.init_node("params_logging")

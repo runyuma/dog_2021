@@ -18,7 +18,7 @@ public:
   ros::Subscriber footpoint_subscriber;
   ros::Subscriber footvel_subscriber;
   ros::Subscriber state_estimation_subscriber;
-
+  ros::Subscriber command_subscriber;
   ros::Time ros_time,last_rostime;
   double loop_time;
 
@@ -30,7 +30,6 @@ public:
   ros::Publisher swingleg_publisher;
   ros::Publisher leg_status_publisher;
 
-
   int time_index = 0;
   dog_controller *_Dog;
 
@@ -40,7 +39,7 @@ public:
   void footpoint_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg);
   void footvel_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg);
   void state_estimation_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg);
-
+void command_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg);
   void status_publish();
   void set_schedulegroundleg();
   void set_error();

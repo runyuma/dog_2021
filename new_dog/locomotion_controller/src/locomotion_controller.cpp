@@ -11,6 +11,7 @@ void locomotion_controller::init()
   footpoint_subscriber = pnh->subscribe("/foot_points",10,&locomotion_controller::footpoint_callback,this);
   footvel_subscriber = pnh->subscribe("/foot_vel",10,&locomotion_controller::footvel_callback,this);
   state_estimation_subscriber = pnh->subscribe("/state",10,&locomotion_controller::state_estimation_callback,this);
+  command_subscriber = pnh->subscribe("/command",10,&locomotion_controller::command_callback,this);
 
   force_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/ground_force",10);
   swingleg_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/swing_leg",10);
@@ -109,6 +110,12 @@ void locomotion_controller::state_estimation_callback(const  std_msgs::Float32Mu
     _Dog->body_vel<<msg->data[9],msg->data[10],msg->data[11];
   }
 }
+ void locomotion_controller::command_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg)
+ {
+  _Dog->gait_num = msg->data[0];
+  _Dog->command_vel<<0,msg->data[1],0;
+  _Dog->command_omega<<0,0,msg->data[2];
+ }
 
 
 //***************************************************************************************/publish/***************************************************************************************//
@@ -246,7 +253,6 @@ void locomotion_controller::visual()
 void locomotion_controller::moving_init()
 {
   pnh->getParam("state_estimation_mode",_Dog->state_estimation_mode);
-  pnh->setParam("current_gait",0);
   last_rostime =  ros::Time::now();
   _Dog->last_rostime = ros::Time::now();//double ros::Time::now().toSec()
   time_index = 0;//TODO: to bechange because action only manipulatedog
@@ -260,14 +266,10 @@ void locomotion_controller::moving_func()
   last_rostime = ros_time;
 //  std::cout<<"loop_time"<<loop_time<<std::endl;
   _Dog->ros_time = ros_time;
-  float _vel,_omega;
-  pnh->getParam("command_vel",_vel);
-  pnh->getParam("command_omega",_omega);
-  pnh->getParam("contact_state",_Dog->contact_state);
-  _Dog->command_vel<<0,_vel,0;
-  _Dog->command_omega<<0,0,_omega;
 
-  pnh->getParam("current_gait",_Dog->gait_num);
+  // pnh->getParam("contact_state",_Dog->contact_state);
+
+
   int changed = _Dog->statemachine_update();
   _Dog->get_TFmat();
   if(time_index%1 == 0 or changed){
@@ -278,9 +280,8 @@ void locomotion_controller::moving_func()
   _Dog->targetfootpoint_calculation();
 
   std::string str_moving= "moving";
-  pnh->setParam("dog_action",str_moving);
+  // pnh->setParam("dog_action",str_moving);
   swing_publoish();
-  set_schedulegroundleg();
   set_error();
   status_publish();
   time_index += 1;
