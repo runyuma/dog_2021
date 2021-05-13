@@ -34,7 +34,7 @@ plan5 = 0  # trust imu + legdynamic kailam filter
 class state_estimation():
     def __init__(self):
         rospy.init_node("state_estimation",anonymous= True)
-        self.Hz = 1000
+        self.Hz = 500
         self.rate = rospy.Rate(self.Hz)
         self.body_lenth = rospy.get_param("body_lenth")
         self.body_width = rospy.get_param("body_width")
@@ -224,7 +224,7 @@ class state_estimation():
 
                     # print("loop_time_state_estimation:", self.looptime)
                     # print("body_pos:", self.body_pos)
-                    print("body_vel", self.body_vel)
+                    # print("body_vel", self.body_vel)
                 if TEST:
                     if self.time_index%5 == 0:
                         self.restore_df_data()
@@ -343,7 +343,7 @@ class state_estimation():
                             _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
                                     self.linear_acceleration + np.array([[0], [0], [-9.79]]))
                             w_imu_vel = 0.5
-                            W_foot = 5 * math.erf(4 * min(self.phase))
+                            W_foot = 1.5 * math.erf(2 * min(self.phase))
                             self.body_vel = (W_foot * _body_vel + w_imu_vel * _imu_vel) / (w_imu_vel + W_foot)
                         else:
                             self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
@@ -361,11 +361,13 @@ class state_estimation():
                         _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
                                     self.linear_acceleration + np.array([[0], [0], [-9.79]]))
                         w_imu_vel = 0.5
-                        W_foot = 5 * math.erf(4*min(self.phase))
+                        W_foot = 1.5 * math.erf(2*min(self.phase))
                         self.body_vel = (W_foot*_body_vel + w_imu_vel*_imu_vel)/(w_imu_vel+W_foot)
+                        print("vel",_body_vel,_imu_vel,(rospy.get_time() - self.time_intervals[-1]),)
                     else:
                         self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
                                 rospy.get_time() - self.time_intervals[0])
+
 
 
 
@@ -583,7 +585,7 @@ class state_estimation():
     def restore_dataframe(self):
         self.data_frame = pd.DataFrame(self.df_data,columns=self.df_colomn)
         if USE_SIM:
-            name = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/" + str(time.asctime()) + ".csv"
+            name = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/" + self.start_name + "SIM.csv"
         else:
             name = "/home/marunyu/catkin_ws/src//dog_2021//new_dog/state_estimation/datas/" + self.start_name + ".csv"
             # name = str(time.asctime()) + ".csv"
