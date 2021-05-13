@@ -13,15 +13,17 @@ dic = {'total_weight':15,
        'comb_lenth':0.005,
        'comc_lenth':0.05,
        "body_inertia":[0.3,0.1,0.4],
-       "swingleg_P":[80,100,150],   # 150
-       "swingleg_D":[5,15,18],      # 18
-        "groundleg_P":[80,50,200],
-       "groundleg_D":[15,10,10],
+       "swingleg_P":[70,70,150],  # 100,100,150
+       "swingleg_D":[5,15,18],  # 18
+        "groundleg_P4":[80,50,120],  #[80,50,200]
+       "groundleg_D4":[15,10,10],
+       "groundleg_P2": [0, 0, 150],  # [80,50,200]
+       "groundleg_D2": [5, 5, 15],
        "schedule_groundleg": [1, 1, 1, 1],
        "current_gait": 0,  # 0 is standing 1 is trot_runing
        "command_vel": 0,
        "command_omega": 0,
-       "state_estimation_mode":1, # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
+       "state_estimation_mode":1,  # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
        "USE_TOUCHSENSOR": 0,
 	"body_lenth":0.255,
 	"body_width":0.055,
@@ -59,9 +61,9 @@ elif dic["state_estimation_mode"] == 1:
     # dic["stand_troque_p"] = [150, 300, 150]
     # dic["stand_troque_D"] = [10, 15, 10]
     dic["trot_force_p"] = [600,450,600]
-    dic["trot_force_D"] = [80,50,50]
-    dic["trot_troque_p"] = [250,450,400]#400,600,500
-    dic["trot_troque_D"] = [10,20,40]#50,65
+    dic["trot_force_D"] = [150,50,10]
+    dic["trot_troque_p"] = [250,450,800]#400,600,500
+    dic["trot_troque_D"] = [50,40,50]#50,65
 # "damping_compensation":[0.05,0.05,0.85 0r 0.72],
 def params_init():
     rospy.init_node("params_logging")

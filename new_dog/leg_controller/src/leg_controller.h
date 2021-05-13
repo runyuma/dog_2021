@@ -23,12 +23,22 @@ public:
     std_msgs::Float32MultiArray footvel_pubmsg;
     std_msgs::Float32MultiArray jointtarget_pubmsg; 
 
+    Eigen::Matrix3f swing_P = Eigen::Matrix3f::Zero();
+    Eigen::Matrix3f swing_D = Eigen::Matrix3f::Zero();
+    Eigen::Matrix3f ground_P4 = Eigen::Matrix3f::Zero();
+    Eigen::Matrix3f ground_D4 = Eigen::Matrix3f::Zero();
+    Eigen::Matrix3f ground_P2 = Eigen::Matrix3f::Zero();
+    Eigen::Matrix3f ground_D2 = Eigen::Matrix3f::Zero();
+
+
     float target_force[12];
     float target_swing[24];
     float joint_pos[12];
     float joint_vel[12];
     int leg_status[4] = {-1,-1,-1,-1};
+    int ground_legnum = 0;
     int leg_getvalue[4] = {0,0,0,0};
+
 
     int use_sim;
      std::vector<float> damping_compensation; 

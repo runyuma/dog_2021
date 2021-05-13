@@ -16,6 +16,7 @@ void locomotion_controller::init()
   force_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/ground_force",10);
   swingleg_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/swing_leg",10);
   leg_status_publisher = pnh->advertise<std_msgs::Int32MultiArray>("/leg_status",10);
+  phase_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/phase_msg",10);
 
   pnh->getParam("body_lenth",_Dog->body_lenth);
   pnh->getParam("body_width",_Dog->body_width);
@@ -190,7 +191,7 @@ void locomotion_controller::force_publish()
   force_publisher.publish(groundforce_msg);
 }
 
-void locomotion_controller::swing_publoish()
+void locomotion_controller::swing_publish()
 {
   std_msgs::Float32MultiArray swingleg_msg;
   swingleg_msg.data = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
@@ -218,6 +219,15 @@ void locomotion_controller::swing_publoish()
   swingleg_publisher.publish(swingleg_msg);
 }
 
+void locomotion_controller::phase_publish()
+{
+  std_msgs::Float32MultiArray phase_msg;
+  phase_msg.data = {0,0,0,0};
+  for (int i = 0;i<4;i++) {
+    phase_msg.data[i] = _Dog->_statemachine.phase[i];
+  }
+  phase_publisher.publish(phase_msg);
+}
 //***************************************************************************************/visualize/***************************************************************************************//
 void locomotion_controller::visual()
 {
@@ -281,9 +291,10 @@ void locomotion_controller::moving_func()
 
   std::string str_moving= "moving";
   // pnh->setParam("dog_action",str_moving);
-  swing_publoish();
+  swing_publish();
   set_error();
   status_publish();
+  phase_publish();
   time_index += 1;
   visual();
   hz1000->sleep();

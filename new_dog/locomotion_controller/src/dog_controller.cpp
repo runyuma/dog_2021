@@ -64,7 +64,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
   std::vector<Eigen::Matrix<float,3,4>> states(n);
   if(_statemachine._gait.name == "STANDING")
   {
-    if(walking_height - body_pos(2)>= 0.05)
+    if(walking_height - body_pos(2)>= 0.1)
     {
       for (int i=0;i<n;i++) {
         Eigen::Matrix<float,3,4> _state;

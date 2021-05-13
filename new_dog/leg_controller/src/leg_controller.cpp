@@ -63,10 +63,14 @@ void leg_controller::leg_status_callback(const  std_msgs::Int32MultiArray::Const
 {
     if (msg->data.size() == 4)
     {
+        ground_legnum = 0;
         for( int i=0;i<4;i++ )
         {
             leg_status[i] = msg->data[i];
-            // cout<< leg_status[i];
+            if(leg_status[i]!=1)
+            {
+                ground_legnum+=1;
+            }
         }
     }
     
@@ -113,7 +117,35 @@ pnh-> getParam("coma_lenth",discomlist[0]);
 pnh-> getParam("comb_lenth",discomlist[1]);
 pnh-> getParam("comc_lenth",discomlist[2]);
 
+std::vector<float> s_kp, s_kd;
+pnh-> getParam("swingleg_P",s_kp);
+pnh-> getParam("swingleg_D",s_kd);
+swing_P(0,0) = s_kp[0];
+swing_P(1,1) = s_kp[1];
+swing_P(2,2) = s_kp[2];
+swing_D(0,0) = s_kd[0];
+swing_D(1,1) = s_kd[1];
+swing_D(2,2) = s_kd[2];
 
+std::vector<float> g4_kp,g4_kd;
+pnh-> getParam("groundleg_P4",g4_kp);
+pnh-> getParam("groundleg_D4",g4_kd);
+ground_P4(0,0) = g4_kp[0];
+ground_P4(1,1) = g4_kp[1];
+ground_P4(2,2) = g4_kp[2];
+ground_D4(0,0) = g4_kd[0];
+ground_D4(1,1) = g4_kd[1];
+ground_D4(2,2) = g4_kd[2];
+
+std::vector<float> g2_kp,g2_kd;
+pnh-> getParam("groundleg_P2",g2_kp);
+pnh-> getParam("groundleg_D2",g2_kd);
+ground_P2(0,0) = g2_kp[0];
+ground_P2(1,1) = g2_kp[1];
+ground_P2(2,2) = g2_kp[2];
+ground_D2(0,0) = g2_kd[0];
+ground_D2(1,1) = g2_kd[1];
+ground_D2(2,2) = g2_kd[2];
 
 Leg_parameter = leg_params(mass_list,lenth_list,discomlist);
 }
@@ -171,28 +203,16 @@ void leg_controller::main()
             else if(leg_status[i] == 1)
             {
                 double start_time = getCurrentTime() ;
-                Eigen::Matrix3f KP,KD;
-                KP = Eigen::Matrix3f::Zero();
-                KD = Eigen::Matrix3f::Zero();
-                std::vector<float> _kp, _kd;
-                pnh-> getParam("swingleg_P",_kp);
-                pnh-> getParam("swingleg_D",_kd);
-                KP(0,0) = _kp[0];
-                KP(1,1) = _kp[1];
-                KP(2,2) = _kp[2];
-                KD(0,0) = _kd[0];
-                KD(1,1) = _kd[1];
-                KD(2,2) = _kd[2];
             
                 Eigen::Vector3f _target_pos, _target_vel ,_joint_torque;
                 _target_pos<<target_swing[3*i], target_swing[3*i+1], target_swing[3*i+2];
                 _target_vel<<target_swing[3*i + 12], target_swing[3*i+1 + 12], target_swing[3*i+2 + 12];
                 _joint_torque = get_tauff(sidesign, _joint_pos, _joint_vel,Leg_parameter);
-                Eigen::Vector3f taubf= jacobian * get_feedbackward(KP ,KD , _foot_point, _foot_vel, _target_pos,_target_vel);
+                Eigen::Vector3f taubf= jacobian * get_feedbackward(swing_P ,swing_D , _foot_point, _foot_vel, _target_pos,_target_vel);
                if(time_index %1000 == 0)
                {
                     cout<<"tauff"<<i<<_joint_torque<<endl;
-                    cout<<"taubf"<<i<<"     "<<taubf<<KP<<KD<<_foot_point<<_foot_vel<<endl;
+                    cout<<"taubf"<<i<<"     "<<taubf<<swing_P<<swing_D<<_foot_point<<_foot_vel<<endl;
                }
                _joint_torque += taubf;
                if(!use_sim)
@@ -213,18 +233,16 @@ void leg_controller::main()
              else if(leg_status[i] == 2)//force&position
             {
                 Eigen::Matrix3f KP,KD;
-                KP = Eigen::Matrix3f::Zero();
-                KD = Eigen::Matrix3f::Zero();
-                std::vector<float> _kp, _kd;
-                pnh-> getParam("groundleg_P",_kp);
-                pnh-> getParam("groundleg_D",_kd);
-                KP(0,0) = _kp[0];
-                KP(1,1) = _kp[1];
-                KP(2,2) = _kp[2];
-                KD(0,0) = _kd[0];
-                KD(1,1) = _kd[1];
-                KD(2,2) = _kd[2];
-            
+                if(ground_legnum==4)
+                {
+                    KP=ground_P4;
+                    KD=ground_D4;
+                }
+                else
+                {
+                    KP = ground_P2;
+                    KD=ground_D2;
+                }
                 Eigen::Vector3f _target_pos, _target_vel ,_joint_torque,_Force;
                 _target_pos<<target_swing[3*i], target_swing[3*i+1], target_swing[3*i+2];
                 _target_vel<<target_swing[3*i + 12], target_swing[3*i+1 + 12], target_swing[3*i+2 + 12];

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # coding:utf-8
+import math
+
 import rospy
 import numpy as np
 import copy
@@ -9,6 +11,7 @@ from std_msgs.msg import Float32MultiArray, Float32, Int32MultiArray
 TEST = 1
 USE_SIM = rospy.get_param("use_sim")
 TEST_SER = 0
+USE_ERF = 1
 
 if TEST:
     import pandas as pd
@@ -31,7 +34,7 @@ plan5 = 0  # trust imu + legdynamic kailam filter
 class state_estimation():
     def __init__(self):
         rospy.init_node("state_estimation",anonymous= True)
-        self.Hz = 500
+        self.Hz = 1000
         self.rate = rospy.Rate(self.Hz)
         self.body_lenth = rospy.get_param("body_lenth")
         self.body_width = rospy.get_param("body_width")
@@ -161,6 +164,11 @@ class state_estimation():
         self.state_publisher = rospy.Publisher("/state", Float32MultiArray, queue_size=10)
         self.get_schedule_leg = 0
         self.leg_status_subscriber = rospy.Subscriber('/leg_status', Int32MultiArray, self.leg_status_callback)
+        self.phase_subscriber = rospy.Subscriber("/phase_msg",Float32MultiArray,self.phase_callback)
+        self.start_name = str(time.asctime())
+        self.phase = [1, 1, 1, 1]
+    def __del__(self):
+        self.restore_dataframe()
     def leg_status_callback(self,msg):
         self.schedule_leg = [1,1,1,1]
         if self.get_schedule_leg == 1:
@@ -169,10 +177,15 @@ class state_estimation():
                     self.schedule_leg[i] = 0
                 else:
                     self.schedule_leg[i] = 1
-        print("sche", self.schedule_leg)
+
+    def phase_callback(self,msg):
+        self.phase = [1,1,1,1]
+        for i in range(4):
+            self.phase[i] = msg.data[i]
+
+
     def main(self):
         while not rospy.is_shutdown():
-
             if self.state_estimation_mode == 0:
                 self.state_publish()
                 if self.USE_TOUCHSENSOR:
@@ -190,8 +203,6 @@ class state_estimation():
 
                     if self.time_index%5 == 0:
                         self.restore_df_data()
-                    if self.time_index % 5000 == 0:
-                        self.restore_dataframe()
                 # if self.time_index % 50 == 0:
                 #     print(self.linear_acceleration)
             elif self.state_estimation_mode == 1:
@@ -211,13 +222,13 @@ class state_estimation():
                     self.state_publish()
 
 
-                    # print("loop_time:", self.looptime)
+                    # print("loop_time_state_estimation:", self.looptime)
                     # print("body_pos:", self.body_pos)
-                    # `print("body_vel", self.body_vel)
+                    print("body_vel", self.body_vel)
                 if TEST:
                     if self.time_index%5 == 0:
                         self.restore_df_data()
-                    if self.time_index % 5000 == 0:
+                    if self.time_index % 50 == 0:
                         self.restore_dataframe()
             self.rate.sleep()
             self.time_index += 1
@@ -233,6 +244,7 @@ class state_estimation():
         self.schedule_leg = [1,1,1,1]
         self.last_schedule_leg = [1,1,1,1]
         self.last_body_pos = copy.deepcopy(self.body_pos)
+        self.last_body_vel = copy.deepcopy(self.body_vel)
         self.last_rostime = rospy.get_time()
         self.initialed = 1
         self.body_pos_memory = [copy.deepcopy(self.body_pos)]
@@ -255,6 +267,7 @@ class state_estimation():
 
         self.get_schedule_leg = 1
         C_mat = self.get_TFmat()
+        # print("acc",np.dot(C_mat,self.linear_acceleration))
         self.footpoint_W = np.dot(C_mat, self.footpoint)
         if self.USE_TOUCHSENSOR:
             rospy.set_param("contact_state", self.contact_state)
@@ -316,23 +329,48 @@ class state_estimation():
                             self.last_schedule_leg = copy.copy(self.schedule_leg)
                             cal_array = np.array(copy.copy(self.last_schedule_leg))
 
-                            print("*************************change")
-                            print(self.body_pos)
-                            print("cal_array: ", cal_array, self.schedule_leg)
-                            print("contact_point:", self.foot_contactpoint)
-                            print("foot_point", self.footpoint_W)
-                            print("TF", C_mat, self.rpy)
+                            # print("*************************change")
+                            # print(self.body_pos)
+                            # print("cal_array: ", cal_array, self.schedule_leg)
+                            # print("contact_point:", self.foot_contactpoint)
+                            # print("foot_point", self.footpoint_W)
+                            # print("TF", C_mat, self.rpy)
                         self.body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * cal_array,
                                                     axis=1).reshape((3, 1)) / sum(cal_array.tolist())
-                        self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
+                        if USE_ERF:
+                            _body_vel = (self.body_pos - self.body_pos_memory[0]) / (
                                     rospy.get_time() - self.time_intervals[0])
+                            _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
+                                    self.linear_acceleration + np.array([[0], [0], [-9.79]]))
+                            w_imu_vel = 0.5
+                            W_foot = 5 * math.erf(4 * min(self.phase))
+                            self.body_vel = (W_foot * _body_vel + w_imu_vel * _imu_vel) / (w_imu_vel + W_foot)
+                        else:
+                            self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
+                                    rospy.get_time() - self.time_intervals[0])
+                        # print("vel",self.body_vel,self.last_body_vel+(rospy.get_time() - self.time_intervals[-1])*(self.linear_acceleration+np.array([[0],[0],[-9.79]])))
 
                 else:
-                    print("*****calarray",cal_array,rospy.get_time())
+                    # print("*****calarray",cal_array,rospy.get_time())
                     self.body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * cal_array,
                                                 axis=1).reshape((3, 1)) / sum(cal_array.tolist())
-                    self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
+
+                    if USE_ERF:
+                        _body_vel = (self.body_pos - self.body_pos_memory[0]) / (
+                                    rospy.get_time() - self.time_intervals[0])
+                        _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
+                                    self.linear_acceleration + np.array([[0], [0], [-9.79]]))
+                        w_imu_vel = 0.5
+                        W_foot = 5 * math.erf(4*min(self.phase))
+                        self.body_vel = (W_foot*_body_vel + w_imu_vel*_imu_vel)/(w_imu_vel+W_foot)
+                    else:
+                        self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
                                 rospy.get_time() - self.time_intervals[0])
+
+
+
+                    # print("vel", self.body_vel, self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (self.linear_acceleration + np.array([[0], [0], [-9.79]])))
+
                 if self.last_schedule_leg != self.schedule_leg:
                     print(cal_array)
                     print(self.foot_contactpoint)
@@ -346,6 +384,7 @@ class state_estimation():
                     self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
 
                 self.last_body_pos = copy.deepcopy(self.body_pos)
+                self.last_body_vel = copy.deepcopy(self.body_vel)
         #     elif plan5:
         #         if self.last_schedule_leg != self.schedule_leg:
         #             permit = 1
@@ -546,11 +585,11 @@ class state_estimation():
         if USE_SIM:
             name = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/" + str(time.asctime()) + ".csv"
         else:
-            name = "/home/marunyu/catkin_ws/src//dog_2021//new_dog/state_estimation/datas/" + str(time.asctime()) + ".csv"
+            name = "/home/marunyu/catkin_ws/src//dog_2021//new_dog/state_estimation/datas/" + self.start_name + ".csv"
             # name = str(time.asctime()) + ".csv"
             # print(self.data_frame)
         self.data_frame.to_csv(name)
-        print("saved")
+        # print("saved")
 
 
 
@@ -627,7 +666,7 @@ class state_estimation():
                             # print(1)
                             # print("rpy", self.rpy)
                             # print("omega", self.omega)
-                            # print("acc", self.linear_acceleration)
+            #                 print("acc", self.linear_acceleration)
             #             else:
             #                 print("imu CRC not pass*******************************")
             #         else:

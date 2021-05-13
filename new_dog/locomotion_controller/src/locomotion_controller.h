@@ -29,6 +29,7 @@ public:
   ros::Publisher force_publisher;
   ros::Publisher swingleg_publisher;
   ros::Publisher leg_status_publisher;
+  ros::Publisher phase_publisher;
 
   int time_index = 0;
   dog_controller *_Dog;
@@ -44,7 +45,8 @@ void command_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg);
   void set_schedulegroundleg();
   void set_error();
   void force_publish();
-  void swing_publoish();
+  void swing_publish();
+  void phase_publish();
 
   bool error_handle();
   bool shrink(int start_index,Eigen::Vector3f rpy );

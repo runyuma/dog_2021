@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
-  <node name = "state_estimation" pkg = "state_estimation" type = "state_estimation.py" />
-  <node name="locomotion_controller" pkg="locomotion_controller" type="locomotion" output="screen"/>
+  <node name = "state_estimation" pkg = "state_estimation" type = "state_estimation.py" output="screen" />
+  <node name="locomotion_controller" pkg="locomotion_controller" type="locomotion" />
 </launch>
 
 
