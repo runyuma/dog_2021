@@ -86,8 +86,11 @@ class state_estimation():
                                   "vx",
                                   "vy",
                                   "vz",
+                                  "raw_vx",
+                                  "raw_vy",
+                                  "raw_vz",
                                   ]
-                self.df_data = np.zeros((1,26))
+                self.df_data = np.zeros((1,29))
                 self.test_body_pos = np.zeros((3, 1))
                 self.test_body_vel = np.zeros((3, 1))
                 self.test_rpy = np.zeros((3, 1))
@@ -225,11 +228,11 @@ class state_estimation():
                     # print("loop_time_state_estimation:", self.looptime)
                     # print("body_pos:", self.body_pos)
                     # print("body_vel", self.body_vel)
-                if TEST:
-                    if self.time_index%5 == 0:
-                        self.restore_df_data()
-                    if self.time_index % 50 == 0:
-                        self.restore_dataframe()
+                    if TEST:
+                        if self.time_index%5 == 0:
+                            self.restore_df_data()
+                        if self.time_index % 50 == 0:
+                            self.restore_dataframe()
             self.rate.sleep()
             self.time_index += 1
 
@@ -249,7 +252,8 @@ class state_estimation():
         self.initialed = 1
         self.body_pos_memory = [copy.deepcopy(self.body_pos)]
         self.time_intervals = [rospy.get_time()]
-        self.memory_lenth = 20
+        self.erfs = [1]
+        self.memory_lenth = 10
         if plan5:
             self.memory_lenth = 10
             self.x[0:3,0:1] = self.body_pos
@@ -260,6 +264,7 @@ class state_estimation():
             self.test_body_vel = np.zeros((3, 1))
             self.test_rpy = np.zeros((3, 1))
             self.test_omega = np.zeros((3, 1))
+        self.raw_vel = np.zeros((3, 1))
 
     def leg_dynamic_estimation(self):
         # cauculate pos
@@ -340,12 +345,29 @@ class state_estimation():
                         if USE_ERF:
                             _body_vel = (self.body_pos - self.body_pos_memory[0]) / (
                                     rospy.get_time() - self.time_intervals[0])
+                            pos_diff = [self.body_pos_memory[i + 1] - self.body_pos_memory[i] for i in
+                                        range(len(self.body_pos_memory) - 1)]
+                            pos_diff.append(self.body_pos - self.body_pos_memory[-1])
+                            time_diff = [self.time_intervals[i + 1] - self.time_intervals[i] for i in
+                                         range(len(self.body_pos_memory) - 1)]
+                            time_diff.append(rospy.get_time() - self.time_intervals[-1])
+                            erfs = self.erfs[1:] + [math.erf(2*min(self.phase))]
+                            vel_multiplyweight = np.zeros((3, 1))
+                            _sum = 0
+                            for i in range(len(pos_diff)):
+                                if time_diff[i] != 0:
+                                    vel = (pos_diff[i] / time_diff[i])
+                                    vel_multiplyweight += erfs[i] * vel
+                                    _sum+=erfs[i]
+                            _body_vel = vel_multiplyweight/_sum
+
                             _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
                                     self.linear_acceleration + np.array([[0], [0], [-9.79]]))
                             _vel_error = np.dot((_body_vel - self.body_vel).T,(_body_vel - self.body_vel))[0][0]**0.5
                             w_imu_vel = 0.5
-                            W_foot = 1.5 * math.erf(2 * min(self.phase))*math.erfc(_vel_error)
+                            W_foot = 1. * min(erfs)*math.erfc(_vel_error/2)
                             self.body_vel = (W_foot * _body_vel + w_imu_vel * _imu_vel) / (w_imu_vel + W_foot)
+                            self.raw_vel = copy.copy(_body_vel)
                         else:
                             self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
                                     rospy.get_time() - self.time_intervals[0])
@@ -359,13 +381,29 @@ class state_estimation():
                     if USE_ERF:
                         _body_vel = (self.body_pos - self.body_pos_memory[0]) / (
                                     rospy.get_time() - self.time_intervals[0])
+                        pos_diff = [self.body_pos_memory[i+1] - self.body_pos_memory[i] for i in range(len(self.body_pos_memory) - 1)]
+                        pos_diff.append(self.body_pos - self.body_pos_memory[-1])
+                        time_diff = [self.time_intervals[i+1] - self.time_intervals[i] for i in range(len(self.body_pos_memory) - 1)]
+                        time_diff.append(rospy.get_time() - self.time_intervals[-1])
+                        vels = [pos_diff[i]/time_diff[i] for i in range(len(pos_diff))]
+                        erfs = self.erfs[1:] + [math.erf(2*min(self.phase))]
+                        vel_multiplyweight = np.zeros((3, 1))
+                        _sum = 0
+                        for i in range(len(pos_diff)):
+                            if time_diff[i] != 0:
+                                vel = (pos_diff[i] / time_diff[i])
+                                vel_multiplyweight += erfs[i] * vel
+                                _sum += erfs[i]
+                        _body_vel = vel_multiplyweight / _sum
                         _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
-                                    self.linear_acceleration + np.array([[0], [0], [-9.79]]))
+                                    np.dot(C_mat,self.linear_acceleration) + np.array([[0], [0], [-9.79]]))
                         _vel_error = np.dot((_body_vel - self.body_vel).T, (_body_vel - self.body_vel))[0][0] ** 0.5
                         w_imu_vel = 0.5
-                        W_foot = 1.5 * math.erf(2*min(self.phase))*math.erfc(_vel_error)
+                        W_foot = 1. * min(erfs)*math.erfc(_vel_error/2)
                         self.body_vel = (W_foot*_body_vel + w_imu_vel*_imu_vel)/(w_imu_vel+W_foot)
                         print("vel",_body_vel,_imu_vel,(rospy.get_time() - self.time_intervals[-1]),)
+                        self.raw_vel = copy.copy(_body_vel)
+
                     else:
                         self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
                                 rospy.get_time() - self.time_intervals[0])
@@ -383,9 +421,11 @@ class state_estimation():
                 if len(self.body_pos_memory) < self.memory_lenth:
                     self.body_pos_memory.append(copy.deepcopy(self.body_pos))
                     self.time_intervals.append(rospy.get_time())
+                    self.erfs.append(math.erf(2*min(self.phase)))
                 else:
                     self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.body_pos)]
                     self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
+                    self.erfs = self.erfs[1:]+[2*math.erf(2*min(self.phase))]
 
                 self.last_body_pos = copy.deepcopy(self.body_pos)
                 self.last_body_vel = copy.deepcopy(self.body_vel)
@@ -562,7 +602,7 @@ class state_estimation():
         #         self.last_body_pos = copy.deepcopy(self.test_body_pos)
     def restore_df_data(self):
         if USE_SIM:
-            _data = np.zeros(26)
+            _data = np.zeros(29)
             _data[0] = rospy.get_time()
             _data[1] = self.current_gait
             _data[2:5] = self.test_rpy.reshape(3)
@@ -573,7 +613,8 @@ class state_estimation():
             _data[17:20] = self.body_pos.reshape(3)
             _data[20:23] = self.omega.reshape(3)
             _data[23:26] = self.body_vel.reshape(3)
-            self.df_data = np.vstack([self.df_data,_data.reshape((1,26))])
+            _data[26:29] = self.raw_vel.reshape(3)
+            self.df_data = np.vstack([self.df_data,_data.reshape((1,29))])
         else:
             _data = np.zeros(14)
             _data[0] = rospy.get_time()
