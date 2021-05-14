@@ -290,7 +290,7 @@ void locomotion_controller::moving_func()
   _Dog->targetfootpoint_calculation();
 
   std::string str_moving= "moving";
-  // pnh->setParam("dog_action",str_moving);
+  pnh->setParam("dog_action",str_moving);
   swing_publish();
   set_error();
   status_publish();

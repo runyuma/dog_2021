@@ -159,7 +159,7 @@ def test_singleleg():
                     _pos = [None, None, None, None]
                     _vel = [None, None, None, None]
                     for i in range(4):
-                        T = 0.5
+                        T = 0.25
                         _statemachine[i].generate_point(T,init_pos[i],init_pos[i])
                         _pos[i] = _statemachine[i].target_pos.T[0].tolist()
                         _vel[i] = _statemachine[i].target_vel.T[0].tolist()

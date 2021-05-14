@@ -436,6 +436,10 @@ void dog_controller::swingleg_calculation()
        _statemachine.target_pos(0) = final_point(0);
 //       _statemachine.target_pos(1) = final_point(1);// magic change
      }
+     else
+     {
+       _statemachine.target_pos(0) = final_point(0);// magic change
+     }
 
      target_swingpos.block(0,i,3,1) = _statemachine.target_pos;
      target_swingvel.block(0,i,3,1) = _statemachine.target_vel;

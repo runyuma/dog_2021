@@ -83,8 +83,8 @@ void qp_solver::updateConstraints()
           U(i) = 1.5*ForceTorque(2)/leg_num;
         }
         else{
-        L(i) = 0.5*ForceTorque(2)/leg_num;
-        U(i) = 1.5*ForceTorque(2)/leg_num;
+        L(i) = 0.7*ForceTorque(2)/leg_num;
+        U(i) = 1.3*ForceTorque(2)/leg_num;
         }
 
 

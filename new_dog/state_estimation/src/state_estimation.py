@@ -342,8 +342,9 @@ class state_estimation():
                                     rospy.get_time() - self.time_intervals[0])
                             _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
                                     self.linear_acceleration + np.array([[0], [0], [-9.79]]))
+                            _vel_error = np.dot((_body_vel - self.body_vel).T,(_body_vel - self.body_vel))[0][0]**0.5
                             w_imu_vel = 0.5
-                            W_foot = 1.5 * math.erf(2 * min(self.phase))
+                            W_foot = 1.5 * math.erf(2 * min(self.phase))*math.erfc(_vel_error)
                             self.body_vel = (W_foot * _body_vel + w_imu_vel * _imu_vel) / (w_imu_vel + W_foot)
                         else:
                             self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
@@ -360,8 +361,9 @@ class state_estimation():
                                     rospy.get_time() - self.time_intervals[0])
                         _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
                                     self.linear_acceleration + np.array([[0], [0], [-9.79]]))
+                        _vel_error = np.dot((_body_vel - self.body_vel).T, (_body_vel - self.body_vel))[0][0] ** 0.5
                         w_imu_vel = 0.5
-                        W_foot = 1.5 * math.erf(2*min(self.phase))
+                        W_foot = 1.5 * math.erf(2*min(self.phase))*math.erfc(_vel_error)
                         self.body_vel = (W_foot*_body_vel + w_imu_vel*_imu_vel)/(w_imu_vel+W_foot)
                         print("vel",_body_vel,_imu_vel,(rospy.get_time() - self.time_intervals[-1]),)
                     else:
