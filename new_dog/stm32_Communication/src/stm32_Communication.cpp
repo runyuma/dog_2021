@@ -22,8 +22,8 @@
 #define FRONTINDEX      0       // 前驱动板下标
 #define BACKINDEX       1       // 后驱动板下标
 // KP KD
-#define MOTOR0KP        0.00f    // 0号KP
-#define MOTOR0KD        1.5f
+#define MOTOR0KP        0.05f    // 0号KP
+#define MOTOR0KD        10.f
 #define MOTOR1KP        0.05f    // 1号KP
 #define MOTOR1KD        5.0f
 #define MOTOR2KP        0.1f    // 2号KP
@@ -77,7 +77,7 @@ int main(int argc, char **argv){
             BackLowerTimer.start();
         }
 
-#if 1
+#if 0
     // 显示下位机上发的数据
     static int UpdateCount = 0;
     if(++UpdateCount == 200){
@@ -193,13 +193,13 @@ void DebugTest(void){
 
 /** @brief 前下位机看门狗回调函数 */
 void FrontLowerTimercallback(const ros::TimerEvent&){
-    //ROS_ERROR_STREAM("Front Lower Disconnected!");
+    ROS_ERROR_STREAM("Front Lower Disconnected!");
     // 后续操作
 }
 
 /** @brief 后下位机看门狗回调函数 */
 void BackLowerTimercallback(const ros::TimerEvent&){
-//    ROS_ERROR_STREAM("Back Lower Disconnected!");
+    ROS_ERROR_STREAM("Back Lower Disconnected!");
     // 后续操作
 }
 

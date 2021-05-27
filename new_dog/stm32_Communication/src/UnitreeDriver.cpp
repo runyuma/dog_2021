@@ -8,15 +8,33 @@
  ****************************************************************************/
 #include "UnitreeDriver.h"
 #include <ros/ros.h>
-#include <iostream>
+#include<iostream>
 #include<stdlib.h>
 #include<string>
+
 
 #define FRAMEHEAD           0x7E    // 帧头
 #define BACKFRAMELENGTH     11
 #define CONTROLFRAMELENGTH  7
 #define DriverBaudRate      921600  // 驱动板使用的串口波特率
 #define USERPASSWORD        "jqrmmd07"
+
+std::string ByteStream2String(const uint8_t *pByteStream, size_t iStreamLen)
+{
+    std::string sRet = "";
+    char curr_byte[3];
+
+    for (size_t idx = 0; idx < iStreamLen; ++idx)
+    {
+    memset(curr_byte, 0, 3);
+    sprintf(curr_byte, "%02hhX", pByteStream[idx]);
+
+    sRet += curr_byte;
+    sRet += " ";
+    }
+
+    return sRet;
+}
 
 /**
  * @brief   构造函数
@@ -52,10 +70,10 @@ UnitreeDriver::UnitreeDriver(const std::string PortName)
         }
 
         if(prvSerial.isOpen()){
-            double StartTime = getCurrentTime();
+            // double StartTime = getCurrentTime();
             ROS_INFO_STREAM(PortName << "Open Serial Succeed!");
-            double EndTime = getCurrentTime();
-            ROS_INFO_STREAM(EndTime - StartTime);
+            // double EndTime = getCurrentTime();
+            // ROS_INFO_STREAM(EndTime - StartTime);
         }
         else
             return ;
@@ -228,7 +246,7 @@ void UnitreeDriver::EncodePosFrame(uint8_t *pData, uint8_t MotorID, float Positi
 void UnitreeDriver::DecodeFrame(uint8_t *pData){
     uint8_t ErrorCode = pData[1] & 0x1F;
     if(ErrorCode){    // 电机发生了错误
-
+    
     }
     else{
         int8_t MotorID = (pData[1] & 0xE0) >> 5;

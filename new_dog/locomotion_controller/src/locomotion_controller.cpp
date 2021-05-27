@@ -1,4 +1,4 @@
-#include "locomotion_controller.h"
+# include "locomotion_controller.h"
 #define ABS(x) (x>0 ? x : -x)
 #define FORCEANDPOS 1
 
@@ -235,6 +235,7 @@ void locomotion_controller::visual()
   {
     std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
     std::cout<<"target_groundleg: "<<_Dog->target_groundleg<<std::endl;
+    std::cout<<"ground_point: "<<_Dog->ground_point<<std::endl;
     std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
     std::cout<<"rpy: "<<_Dog->rpy<<std::endl;
     std::cout<<"xyz: "<<_Dog->body_pos<<std::endl;

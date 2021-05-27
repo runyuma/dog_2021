@@ -135,10 +135,10 @@ def test_singleleg():
                     else:
                         if i == 0:
                             print("")
-                        status_msg.data[i] = 5
+                        status_msg.data[i] = 0
                         _statemachine[i].phase += 1 / (1000 * Swing_T)
                         # _posloop[i] = [-0.02 + (-0.01 + 0.02) * _statemachine[i].phase, 0.936 + (0.922 - 0.936) * _statemachine[i].phase, -1.596 + (-1.589 + 1.596) * _statemachine[i].phase]
-                        _posloop[i] = [0.1, 0.75, -1.5]
+                        _posloop[i] = [0, 0., -0.070]
                         _pos[i] = [0, 0, 0]
                         _vel[i] = [0, 0, 0]
 
@@ -159,7 +159,7 @@ def test_singleleg():
                     _pos = [None, None, None, None]
                     _vel = [None, None, None, None]
                     for i in range(4):
-                        T = 0.25
+                        T = 0.5
                         _statemachine[i].generate_point(T,init_pos[i],init_pos[i])
                         _pos[i] = _statemachine[i].target_pos.T[0].tolist()
                         _vel[i] = _statemachine[i].target_vel.T[0].tolist()

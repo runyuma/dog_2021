@@ -199,8 +199,8 @@ void dog_controller::getTarget_Force()
 
   Eigen::Matrix3f Force_KP,Force_KD,Torque_KP,Torque_KD;
   Eigen::Vector3f Force_limit,Torque_limit;
-  Force_limit<<20,20,200;
-  Torque_limit<<10,15,10;
+  Force_limit<<20,30,200;
+  Torque_limit<<10,10,7;
   if(_statemachine._gait.name == "STANDING")
   {
 //    Force_KP<<2500,0,0,0,800,0,0,0,800;
@@ -429,8 +429,19 @@ void dog_controller::swingleg_calculation()
      {
 //       TODO
      }
+     //RAIBERT_HEURISTIC
+     Eigen::Vector3f b_vel = TF_mat.inverse()* body_vel;
+     float dx = 0.5*swing_time*b_vel(0);
+     float dy = 0.5*swing_time*(b_vel(1) - _target_vel(1));
+    final_point(0)+= dx;
+    final_point(1)+= dy;
+     //RAIBERT_HEURISTIC
      Eigen::Vector3f init_pos = init_SWINGfootpoint.block(0,i,3,1);
-     _statemachine.gait_swingLeg(_statemachine.phase[i],swing_time,init_pos,final_point);
+     Eigen::Vector3f _body_rpy;
+     _body_rpy<<rpy(0),rpy(1),0;
+     Eigen::Matrix3f body_TFmat = get_tfmat(_body_rpy);
+     final_point = body_TFmat.inverse() * final_point;
+     _statemachine.gait_swingLeg(_statemachine.phase[i],swing_time,init_pos, final_point);
      if(use_sim)
      {
        _statemachine.target_pos(0) = final_point(0);
@@ -440,7 +451,13 @@ void dog_controller::swingleg_calculation()
      {
        _statemachine.target_pos(0) = final_point(0);// magic change
      }
+     //RAIBERT_HEURISTIC
+     float dvx = 0.5 * b_vel(0);
+     float dvy = 0.5 * (b_vel(1) - _target_vel(1));
 
+    _statemachine.target_vel(0)+=dvx;
+    _statemachine.target_vel(1)+=dvy;
+    //RAIBERT_HEURISTIC
      target_swingpos.block(0,i,3,1) = _statemachine.target_pos;
      target_swingvel.block(0,i,3,1) = _statemachine.target_vel;
     }
