@@ -13,14 +13,14 @@ dic = {'total_weight':15,
        'comb_lenth':0.005,
        'comc_lenth':0.05,
        "body_inertia":[0.3,0.1,0.4],
-       "swingleg_P":[200,150,180],  # 100,100,150
-       "swingleg_D":[100,25,30],  # 18
+       "swingleg_P":[100,100,150],  # 100,100,150 CQS
+       "swingleg_D":[80,18,55],  # 18 CQS
        #  "swingleg_P":[0,0,0],  # 100,100,150
        # "swingleg_D":[0,0,0],  # 18
-        "groundleg_P4":[80,50,120],  #[80,50,200]
-       "groundleg_D4":[15,10,10],
-       "groundleg_P2": [0, 0, 160],  # [0, 0, 150]
-       "groundleg_D2": [5, 5, 25],
+        "groundleg_P4":[80,50,120],  #[80,50,120]
+       "groundleg_D4":[25,5,10],
+       "groundleg_P2": [0, 0, 120],  # [0, 0, 250]
+       "groundleg_D2": [25, 5, 40],
        # "groundleg_P4": [0, 0, 0],  # [80,50,200]
        # "groundleg_D4": [0, 0, 0],
        # "groundleg_P2": [0, 0, 0],  # [80,50,200]
@@ -35,7 +35,7 @@ dic = {'total_weight':15,
        "body_width":0.055,
        "use_sim":0,
        "damping_compensation":[0.05,0.00,0.5],
-       "walking_height": 0.3,
+       "walking_height": 0.29,
        }
 dic["move_reset"] = 0
 dic["start_move"] = 0
@@ -58,19 +58,27 @@ if dic["state_estimation_mode"] == 0:
     dic["trot_troque_p"] = [400,600,500]
     dic["trot_troque_D"] = [50,65,50]
 elif dic["state_estimation_mode"] == 1:
-    dic["stand_force_p"] = [850,400,400]
-    dic["stand_force_D"] = [80,40,40]
+    dic["stand_force_p"] = [850,80,400]
+    dic["stand_force_D"] = [90,40,40]
     dic["stand_troque_p"] = [150,350,150]
     dic["stand_troque_D"] = [10,5,10]
     # dic["stand_force_p"] = [800, 400, 400]
     # dic["stand_force_D"] = [50, 50, 50]
     # dic["stand_troque_p"] = [150, 300, 150]
     # dic["stand_troque_D"] = [10, 15, 10]
-    dic["trot_force_p"] = [550,450,600]
-    dic["trot_force_D"] = [650,450,50]
-    dic["trot_troque_p"] = [450,600,350]#400,600,500
-    dic["trot_troque_D"] = [40,25,35]#[50,40,50]
+    """
+    dic["trot_force_p"] = [550,450,400]#[550,450,400]
+    dic["trot_force_D"] = [600,350,30]
+    dic["trot_troque_p"] = [450,650,350]#400,600,500
+    dic["trot_troque_D"] = [35,35,35]#[50,40,50]
+    """
+    dic["trot_force_p"] = [250, 250, 300]  # [550,450,400]
+    dic["trot_force_D"] = [600, 350, 30]
+    dic["trot_troque_p"] = [300, 400, 300]  # 400,600,500 CQS
+    dic["trot_troque_D"] = [35, 35, 35]  # [50,40,50] CQS
 # "damping_compensation":[0.05,0.05,0.85 0r 0.72],
+
+
 def params_init():
     rospy.init_node("params_logging")
     rate = rospy.Rate(1)

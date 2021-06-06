@@ -83,8 +83,8 @@ void qp_solver::updateConstraints()
           U(i) = 1.5*ForceTorque(2)/leg_num;
         }
         else{
-        L(i) = 0.7*ForceTorque(2)/leg_num;
-        U(i) = 1.3*ForceTorque(2)/leg_num;
+        L(i) = 0.6*ForceTorque(2)/leg_num;
+        U(i) = 1.4*ForceTorque(2)/leg_num;
         }
 
 
@@ -123,7 +123,7 @@ int qp_solver::solveQP(Eigen::Matrix<float,3,4> & _foot_point, int *_schedule_le
  {
   D = D4;
  }
- else if(leg_num == 2)
+ else if(leg_num == 2 or leg_num == 3)
  {
    D = D2;
  }

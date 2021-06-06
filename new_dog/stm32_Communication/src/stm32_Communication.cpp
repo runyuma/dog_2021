@@ -23,7 +23,7 @@
 #define BACKINDEX       1       // 后驱动板下标
 // KP KD
 #define MOTOR0KP        0.05f    // 0号KP
-#define MOTOR0KD        10.f
+#define MOTOR0KD        12.0f
 #define MOTOR1KP        0.05f    // 1号KP
 #define MOTOR1KD        5.0f
 #define MOTOR2KP        0.1f    // 2号KP

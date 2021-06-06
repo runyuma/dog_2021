@@ -352,11 +352,11 @@ bool locomotion_controller::shrink(int start_index,Eigen::Vector3f rpy)
     hz100->sleep();
     return 0;
   }
-  else if(time_index - start_index == 300)
+  else if(time_index - start_index >= 300)
   {
     time_index += 1;
     hz100->sleep();
-    if(ABS(rpy(0)<0.1) and ABS(rpy(1))<0.1)
+    if(ABS(rpy(0)<0.2) and ABS(rpy(1))<0.2)
     {
      return 1;
     }

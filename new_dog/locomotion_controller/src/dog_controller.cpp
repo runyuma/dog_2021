@@ -8,10 +8,10 @@
 
 std::map<int,std::string> gait_map= {
   { 0,"STANDING" },
-  { 1,"TROTING_RUNING",}};
+  { 1,"TROTING_WALKING",}};
 void dog_controller::dog_reset()
 {
-  USE_RAIBERT_HEURISTIC = 0;
+  USE_RAIBERT_HEURISTIC = 1;
   is_moving = 0;
   set_schedule = 0;
   contact_state = {1,1,1,1};
@@ -199,9 +199,16 @@ void dog_controller::getTarget_Force()
 
   Eigen::Matrix3f Force_KP,Force_KD,Torque_KP,Torque_KD;
   Eigen::Vector3f Force_limit,Torque_limit;
-  Force_limit<<20,30,200;
-  Torque_limit<<10,10,7;
-  if(_statemachine._gait.name == "STANDING")
+  Force_limit<<20,35,180;
+  Torque_limit<<15,10,7;
+    int leg_num = 0;
+    for (int i = 0;i<4;i++) {
+      if (schedualgroundLeg[i] == 1)
+      {
+        leg_num += 1;
+      }
+    }
+  if(_statemachine._gait.name == "STANDING" or leg_num == 4)
   {
 //    Force_KP<<2500,0,0,0,800,0,0,0,800;
 //    Force_KD<<600,0,0,0,350,0,0,0,150;
@@ -212,7 +219,7 @@ void dog_controller::getTarget_Force()
       Torque_KP = stand_troque_p;
       Torque_KD = stand_troque_D;
   }
-  else if (_statemachine._gait.name == "TROTING_WALKING" or _statemachine._gait.name == "TROTING_RUNING") {
+  else if ((_statemachine._gait.name == "TROTING_WALKING" or _statemachine._gait.name == "TROTING_RUNING")and leg_num<4) {
 //    Force_KP<<400,0,0,0,450,0,0,0,600;
 //    Force_KD<<250,0,0,0,100,0,0,0,120;
 //    Torque_KP<<400,0,0,0,600,0,0,0,500;
@@ -221,13 +228,7 @@ void dog_controller::getTarget_Force()
     Force_KD = trot_force_D;
     Torque_KP = trot_troque_p;
     Torque_KD = trot_troque_D;
-    if( USE_RAIBERT_HEURISTIC)
-    {
-          Force_KP<<50,0,0,0,50,0,0,0,600;
-          Force_KD<<250,0,0,0,100,0,0,0,120;
-          Torque_KP<<400,0,0,0,600,0,0,0,500;
-          Torque_KD<<50,0,0,0,50,0,0,0,50;
-    }
+
   }
   else if (_statemachine._gait.name == "SLOW_WALKING") {
     Force_KP<<500,0,0,0,800,0,0,0,800;
@@ -354,10 +355,13 @@ int dog_controller::statemachine_update()
           last_targetstate = targetstates[state_index];
         }
         else {
-          last_targetstate.block(0,0,3,1) = rpy;
-          last_targetstate.block(0,1,3,1) = body_pos;
-          last_targetstate.block(0,2,3,1) = omega;
-          last_targetstate.block(0,3,3,1) = body_vel;
+          last_targetstate = targetstates[state_index];
+
+
+          // last_targetstate.block(0,0,3,1) = rpy;
+          // last_targetstate.block(0,1,3,1) = body_pos;
+          // last_targetstate.block(0,2,3,1) = omega;
+          // last_targetstate.block(0,3,3,1) = body_vel;
         }
       }
 
@@ -424,18 +428,23 @@ void dog_controller::swingleg_calculation()
      float phase2 = next_phase[i];
      float swing_time = time/(phase2 - phase1);
      Eigen::Vector3f final_point;
-     final_point<<Xsidesign*(body_width + hip_lenth),Ysidesign*body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),-walking_height;
+     final_point<< Xsidesign*(body_width + hip_lenth),
+                                  Ysidesign*body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),
+                                  -walking_height;
+     Eigen::Vector3f b_vel = TF_mat.inverse()* body_vel;
      if( USE_RAIBERT_HEURISTIC)
      {
-//       TODO
-     }
      //RAIBERT_HEURISTIC
-     Eigen::Vector3f b_vel = TF_mat.inverse()* body_vel;
-     float dx = 0.5*swing_time*b_vel(0);
-     float dy = 0.5*swing_time*(b_vel(1) - _target_vel(1));
-    final_point(0)+= dx;
+     
+     float dx = 0.2*swing_time*b_vel(0);
+     float dy = 0.2*swing_time*(b_vel(1) - _target_vel(1));
+    // final_point(0)+= dx;
+    // CQS Write
+    final_point(0)+= 0;
     final_point(1)+= dy;
      //RAIBERT_HEURISTIC
+     }
+
      Eigen::Vector3f init_pos = init_SWINGfootpoint.block(0,i,3,1);
      Eigen::Vector3f _body_rpy;
      _body_rpy<<rpy(0),rpy(1),0;
@@ -451,13 +460,16 @@ void dog_controller::swingleg_calculation()
      {
        _statemachine.target_pos(0) = final_point(0);// magic change
      }
+      if( USE_RAIBERT_HEURISTIC)
+     {
      //RAIBERT_HEURISTIC
-     float dvx = 0.5 * b_vel(0);
-     float dvy = 0.5 * (b_vel(1) - _target_vel(1));
+     float dvx = 0.2 * b_vel(0);
+     float dvy = 0.2 * (b_vel(1) - _target_vel(1));
 
     _statemachine.target_vel(0)+=dvx;
     _statemachine.target_vel(1)+=dvy;
     //RAIBERT_HEURISTIC
+    }
      target_swingpos.block(0,i,3,1) = _statemachine.target_pos;
      target_swingvel.block(0,i,3,1) = _statemachine.target_vel;
     }

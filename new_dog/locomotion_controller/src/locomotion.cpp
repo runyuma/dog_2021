@@ -29,6 +29,7 @@ int main(int argc, char **argv)
       _locomotion_controller.moving_init();
     }
 //    _locomotion_controller.moving_func();
+    // std::cout<<"startmove"<<start_move <<std::endl;
     if(not _locomotion_controller.error_handle())
     {
 
@@ -49,10 +50,12 @@ int main(int argc, char **argv)
         error_inited = 1;
         start_move = 0;
       }
-      int recover = _locomotion_controller.shrink(start_timeindex,_locomotion_controller._Dog->rpy);
+      bool recover = _locomotion_controller.shrink(start_timeindex,_locomotion_controller._Dog->rpy);
+      // std::cout<<"recover"<<recover <<std::endl;
       if(recover)
       {
-        // _locomotion_controller.moving_reset();
+         _locomotion_controller.moving_reset();
+        // std::cout<<"********************recover*****************"<<std::endl;
       }
     }
 
