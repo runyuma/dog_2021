@@ -13,10 +13,10 @@ void locomotion_controller::init()
   state_estimation_subscriber = pnh->subscribe("/state",10,&locomotion_controller::state_estimation_callback,this);
   command_subscriber = pnh->subscribe("/command",10,&locomotion_controller::command_callback,this);
 
-  force_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/ground_force",10);
-  swingleg_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/swing_leg",10);
-  leg_status_publisher = pnh->advertise<std_msgs::Int32MultiArray>("/leg_status",10);
-  phase_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/phase_msg",10);
+  force_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/ground_force",10);  // 足端力
+  swingleg_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/swing_leg",10);  // 摆动腿轨迹
+  leg_status_publisher = pnh->advertise<std_msgs::Int32MultiArray>("/leg_status",10); // 腿状态
+  phase_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/phase_msg",10);     // 
 
   pnh->getParam("body_lenth",_Dog->body_lenth);
   pnh->getParam("body_width",_Dog->body_width);
@@ -106,9 +106,9 @@ void locomotion_controller::state_estimation_callback(const  std_msgs::Float32Mu
     {
       pnh ->setParam("fallen_error",1);
     }
-    _Dog->body_pos<<msg->data[3],msg->data[4],msg->data[5];
-    _Dog->omega<<msg->data[6],msg->data[7],msg->data[8];
-    _Dog->body_vel<<msg->data[9],msg->data[10],msg->data[11];
+    _Dog->body_pos << msg->data[3],msg->data[4],msg->data[5];
+    _Dog->omega << msg->data[6],msg->data[7],msg->data[8];
+    _Dog->body_vel << msg->data[9],msg->data[10],msg->data[11];
   }
 }
  void locomotion_controller::command_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg)

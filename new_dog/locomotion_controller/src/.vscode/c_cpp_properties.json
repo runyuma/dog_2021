@@ -1,0 +1,20 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/opt/ros/melodic/include/**",
+        "/home/cqsubantu/WorkSpace/BUAARobot/CQSDogPro/src/UserInterface/include/**",
+        "/home/cqsubantu/WorkSpace/BUAARobot/Dog_ws/src/dog_2021/new_dog/dog_sim/include/**",
+        "/home/cqsubantu/WorkSpace/catkin_ws/src/eigen_test_package/include/**",
+        "/home/cqsubantu/WorkSpace/BUAARobot/Dog_ws/src/dog_2021/new_dog/stm32_Communication/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}

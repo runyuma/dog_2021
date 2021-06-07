@@ -21,14 +21,14 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
     ros::spinOnce();
-//    _locomotion_controller.pnh->setParam("locomotion_runing",1);
+    //    _locomotion_controller.pnh->setParam("locomotion_runing",1);
     static bool error_inited = 0;
     int start_timeindex;
     if(_locomotion_controller.time_index == 0)
     {
       _locomotion_controller.moving_init();
     }
-//    _locomotion_controller.moving_func();
+    //    _locomotion_controller.moving_func();
     // std::cout<<"startmove"<<start_move <<std::endl;
     if(not _locomotion_controller.error_handle())
     {

@@ -91,6 +91,12 @@ void UnitreeDriver::SendControlDataToSTM32(){
     SendBuffer.resize(7 * 6);
     /* 编码 */
     for(uint8_t count = 0;count < 6;count ++){
+        if(count == 0 || count == 3){   // 如果是腿的0号电机需要动态调整阻尼
+            // 摆动相则阻尼小
+
+            // 支撑相则阻尼大
+            
+        }
         switch(MotorData[count].MotionMode){
             case DISABLE:EncodeAbleFrame(SendBuffer.data() + 7 * count, count, false);break;
             case TORMODE:EncodeTorFrame(SendBuffer.data() + 7 * count, count, MotorData[count].TarTor);break;
