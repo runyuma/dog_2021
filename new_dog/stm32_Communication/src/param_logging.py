@@ -31,9 +31,9 @@ dic = {'total_weight':15,
        "command_omega": 0,
        "state_estimation_mode":1,  # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
        "USE_TOUCHSENSOR": 0,
-	"body_lenth":0.255,
+	   "body_lenth":0.255,
        "body_width":0.055,
-       "use_sim":0,
+       "use_sim":1,
        "damping_compensation":[0.05,0.00,0.5],
        "walking_height": 0.29,
        }

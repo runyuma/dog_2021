@@ -633,7 +633,7 @@ class state_estimation():
             name = "/home/marunyu/catkin_ws/src//dog_2021//new_dog/state_estimation/datas/" + self.start_name + ".csv"
             # name = str(time.asctime()) + ".csv"
             # print(self.data_frame)
-        self.data_frame.to_csv(name)
+        # self.data_frame.to_csv(name)
         # print("saved")
 
 

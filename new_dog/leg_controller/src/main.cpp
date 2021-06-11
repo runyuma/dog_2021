@@ -3,7 +3,9 @@ using namespace std;
 #include <stdio.h>
 #include <ros/ros.h>
 #include"leg_controller.h"
+
 leg_controller Legcontroller;
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "leg_controller");
