@@ -221,7 +221,9 @@ void leg_controller::main()
                         _joint_torque[j] = _joint_torque[j] + SIGN(_joint_torque[j]) * damping_compensation[j];
                     } 
                 }
+
                 // cout<<getCurrentTime() - start_time<<endl;
+                
                 for( int j=0;j<3;j++ )
                 {  
                     target_mode[3*i+j] = 3; // 摆动相力矩模式

@@ -409,7 +409,7 @@ void dog_controller::swingleg_calculation()
       int Ysidesign = pow(-1, 1+i / 2);
       float phase1 = current_phase[i];
       float phase2 = next_phase[i];
-      float swing_time = time/(phase2 - phase1);
+      float swing_time = time / (phase2 - phase1);
 
       // 足端位置
       Eigen::Vector3f final_point;
@@ -427,6 +427,8 @@ void dog_controller::swingleg_calculation()
                        Ysidesign*body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),
                        -walking_height;
         Eigen::Vector3f b_vel = TF_mat.inverse()* body_vel; // 质心速度
+        float dy = 0.5 * swing_time * (b_vel(1) - _target_vel(1));
+        final_point(1) += dy;
       #endif
 
       if(USE_RAIBERT_HEURISTIC){
@@ -459,8 +461,8 @@ void dog_controller::swingleg_calculation()
         // RAIBERT_HEURISTIC
         float dvx = 0.2 * b_vel(0);
         float dvy = 0.2 * (b_vel(1) - _target_vel(1));
-        _statemachine.target_vel(0)+=dvx;
-        _statemachine.target_vel(1)+=dvy;
+        _statemachine.target_vel(0) += dvx;
+        _statemachine.target_vel(1) += dvy;
         // RAIBERT_HEURISTIC
       }
 

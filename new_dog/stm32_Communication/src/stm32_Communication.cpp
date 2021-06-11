@@ -95,10 +95,8 @@ int main(int argc, char **argv){
             std::cout << pMotorDriver[BACKINDEX]->MotorData[i].CurPos << " ";
         }
         std::cout << std::endl;
-    }
-    
+    } 
 #endif
-
         
         ros::spinOnce();                                        // 刷新控制数据(调用本函数之后，会直接调用CallBack函数，所以应该是不用担心数据还没来得及刷新的问题的)
         // DebugTest();
