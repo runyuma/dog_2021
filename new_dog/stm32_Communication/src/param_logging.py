@@ -13,7 +13,7 @@ dic = {'total_weight':15,
        'comb_lenth':0.005,
        'comc_lenth':0.05,
        "body_inertia":[0.3,0.1,0.4],
-       "swingleg_P":[100,100,150],  # 100,100,150 CQS
+       "swingleg_P":[100,100,100],  # 100,100,150 CQS
        "swingleg_D":[80,18,55],  # 18 CQS
        #  "swingleg_P":[0,0,0],  # 100,100,150
        # "swingleg_D":[0,0,0],  # 18
@@ -33,7 +33,7 @@ dic = {'total_weight':15,
        "USE_TOUCHSENSOR": 0,
 	   "body_lenth":0.255,
        "body_width":0.055,
-       "use_sim":1,
+       "use_sim":0,
        "damping_compensation":[0.05,0.00,0.5],
        "walking_height": 0.29,
        }

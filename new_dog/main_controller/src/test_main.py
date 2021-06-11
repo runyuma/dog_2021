@@ -49,8 +49,14 @@ def test_singleleg():
     _statemachine = [statemachine() for i in range(4)]
     # init_pos = [np.array([[0.1],[0],[-0.26]]),np.array([[-0.1],[0],[-0.26]]),np.array([[0.1],[0],[-0.26]]),np.array([[-0.1],[0],[-0.26]])]
     # final_pos =[np.array([[0.1],[0.1],[-0.26]]),np.array([[-0.1],[0.1],[-0.26]]),np.array([[0.1],[0.1],[-0.26]]),np.array([[-0.1],[0.1],[-0.26]])]
-    init_pos = [np.array([[0.13],[0],[-0.28]]),np.array([[-0.13],[0],[-0.28]]),np.array([[0.13],[0],[-0.28]]),np.array([[-0.13],[0],[-0.28]])]
-    final_pos =[np.array([[0.1],[0.1],[-0.31]]),np.array([[-0.1],[0.1],[-0.31]]),np.array([[0.1],[0.1],[-0.31]]),np.array([[-0.1],[0.1],[-0.31]])]
+    init_pos = [np.array([[0.13],[0],[-0.28]]),
+                np.array([[-0.13],[0],[-0.28]]),
+                np.array([[0.13],[0],[-0.28]]),
+                np.array([[-0.13],[0],[-0.28]])]
+    final_pos =[np.array([[0.1],[0.1],[-0.31]]),
+                np.array([[-0.1],[0.1],[-0.31]]),
+                np.array([[0.1],[0.1],[-0.31]]),
+                np.array([[-0.1],[0.1],[-0.31]])] # np.array([[-0.1],[0.1],[-0.31]])]
     while not rospy.is_shutdown():
         if test_jacobian:
             if time_index <=1000:
@@ -149,18 +155,18 @@ def test_singleleg():
                 footforce_msg.data = _posloop[0] + _posloop[1] + _posloop[2] + _posloop[3]
 
         elif test_swing_leg:
-            if time_index <= 1000:
+            if time_index <= 1000:  # First Pos Loop
                 status_msg.data = [5, 5, 5, 5]
                 footforce_msg.data = [0, 1, -2] * 4
 
-            else:
+            else:   # Then Tor Loop
                 if _statemachine[0].phase <= 1:
-                    status_msg.data = [1,1,1,1]
+                    status_msg.data = [-1, -1, 1, 1]
                     _pos = [None, None, None, None]
                     _vel = [None, None, None, None]
                     for i in range(4):
                         T = 0.5
-                        _statemachine[i].generate_point(T,init_pos[i],init_pos[i])
+                        _statemachine[i].generate_point(T, init_pos[i], init_pos[i])
                         _pos[i] = _statemachine[i].target_pos.T[0].tolist()
                         _vel[i] = _statemachine[i].target_vel.T[0].tolist()
 
