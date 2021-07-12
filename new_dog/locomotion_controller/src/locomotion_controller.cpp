@@ -231,7 +231,7 @@ void locomotion_controller::phase_publish()
 //***************************************************************************************/visualize/***************************************************************************************//
 void locomotion_controller::visual()
 {
-  if(time_index%5 == 0)
+  if(time_index%5 == 0 and _Dog->_statemachine._gait.name != "STANDING")
   {
     std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
     std::cout<<"target_groundleg: "<<_Dog->target_groundleg<<std::endl;
@@ -249,6 +249,7 @@ void locomotion_controller::visual()
     std::cout<<std::endl;
     std::cout<<"target_state: "<<_Dog->target_state<<std::endl;
     std::cout<<"gait_time: "<<_Dog->_statemachine._gait.Gait_currentTime<<std::endl;
+    std::cout<<"gait_name: "<<_Dog->_statemachine._gait.name<<std::endl;
     std::cout<<"loop_time: "<<_Dog->loop_time<<std::endl;
     std::cout<<"target_force/Torque: "<<_Dog->target_force<<std::endl<<_Dog->target_torque<<std::endl;
     std::cout<<"Error: "<<_Dog->_qp_solver.Error<<std::endl;

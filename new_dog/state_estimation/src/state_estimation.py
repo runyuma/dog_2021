@@ -8,6 +8,7 @@ import copy
 import time
 import os
 from std_msgs.msg import Float32MultiArray, Float32, Int32MultiArray
+
 TEST = 1
 USE_SIM = rospy.get_param("use_sim")
 TEST_SER = 0
@@ -24,34 +25,36 @@ else:
     import serial.tools.list_ports
     import os
     from IMUDecode import *
+
 plan1 = 0
 plan2 = 0
 plan3 = 0  # pure imu
-plan4 = 1  # pure legdynamic + when not contact pure imu
+plan4 = 1  # pure leg dynamic + when not contact pure imu
 plan5 = 0  # trust imu + legdynamic kailam filter
 
 
 class state_estimation():
     def __init__(self):
-        rospy.init_node("state_estimation",anonymous= True)
+        rospy.init_node("state_estimation", anonymous=True)
         self.Hz = 500
         self.rate = rospy.Rate(self.Hz)
         self.body_lenth = rospy.get_param("body_lenth")
         self.body_width = rospy.get_param("body_width")
-        self.state_estimation_mode = rospy.get_param("state_estimation_mode")# 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
+        self.state_estimation_mode = rospy.get_param(
+            "state_estimation_mode")  # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
 
-        self.contact_state = [0,0,0,0]
+        self.contact_state = [0, 0, 0, 0]
 
         self.touchsensors = [np.zeros(3) for i in range(4)]
-        self.rpy = np.zeros((3,1))
+        self.rpy = np.zeros((3, 1))
         self.omega = np.zeros((3, 1))
-        self.linear_acceleration = np.zeros((3,1))
-        self.body_pos = np.zeros((3,1))
-        self.body_vel = np.zeros((3,1))
-        self.footpoint = np.zeros((3,4))
-        self.foot_vel = np.zeros((3,4))
+        self.linear_acceleration = np.zeros((3, 1))
+        self.body_pos = np.zeros((3, 1))
+        self.body_vel = np.zeros((3, 1))
+        self.footpoint = np.zeros((3, 4))
+        self.foot_vel = np.zeros((3, 4))
 
-        self.initialed = 0 # initialized or not
+        self.initialed = 0  # initialized or not
         self.foot_point_received = 0
         self.foot_vel_received = 0
         self.got_imu = 0
@@ -90,7 +93,7 @@ class state_estimation():
                                   "raw_vy",
                                   "raw_vz",
                                   ]
-                self.df_data = np.zeros((1,29))
+                self.df_data = np.zeros((1, 29))
                 self.test_body_pos = np.zeros((3, 1))
                 self.test_body_vel = np.zeros((3, 1))
                 self.test_rpy = np.zeros((3, 1))
@@ -102,7 +105,7 @@ class state_estimation():
                                   "p",
                                   "y",
                                   "x",
-                                  "y",
+                                  "yy",
                                   "z",
                                   "wx",
                                   "wy",
@@ -114,24 +117,21 @@ class state_estimation():
                 self.df_data = np.zeros((1, 14))
                 self.df_data[0][0] = rospy.get_time()
         if plan5:
-            #x = {pos vel p1 p2 p3 p4}
-            self.x = np.zeros((18,1))
-            self.Qp = np.diag([0.001,0.001,0.001]) ** 2 # noise of foot point 3*3
-            self.Qf = np.diag([0.01,0.01,0.01]) ** 2 # noise of acc 3*3
-            self.Q = np.zeros((18,18))
+            # x = {pos vel p1 p2 p3 p4}
+            self.x = np.zeros((18, 1))
+            self.Qp = np.diag([0.001, 0.001, 0.001]) ** 2  # noise of foot point 3*3
+            self.Qf = np.diag([0.01, 0.01, 0.01]) ** 2  # noise of acc 3*3
+            self.Q = np.zeros((18, 18))
             self.F = np.eye(18)
-            self.y = np.zeros((15,1)) #leg0123 vel
-            self.H = np.zeros((15,18))
-            self.Qr = np.kron(np.eye(5),np.dot(np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,0.17]]),np.dot(np.diag([0.001,0.001,0.001])**2,np.array([[0.3,0,0],[0,0.17,0.17],[0,0.17,0.17]]).T)))
-            self.P = np.zeros((18,18))
-            self.S = np.zeros((18,18))
-            self.K = np.zeros((18,18))# kalman increment
-            self.yv = np.zeros((3,1))
-
-
-
-
-
+            self.y = np.zeros((15, 1))  # leg0123 vel
+            self.H = np.zeros((15, 18))
+            self.Qr = np.kron(np.eye(5), np.dot(np.array([[0.3, 0, 0], [0, 0.17, 0.17], [0, 0.17, 0.17]]),
+                                                np.dot(np.diag([0.001, 0.001, 0.001]) ** 2,
+                                                       np.array([[0.3, 0, 0], [0, 0.17, 0.17], [0, 0.17, 0.17]]).T)))
+            self.P = np.zeros((18, 18))
+            self.S = np.zeros((18, 18))
+            self.K = np.zeros((18, 18))  # kalman increment
+            self.yv = np.zeros((3, 1))
 
         if USE_SIM:
             if self.state_estimation_mode == 0 or TEST:
@@ -157,7 +157,7 @@ class state_estimation():
             else:
                 print(port_list[0])
                 self.port = port_list[0]
-                self.port_name =  "/dev/ttyACM0"
+                self.port_name = "/dev/ttyACM0"
                 self.bps = 921600
                 timex = None
                 self.ser = serial.Serial(self.port_name, self.bps, timeout=timex)
@@ -167,13 +167,15 @@ class state_estimation():
         self.state_publisher = rospy.Publisher("/state", Float32MultiArray, queue_size=10)
         self.get_schedule_leg = 0
         self.leg_status_subscriber = rospy.Subscriber('/leg_status', Int32MultiArray, self.leg_status_callback)
-        self.phase_subscriber = rospy.Subscriber("/phase_msg",Float32MultiArray,self.phase_callback)
+        self.phase_subscriber = rospy.Subscriber("/phase_msg", Float32MultiArray, self.phase_callback)
         self.start_name = str(time.asctime())
         self.phase = [1, 1, 1, 1]
+
     def __del__(self):
         self.restore_dataframe()
-    def leg_status_callback(self,msg):
-        self.schedule_leg = [1,1,1,1]
+
+    def leg_status_callback(self, msg):
+        self.schedule_leg = [1, 1, 1, 1]
         if self.get_schedule_leg == 1:
             for i in range(4):
                 if msg.data[i] == 1:
@@ -181,11 +183,10 @@ class state_estimation():
                 else:
                     self.schedule_leg[i] = 1
 
-    def phase_callback(self,msg):
-        self.phase = [1,1,1,1]
+    def phase_callback(self, msg):
+        self.phase = [1, 1, 1, 1]
         for i in range(4):
             self.phase[i] = msg.data[i]
-
 
     def main(self):
         while not rospy.is_shutdown():
@@ -204,16 +205,15 @@ class state_estimation():
                         self.last_rostime = self.current_time
                         self.leg_dynamic_estimation()
 
-                    if self.time_index%5 == 0:
+                    if self.time_index % 5 == 0:
                         self.restore_df_data()
                 # if self.time_index % 50 == 0:
                 #     print(self.linear_acceleration)
             elif self.state_estimation_mode == 1:
                 if not USE_SIM:
-
                     self.get_imu()
                 if not self.initialed:
-                    if self.foot_point_received and self.got_imu :
+                    if self.foot_point_received and self.got_imu:
                         self.initial()
                         self.state_publish()
                 else:
@@ -224,12 +224,11 @@ class state_estimation():
 
                     self.state_publish()
 
-
                     # print("loop_time_state_estimation:", self.looptime)
                     # print("body_pos:", self.body_pos)
                     # print("body_vel", self.body_vel)
                     if TEST:
-                        if self.time_index%5 == 0:
+                        if self.time_index % 5 == 0:
                             self.restore_df_data()
                         if self.time_index % 50 == 0:
                             self.restore_dataframe()
@@ -238,14 +237,14 @@ class state_estimation():
 
     def initial(self):
         C_mat = self.get_TFmat()
-        self.footpoint_W = np.dot(C_mat,self.footpoint)
+        self.footpoint_W = np.dot(C_mat, self.footpoint)
         height = -np.mean(self.footpoint_W[2])
         self.body_pos = np.zeros((3, 1))
         self.body_vel = np.zeros((3, 1))
         self.body_pos[2][0] = height
-        self.foot_contactpoint = np.dot(self.body_pos ,np.ones((1,4))) + self.footpoint_W
-        self.schedule_leg = [1,1,1,1]
-        self.last_schedule_leg = [1,1,1,1]
+        self.foot_contactpoint = np.dot(self.body_pos, np.ones((1, 4))) + self.footpoint_W
+        self.schedule_leg = [1, 1, 1, 1]
+        self.last_schedule_leg = [1, 1, 1, 1]
         self.last_body_pos = copy.deepcopy(self.body_pos)
         self.last_body_vel = copy.deepcopy(self.body_vel)
         self.last_rostime = rospy.get_time()
@@ -256,9 +255,9 @@ class state_estimation():
         self.memory_lenth = 10
         if plan5:
             self.memory_lenth = 10
-            self.x[0:3,0:1] = self.body_pos
-            self.x[3:6,0:1] = self.body_vel
-            self.x[6:,0:1] = self.foot_contactpoint.reshape(12,1)
+            self.x[0:3, 0:1] = self.body_pos
+            self.x[3:6, 0:1] = self.body_vel
+            self.x[6:, 0:1] = self.foot_contactpoint.reshape(12, 1)
         if TEST:
             self.test_body_pos = np.zeros((3, 1))
             self.test_body_vel = np.zeros((3, 1))
@@ -268,7 +267,6 @@ class state_estimation():
 
     def leg_dynamic_estimation(self):
         # cauculate pos
-
 
         self.get_schedule_leg = 1
         C_mat = self.get_TFmat()
@@ -302,7 +300,7 @@ class state_estimation():
                 if self.last_schedule_leg != self.schedule_leg:
                     if self.contact_state == [0, 0, 0, 0]:
                         self.body_vel += (self.looptime) * (
-                                    np.dot(C_mat, self.linear_acceleration) + np.array([[0], [0], [-9.81]]))
+                                np.dot(C_mat, self.linear_acceleration) + np.array([[0], [0], [-9.81]]))
                         self.body_pos += (self.looptime) * self.body_pos
                     else:
                         permit = 1
@@ -313,7 +311,7 @@ class state_estimation():
                                     point = self.foot_contactpoint[:, i:i + 1]
                                     if (point == np.zeros((3, 1))).all():
                                         self.foot_contactpoint[:, i:i + 1] = self.body_pos + self.footpoint_W[:,
-                                                                                                  i:i + 1]
+                                                                                             i:i + 1]
                                         # print("contact")
                                 else:
                                     permit = 0
@@ -341,7 +339,7 @@ class state_estimation():
                             # print("foot_point", self.footpoint_W)
                             # print("TF", C_mat, self.rpy)
                         self.body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * cal_array,
-                                                    axis=1).reshape((3, 1)) / sum(cal_array.tolist())
+                                               axis=1).reshape((3, 1)) / sum(cal_array.tolist())
                         if USE_ERF:
                             _body_vel = (self.body_pos - self.body_pos_memory[0]) / (
                                     rospy.get_time() - self.time_intervals[0])
@@ -351,21 +349,21 @@ class state_estimation():
                             time_diff = [self.time_intervals[i + 1] - self.time_intervals[i] for i in
                                          range(len(self.body_pos_memory) - 1)]
                             time_diff.append(rospy.get_time() - self.time_intervals[-1])
-                            erfs = self.erfs[1:] + [math.erf(2*min(self.phase))]
+                            erfs = self.erfs[1:] + [math.erf(2 * min(self.phase))]
                             vel_multiplyweight = np.zeros((3, 1))
                             _sum = 0
                             for i in range(len(pos_diff)):
                                 if time_diff[i] != 0:
                                     vel = (pos_diff[i] / time_diff[i])
                                     vel_multiplyweight += erfs[i] * vel
-                                    _sum+=erfs[i]
-                            _body_vel = vel_multiplyweight/_sum
+                                    _sum += erfs[i]
+                            _body_vel = vel_multiplyweight / _sum
 
                             _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
                                     self.linear_acceleration + np.array([[0], [0], [-9.79]]))
-                            _vel_error = np.dot((_body_vel - self.body_vel).T,(_body_vel - self.body_vel))[0][0]**0.5
+                            _vel_error = np.dot((_body_vel - self.body_vel).T, (_body_vel - self.body_vel))[0][0] ** 0.5
                             w_imu_vel = 0.5
-                            W_foot = 1. * min(erfs)*math.erfc(_vel_error/2)
+                            W_foot = 1. * min(erfs) * math.erfc(_vel_error / 2)
                             self.body_vel = (W_foot * _body_vel + w_imu_vel * _imu_vel) / (w_imu_vel + W_foot)
                             self.raw_vel = copy.copy(_body_vel)
                         else:
@@ -376,17 +374,19 @@ class state_estimation():
                 else:
                     # print("*****calarray",cal_array,rospy.get_time())
                     self.body_pos = np.sum((self.foot_contactpoint - self.footpoint_W) * cal_array,
-                                                axis=1).reshape((3, 1)) / sum(cal_array.tolist())
+                                           axis=1).reshape((3, 1)) / sum(cal_array.tolist())
 
                     if USE_ERF:
                         _body_vel = (self.body_pos - self.body_pos_memory[0]) / (
-                                    rospy.get_time() - self.time_intervals[0])
-                        pos_diff = [self.body_pos_memory[i+1] - self.body_pos_memory[i] for i in range(len(self.body_pos_memory) - 1)]
+                                rospy.get_time() - self.time_intervals[0])
+                        pos_diff = [self.body_pos_memory[i + 1] - self.body_pos_memory[i] for i in
+                                    range(len(self.body_pos_memory) - 1)]
                         pos_diff.append(self.body_pos - self.body_pos_memory[-1])
-                        time_diff = [self.time_intervals[i+1] - self.time_intervals[i] for i in range(len(self.body_pos_memory) - 1)]
+                        time_diff = [self.time_intervals[i + 1] - self.time_intervals[i] for i in
+                                     range(len(self.body_pos_memory) - 1)]
                         time_diff.append(rospy.get_time() - self.time_intervals[-1])
-                        vels = [pos_diff[i]/time_diff[i] for i in range(len(pos_diff))]
-                        erfs = self.erfs[1:] + [math.erf(2*min(self.phase))]
+                        vels = [pos_diff[i] / time_diff[i] for i in range(len(pos_diff))]
+                        erfs = self.erfs[1:] + [math.erf(2 * min(self.phase))]
                         vel_multiplyweight = np.zeros((3, 1))
                         _sum = 0
                         for i in range(len(pos_diff)):
@@ -396,20 +396,17 @@ class state_estimation():
                                 _sum += erfs[i]
                         _body_vel = vel_multiplyweight / _sum
                         _imu_vel = self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (
-                                    np.dot(C_mat,self.linear_acceleration) + np.array([[0], [0], [-9.79]]))
+                                np.dot(C_mat, self.linear_acceleration) + np.array([[0], [0], [-9.79]]))
                         _vel_error = np.dot((_body_vel - self.body_vel).T, (_body_vel - self.body_vel))[0][0] ** 0.5
                         w_imu_vel = 0.5
-                        W_foot = 1. * min(erfs)*math.erfc(_vel_error/2)
-                        self.body_vel = (W_foot*_body_vel + w_imu_vel*_imu_vel)/(w_imu_vel+W_foot)
-                        print("vel",_body_vel,_imu_vel,(rospy.get_time() - self.time_intervals[-1]),)
+                        W_foot = 1. * min(erfs) * math.erfc(_vel_error / 2)
+                        self.body_vel = (W_foot * _body_vel + w_imu_vel * _imu_vel) / (w_imu_vel + W_foot)
+                        print("vel", _body_vel, _imu_vel, (rospy.get_time() - self.time_intervals[-1]), )
                         self.raw_vel = copy.copy(_body_vel)
 
                     else:
                         self.body_vel = (self.body_pos - self.body_pos_memory[0]) / (
                                 rospy.get_time() - self.time_intervals[0])
-
-
-
 
                     # print("vel", self.body_vel, self.last_body_vel + (rospy.get_time() - self.time_intervals[-1]) * (self.linear_acceleration + np.array([[0], [0], [-9.79]])))
 
@@ -421,11 +418,11 @@ class state_estimation():
                 if len(self.body_pos_memory) < self.memory_lenth:
                     self.body_pos_memory.append(copy.deepcopy(self.body_pos))
                     self.time_intervals.append(rospy.get_time())
-                    self.erfs.append(math.erf(2*min(self.phase)))
+                    self.erfs.append(math.erf(2 * min(self.phase)))
                 else:
                     self.body_pos_memory = self.body_pos_memory[1:] + [copy.deepcopy(self.body_pos)]
                     self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
-                    self.erfs = self.erfs[1:]+[2*math.erf(2*min(self.phase))]
+                    self.erfs = self.erfs[1:] + [2 * math.erf(2 * min(self.phase))]
 
                 self.last_body_pos = copy.deepcopy(self.body_pos)
                 self.last_body_vel = copy.deepcopy(self.body_vel)
@@ -600,6 +597,7 @@ class state_estimation():
         #             self.time_intervals = self.time_intervals[1:] + [rospy.get_time()]
         #
         #         self.last_body_pos = copy.deepcopy(self.test_body_pos)
+
     def restore_df_data(self):
         if USE_SIM:
             _data = np.zeros(29)
@@ -614,34 +612,32 @@ class state_estimation():
             _data[20:23] = self.omega.reshape(3)
             _data[23:26] = self.body_vel.reshape(3)
             _data[26:29] = self.raw_vel.reshape(3)
-            self.df_data = np.vstack([self.df_data,_data.reshape((1,29))])
+            self.df_data = np.vstack([self.df_data, _data.reshape((1, 29))])
         else:
             _data = np.zeros(14)
             _data[0] = rospy.get_time()
-            _data[1] = self.current_gait
-            _data[2:5] = self.rpy.reshape(3)
-            _data[5:8] = self.body_pos.reshape(3)
-            _data[8:11] = self.omega.reshape(3)
-            _data[11:14] = self.body_vel.reshape(3)
-            self.df_data = np.vstack([self.df_data, _data.reshape((1, 14))])
+            _data[1] = copy.deepcopy(self.current_gait)
+            _data[2:5] = copy.deepcopy(self.rpy.reshape(3))
+            _data[5:8] = copy.deepcopy(self.body_pos.reshape(3))
+            _data[8:11] = copy.deepcopy(self.omega.reshape(3))
+            _data[11:14] = copy.deepcopy(self.body_vel.reshape(3))
+            self.df_data = copy.deepcopy(np.vstack([self.df_data, _data.reshape((1, 14))]))
 
     def restore_dataframe(self):
-        self.data_frame = pd.DataFrame(self.df_data,columns=self.df_colomn)
+        self.data_frame = pd.DataFrame(self.df_data, columns=self.df_colomn)
+        #print("-------------------------------------------------", USE_SIM, "------------------------------------------------")
+        #print("#" for i in range(1000))
         if USE_SIM:
             name = "/home/marunyu/catkin_ws/src/new_dog/state_estimation/datas/" + self.start_name + "SIM.csv"
         else:
             name = "/home/marunyu/catkin_ws/src//dog_2021//new_dog/state_estimation/datas/" + self.start_name + ".csv"
             # name = str(time.asctime()) + ".csv"
             # print(self.data_frame)
-        # self.data_frame.to_csv(name)
+        self.data_frame.to_csv(name)
         # print("saved")
 
-
-
-
-
     def get_TFmat(self):
-        r,p,y = self.rpy[0][0],self.rpy[1][0],self.rpy[2][0]
+        r, p, y = self.rpy[0][0], self.rpy[1][0], self.rpy[2][0]
         matr_y = np.array([[np.cos(p), 0, np.sin(p)],
                            [0, 1, 0],
                            [-np.sin(p), 0, np.cos(p)]])
@@ -653,17 +649,18 @@ class state_estimation():
                            [0, 0, 1]])
 
         TF_mat = np.dot(np.dot(matr_z, matr_y), matr_x)
-        return  TF_mat
+        return TF_mat
+
     def state_publish(self):
         if self.state_estimation_mode == 0:
             if self.got_xyz and self.got_imu:
-                self.STATE = np.vstack([self.rpy,self.body_pos,self.omega, self.body_vel])
+                self.STATE = np.vstack([self.rpy, self.body_pos, self.omega, self.body_vel])
                 state = Float32MultiArray()
                 state.data = self.STATE.T[0].tolist()
                 self.state_publisher.publish(state)
         elif self.state_estimation_mode == 1:
             if self.got_imu:
-                self.STATE = np.vstack([self.rpy,self.body_pos,self.omega, self.body_vel])
+                self.STATE = np.vstack([self.rpy, self.body_pos, self.omega, self.body_vel])
                 state = Float32MultiArray()
                 state.data = self.STATE.T[0].tolist()
                 self.state_publisher.publish(state)
@@ -671,7 +668,10 @@ class state_estimation():
     def get_imu(self):
         Result = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         if TEST_SER:
-            rec_str = bytes([0x14, 0x23, 0x7E ,0x01 ,0xB6 ,0xF3 ,0x9D ,0x3F ,0x2D ,0xB2 ,0xB5 ,0x40 ,0x27 ,0x31 ,0x10 ,0x41 ,0xB6 ,0xF3 ,0x9D ,0x3F ,0x2D,0xB2 ,0xB5 ,0x40 ,0x27 ,0x31 ,0x10 ,0x41 ,0xB6 ,0xF3 ,0x9D ,0x3F ,0x2D ,0xB2 ,0xB5 ,0x40 ,0x27 ,0x31 ,0x10 ,0x41 ,0x32, 0x05])
+            rec_str = bytes(
+                [0x14, 0x23, 0x7E, 0x01, 0xB6, 0xF3, 0x9D, 0x3F, 0x2D, 0xB2, 0xB5, 0x40, 0x27, 0x31, 0x10, 0x41, 0xB6,
+                 0xF3, 0x9D, 0x3F, 0x2D, 0xB2, 0xB5, 0x40, 0x27, 0x31, 0x10, 0x41, 0xB6, 0xF3, 0x9D, 0x3F, 0x2D, 0xB2,
+                 0xB5, 0x40, 0x27, 0x31, 0x10, 0x41, 0x32, 0x05])
         else:
             count = self.ser.inWaiting()
             if count > 0:
@@ -689,11 +689,11 @@ class state_estimation():
                         PossibleFrame = rec_str[FrameHeadIndex:FrameHeadIndex + 39]  # 完整的一帧长度为39个字节
                         if CRC8Calculate(PossibleFrame, 39) == 0:
                             IMUDataDecode(PossibleFrame, Result)
-                    # FrameHeadIndex = rec_str.find(0x7E)
-                    # if FrameHeadIndex != -1:
-                    #     PossibleFrame = rec_str[FrameHeadIndex:FrameHeadIndex + 39]  # 完整的一帧长度为39个字节
-                    #     if FrameHeadIndex + 39 <= len(rec_str) and CRC8Calculate(PossibleFrame, 39) == 0:
-                    #         IMUDataDecode(PossibleFrame, Result)
+                            # FrameHeadIndex = rec_str.find(0x7E)
+                            # if FrameHeadIndex != -1:
+                            #     PossibleFrame = rec_str[FrameHeadIndex:FrameHeadIndex + 39]  # 完整的一帧长度为39个字节
+                            #     if FrameHeadIndex + 39 <= len(rec_str) and CRC8Calculate(PossibleFrame, 39) == 0:
+                            #         IMUDataDecode(PossibleFrame, Result)
                             self.got_imu = 1
                             self.omega[0][0] = Result[3]
                             self.omega[1][0] = Result[4]
@@ -720,9 +720,11 @@ class state_estimation():
             #         print("imu lenth not enough*******************************")
             # else:
             #     print("imu not received*******************************")
+
     def get_touchsensor(self):
-        pass # TODO:touchsensor real_robot
-    def left_front_callback(self,effort_message):
+        pass  # TODO:touchsensor real_robot
+
+    def left_front_callback(self, effort_message):
         foot_index = 0
         if effort_message.states == []:
             self.contact_state[foot_index] = 0
@@ -737,6 +739,7 @@ class state_estimation():
                 Y.append(i.total_wrench.force.y)
                 Z.append(i.total_wrench.force.z)
             self.touchsensors[foot_index] = np.array([np.mean(X), np.mean(Y), np.mean(Z)])
+
     def right_front_callback(self, effort_message):
         foot_index = 1
         if effort_message.states == []:
@@ -752,6 +755,7 @@ class state_estimation():
                 Y.append(i.total_wrench.force.y)
                 Z.append(i.total_wrench.force.z)
             self.touchsensors[foot_index] = np.array([np.mean(X), np.mean(Y), np.mean(Z)])
+
     def left_back_callback(self, effort_message):
         foot_index = 2
         if effort_message.states == []:
@@ -767,6 +771,7 @@ class state_estimation():
                 Y.append(i.total_wrench.force.y)
                 Z.append(i.total_wrench.force.z)
             self.touchsensors[foot_index] = np.array([np.mean(X), np.mean(Y), np.mean(Z)])
+
     def right_back_callback(self, effort_message):
         foot_index = 3
         if effort_message.states == []:
@@ -782,6 +787,7 @@ class state_estimation():
                 Y.append(i.total_wrench.force.y)
                 Z.append(i.total_wrench.force.z)
             self.touchsensors[foot_index] = np.array([np.mean(X), np.mean(Y), np.mean(Z)])
+
     def footpoint_callback(self, msg):
         if self.foot_point_received == 0:
             self.foot_point_received = 1
@@ -789,18 +795,20 @@ class state_estimation():
         body_width = self.body_width
         for i in range(4):
             Xside_sigh = (-1) ** i
-            Yside_sign = (-1) ** (1+i//2)
+            Yside_sign = (-1) ** (1 + i // 2)
             self.footpoint[0][i] = msg.data[i * 3 + 0] + Xside_sigh * body_width
             self.footpoint[1][i] = msg.data[i * 3 + 1] + Yside_sign * body_lenth
             self.footpoint[2][i] = msg.data[i * 3 + 2]
-    def footvel_callback(self,msg):
+
+    def footvel_callback(self, msg):
         if self.foot_vel_received == 0:
             self.foot_vel_received = 1
         for i in range(4):
             self.foot_vel[0][i] = msg.data[i * 3 + 0]
             self.foot_vel[1][i] = msg.data[i * 3 + 1]
             self.foot_vel[2][i] = msg.data[i * 3 + 2]
-    def Imu_callback(self,msg):
+
+    def Imu_callback(self, msg):
         self.got_imu = 1
         x = msg.orientation.x
         y = msg.orientation.y
@@ -821,21 +829,20 @@ class state_estimation():
         rpy_angle = [0, 0, 0]  # XYZ
 
         self.rpy[0][0] = np.arctan2(2 * (y * z + w * x), w * w - x * x - y * y + z * z)
-        self.rpy[1][0] = np.arcsin(2*(w*y - x*z))
+        self.rpy[1][0] = np.arcsin(2 * (w * y - x * z))
         self.rpy[2][0] = np.arctan2(2 * (x * y + w * z), w * w + x * x - y * y - z * z)
         if TEST:
             self.test_rpy = copy.deepcopy(self.rpy)
             self.test_omega = copy.deepcopy(self.omega)
 
-
-    def state_callback(self,msg):
+    def state_callback(self, msg):
         if not TEST or self.state_estimation_mode == 0:
             self.got_xyz = 1
             # Read the position of the robot
             # print("state_callback")
             self.body_pos[0][0] = msg.pose[1].position.x
             self.body_pos[1][0] = msg.pose[1].position.y
-            self.body_pos[2][0] = msg.pose[1].position.z-0.05
+            self.body_pos[2][0] = msg.pose[1].position.z - 0.05
             # print("state_callback working")
 
             # Read the Vel of the robot
@@ -851,13 +858,11 @@ class state_estimation():
             self.test_body_vel[1][0] = msg.twist[1].linear.y
             self.test_body_vel[2][0] = msg.twist[1].linear.z
 
+
 def omega_matrix(omega_array):
-    wx,wy,wz = omega_array[0][0],omega_array[1][0],omega_array[2][0]
-    return np.array([[0,-wz,wy],[wz,0,-wx],[-wy,wx,0]])
+    wx, wy, wz = omega_array[0][0], omega_array[1][0], omega_array[2][0]
+    return np.array([[0, -wz, wy], [wz, 0, -wx], [-wy, wx, 0]])
 
 
 _state_estimation = state_estimation()
-
 _state_estimation.main()
-
-

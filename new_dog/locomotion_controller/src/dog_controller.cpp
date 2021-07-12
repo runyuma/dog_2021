@@ -57,7 +57,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         Eigen::Vector3f target_vel = Eigen::Vector3f::Zero();
         if(i<= n/2){
           target_vel(2) = 4*(walking_height - body_pos(2)) * i /(n*n*t);
-          target_pos(2) = 2*(walking_height - body_pos(2)) *i* i /(n*n) + body_pos(2);
+          target_pos(2) = 2*(walking_height - body_pos(2)) * i * i /(n*n) + body_pos(2);
         }
         else {
           target_vel(2) = 4*(walking_height - body_pos(2)) * (n - i) /(n*n*t);
@@ -133,6 +133,9 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         dy_Vec<<0,dy,0;
         vy_Vec<<0,vy,0;
         target_pos = last_targetstate.block(0,1,3,1) + target_TFmat * dy_Vec;
+
+        //std::cout<<"y____________last<: "<<last_targetstate.block(1,1,1,1)<<std::endl;
+        //std::cout<<"yyyyyyyyyyyyyyyyy<: "<<target_pos(1)<<std::endl;
         if(ABS(target_rpy(2))>PI)
         {
           target_rpy(2) += -SIGN(target_rpy(2)) * 2 * PI;
@@ -143,8 +146,13 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         _state.block(0,2,3,1) = target_omega;
         _state.block(0,3,3,1) = target_vel;
         states[i] = _state;
+        //printf("target_vel::::::::::::::%f", target_vel(1));
+        //std::cout<<"yyyyyyyyyyyyyyyyy<: "<<target_pos(1)<<std::endl;
+        //std::cout<<"y____________last<: "<<last_targetstate.block(1,1,1,1)<<std::endl;
       }
       targetstates = states;
+      //for(int ti=0; ti<n; ti++) {std::cout<<"states<: "<<states[ti]<<std::endl;}
+      //for(int ti=0; ti<n; ti++) {std::cout<<"targetstates by states<: "<<targetstates[ti]<<std::endl;}
     }
     else{
       for (int i=0;i<n;i++)
@@ -157,6 +165,8 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         Eigen::Vector3f target_omega =  command_omega;
         Eigen::Vector3f target_vel = TF_mat * command_vel;
         Eigen::Vector3f target_pos = last_targetstate.block(0,1,3,1) + target_TFmat * dy_Vec;
+        //std::cout<<"yyyyyyyyyyyyyyyyy>: "<<target_pos(1)<<std::endl;
+        //std::cout<<"y____________last>: "<<last_targetstate.block(1,1,1,1)<<std::endl;
         if(ABS(target_rpy(2))>PI)
         {
           target_rpy(2) += -SIGN(target_rpy(2)) * 2 * PI;
@@ -166,8 +176,14 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         _state.block(0,2,3,1) = target_omega;
         _state.block(0,3,3,1) = target_vel;
         states[i] = _state;
+        //printf("target_vel::::::::::::::%f", target_vel(1));
+        //std::cout<<"yyyyyyyyyyyyyyyyy>: "<<target_pos(1)<<std::endl;
+        //std::cout<<"y____________last>: "<<last_targetstate.block(1,1,1,1)<<std::endl;
       }
+
       targetstates = states;
+      //for(int ti=0; ti<n; ti++) {std::cout<<"states<: "<<states[ti]<<std::endl;}
+      //for(int ti=0; ti<n; ti++) {std::cout<<"targetstates by states>: "<<targetstates[ti]<<std::endl;}
     }
   }
 }
@@ -181,8 +197,8 @@ void dog_controller::getTarget_Force()
 
   Eigen::Matrix3f Force_KP,Force_KD,Torque_KP,Torque_KD;
   Eigen::Vector3f Force_limit,Torque_limit;
-  Force_limit<<20,35,180;
-  Torque_limit<<15,10,7;
+  Force_limit<<25,35,180; //20, 35, 180 amend
+  Torque_limit<<15,20,7; //15, 15, 7 amend
     int leg_num = 0;
     for (int i = 0;i<4;i++) {
       if (schedualgroundLeg[i] == 1)
@@ -324,7 +340,7 @@ int dog_controller::statemachine_update()
       _statemachine._gait.Gait_currentTime = 0;
       if(_statemachine._gait.name == "STANDING")
       {
-        last_targetstate = targetstates[state_index];
+        last_targetstate = targetstates[state_index-1];   //amend
 //        last_targetstate(0,2) = rpy(2);
 //        last_targetstate.block(0,1,3,1) = body_pos;
 //        last_targetstate(2,2) = omega(2);
@@ -334,7 +350,12 @@ int dog_controller::statemachine_update()
       else if(_statemachine._gait.name == "TROTING_WALKING" or _statemachine._gait.name == "TROTING_RUNING"){
         if(not USE_RAIBERT_HEURISTIC)
         {
-          last_targetstate = targetstates[state_index];
+          last_targetstate = targetstates[state_index-1];    //amend
+          // not state_index but state_index-1, I had debuged for days!!
+          //for(int ti=0; ti<=state_index; ti++) {std::cout<<"targetstates of index: "<<targetstates[ti]<<std::endl;}
+          //std::cout<<"state_index: "<<state_index<<std::endl;
+          //std::cout<<"last_targetstate-----guess<: "<<targetstates[-1]<<std::endl;
+          //std::cout<<"last_targetstate-----1: "<<last_targetstate<<std::endl;
         }
         else {
           last_targetstate = targetstates[state_index];
@@ -416,19 +437,20 @@ void dog_controller::swingleg_calculation()
       #if 0 // 世界坐标系
         // 世界坐标系下的落足点的构造，根据世界坐标系下的机器人状态求解出目标落足点
         float DogPosX_World = body_pos(0);float DogPosY_World = body_pos(1);
-        final_point << body_pos(0) + Xsidesign*(body_width + hip_lenth),
+        final_point << body_pos(0) + Xsidesign*(body_width + hip_lenth) + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(0), //amend
                        body_pos(1) + Ysidesign * body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),
                        0;
         Eigen::Vector3f b_vel = TF_mat.inverse()* body_vel; // 质心速度
         // 目标落足点转换到身体坐标系：
       #else
         // Final Point位于平动坐标系
-        final_point << Xsidesign*(body_width + hip_lenth),
+        final_point << Xsidesign*(body_width + hip_lenth)  + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(0), //amend
                        Ysidesign*body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),
                        -walking_height;
         Eigen::Vector3f b_vel = TF_mat.inverse()* body_vel; // 质心速度
-        float dy = 0.5 * swing_time * (b_vel(1) - _target_vel(1));
-        final_point(1) += dy;
+        float dy = 0.5 * swing_time * (b_vel(1) - _target_vel(1)) + 0.01; //amend
+        //final_point(1) += dy;
+        //final_point(1) += OffSet;
       #endif
 
       if(USE_RAIBERT_HEURISTIC){
