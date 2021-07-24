@@ -93,6 +93,8 @@ class JoyStick():
                 if key == 'a':
                     if rospy.get_param("start_move") == 0:
                         rospy.set_param("start_move", 1)
+                    if rospy.get_param("start_move") == 1:
+                        rospy.set_param("start_move", 0)
                 if key == 'i':
                     self.velocity = - self.vel_factor
                 if key == 'k':

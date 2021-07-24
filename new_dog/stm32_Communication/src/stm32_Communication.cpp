@@ -23,7 +23,7 @@
 #define BACKINDEX       1       // 后驱动板下标
 // KP KD
 #define MOTOR0KP            0.05f    // 0号KP
-#define MOTOR0KD            12.0f
+#define MOTOR0KD            17.0f
 #define MOTOR0_SWING_KD     4.0f
 #define MOTOR1KP            0.05f    // 1号KP
 #define MOTOR1KD            5.0f
@@ -122,6 +122,13 @@ void NodeUserInit(void){
 /** @brief 动态调整摆动腿0号电机的阻尼 */
 void UpdateSwingLegMotor0KD(void){
     for(int BoardIndex = 0;BoardIndex < 2;BoardIndex ++){   // 前腿和后腿
+        // if(BoardIndex == 0){
+        //     std::cout << "MotorData Front :" 
+        //     << pMotorDriver[BoardIndex]->MotorData[0].MotionMode 
+        //     << pMotorDriver[BoardIndex]->MotorData[3].MotionMode
+        //     << std::endl;
+        // }
+
         if(pMotorDriver[BoardIndex]->MotorData[0].MotionMode == SWING_TORMODE){
             pMotorDriver[BoardIndex]->SetKPKD(0, MOTOR0KP, MOTOR0_SWING_KD);
         }else{

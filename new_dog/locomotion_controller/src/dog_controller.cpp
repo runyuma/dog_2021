@@ -197,15 +197,15 @@ void dog_controller::getTarget_Force()
 
   Eigen::Matrix3f Force_KP,Force_KD,Torque_KP,Torque_KD;
   Eigen::Vector3f Force_limit,Torque_limit;
-  Force_limit<<25,35,180; //20, 35, 180 amend
-  Torque_limit<<15,20,7; //15, 15, 7 amend
-    int leg_num = 0;
-    for (int i = 0;i<4;i++) {
-      if (schedualgroundLeg[i] == 1)
-      {
-        leg_num += 1;
-      }
+  Force_limit << 25, 35, 180; //20, 35, 180 amend
+  Torque_limit << 20, 20, 7; //15, 15, 7 amend
+  int leg_num = 0;
+  for (int i = 0;i<4;i++) {
+    if (schedualgroundLeg[i] == 1)
+    {
+      leg_num += 1;
     }
+  }
   if(_statemachine._gait.name == "STANDING" or leg_num == 4)
   {
 //    Force_KP<<2500,0,0,0,800,0,0,0,800;
@@ -444,6 +444,7 @@ void dog_controller::swingleg_calculation()
         // 目标落足点转换到身体坐标系：
       #else
         // Final Point位于平动坐标系
+
         final_point << Xsidesign*(body_width + hip_lenth)  + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(0), //amend
                        Ysidesign*body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),
                        -walking_height;

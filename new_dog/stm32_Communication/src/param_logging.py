@@ -75,8 +75,8 @@ elif dic["state_estimation_mode"] == 1:
     """
     dic["trot_force_p"] = [350, 150, 400] # [450（550）, 450, 400]
     dic["trot_force_D"] = [250, 80, 30]  # [550（300）, 300, 30]
-    dic["trot_troque_p"] = [450, 750, 250]  # [400, 600, 500]
-    dic["trot_troque_D"] = [35, 45, 40]  # [50, 40, 50]
+    dic["trot_troque_p"] = [550, 750, 250]  # [400, 600, 500]
+    dic["trot_troque_D"] = [55, 45, 40]  # [50, 40, 50]
 
 
 # "damping_compensation":[0.05,0.05,0.85 0r 0.72],

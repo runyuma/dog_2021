@@ -13,8 +13,8 @@ gait_schedular::gait_schedular(string _gait)
     Gait_pacePropotion = 0.5;
   }*/
 
-///jkc
-    if(_gait=="TROTING_WALKING")
+  ///jkc
+  if(_gait=="TROTING_WALKING")
   {
     name = _gait;
     Gait_index = 0;
