@@ -9,7 +9,7 @@ import time
 import os
 from std_msgs.msg import Float32MultiArray, Float32, Int32MultiArray
 
-TEST = 1
+TEST = 0
 USE_SIM = rospy.get_param("use_sim")
 TEST_SER = 0
 USE_ERF = 1
@@ -172,7 +172,8 @@ class state_estimation():
         self.phase = [1, 1, 1, 1]
 
     def __del__(self):
-        self.restore_dataframe()
+        a = 1
+        # self.restore_dataframe()
 
     def leg_status_callback(self, msg):
         self.schedule_leg = [1, 1, 1, 1]
@@ -224,14 +225,16 @@ class state_estimation():
 
                     self.state_publish()
 
-                    # print("loop_time_state_estimation:", self.looptime)
+                    print(self.rpy[0][0],self.rpy[1][0],self.rpy[2][0] )
+                    # if self.looptime > 0.003:
+                    #     print("loop_time_state_estimation:", self.looptime)
                     # print("body_pos:", self.body_pos)
                     # print("body_vel", self.body_vel)
-                    if TEST:
-                        if self.time_index % 5 == 0:
-                            self.restore_df_data()
-                        if self.time_index % 50 == 0:
-                            self.restore_dataframe()
+                    # if TEST:
+                    #     if self.time_index % 5 == 0:
+                    #         self.restore_df_data()
+                    #     if self.time_index % 50 == 0:
+                    #         self.restore_dataframe()
             self.rate.sleep()
             self.time_index += 1
 
@@ -401,7 +404,7 @@ class state_estimation():
                         w_imu_vel = 0.5
                         W_foot = 1. * min(erfs) * math.erfc(_vel_error / 2)
                         self.body_vel = (W_foot * _body_vel + w_imu_vel * _imu_vel) / (w_imu_vel + W_foot)
-                        print("vel", _body_vel, _imu_vel, (rospy.get_time() - self.time_intervals[-1]), )
+                        # print("vel", _body_vel, _imu_vel, (rospy.get_time() - self.time_intervals[-1]), )
                         self.raw_vel = copy.copy(_body_vel)
 
                     else:
@@ -857,7 +860,7 @@ class state_estimation():
             self.test_body_vel[0][0] = msg.twist[1].linear.x
             self.test_body_vel[1][0] = msg.twist[1].linear.y
             self.test_body_vel[2][0] = msg.twist[1].linear.z
-
+        
 
 def omega_matrix(omega_array):
     wx, wy, wz = omega_array[0][0], omega_array[1][0], omega_array[2][0]

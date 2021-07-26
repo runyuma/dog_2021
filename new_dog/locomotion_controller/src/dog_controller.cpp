@@ -444,8 +444,7 @@ void dog_controller::swingleg_calculation()
         // 目标落足点转换到身体坐标系：
       #else
         // Final Point位于平动坐标系
-
-        final_point << Xsidesign*(body_width + hip_lenth)  + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(0), //amend
+        final_point << Xsidesign*(body_width + hip_lenth + 0.010f)  + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(0), //amend
                        Ysidesign*body_lenth + _statemachine._gait.Gait_pacePropotion*swing_time*_target_vel(1),
                        -walking_height;
         Eigen::Vector3f b_vel = TF_mat.inverse()* body_vel; // 质心速度
