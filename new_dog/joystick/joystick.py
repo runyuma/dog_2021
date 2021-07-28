@@ -81,7 +81,7 @@ class JoyStick():
                     pygame.event.get()
                     axis = [self.joystick.get_axis(0), self.joystick.get_axis(4)]
                     self.angular_velocity = -axis[0] * 0.4
-                    self.velocity = axis[1] * 0.6
+                    self.velocity = axis[1] * 0.7
                     bottons = [self.joystick.get_button(0)]
                     if bottons[0] == 1:
                         self.gait_num += 1

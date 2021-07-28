@@ -229,10 +229,14 @@ void dog_controller::getTarget_Force()
 
   }
   else if (_statemachine._gait.name == "SLOW_WALKING") {
-    Force_KP<<500,0,0,0,800,0,0,0,800;
-    Force_KD<<300,0,0,0,350,0,0,0,150;
-    Torque_KP<<400,0,0,0,600,0,0,0,600;
-    Torque_KD<<50,0,0,0,65,0,0,0,50;
+    // dic["trot_force_p"] = [100, 150, 400] # [450（550）, 450, 400]  // 350, 150, 400
+    // dic["trot_force_D"] = [150, 80, 30]  # [550（300）, 300, 30]    // 250, 80, 30
+    // dic["trot_troque_p"] = [500, 250, 250]  # [400, 600, 500]
+    // dic["trot_troque_D"] = [45, 45, 40]  # [50, 40, 50]
+    Force_KP<<100,0,0,0,150,0,0,0,400;
+    Force_KD<<150,0,0,0,80,0,0,0,30;
+    Torque_KP<<500,0,0,0,250,0,0,0,500;
+    Torque_KD<<45,0,0,0,45,0,0,0,50;
   }
   int USE_BODYHEIGHT = 0;
   Eigen::Matrix3f _Force_KP = Force_KP;
@@ -272,11 +276,17 @@ void dog_controller::getTarget_Force()
     target_force = TF_mat.inverse() * target_force;
     foot_height = body_pos(2);
   }
-  if(ABS(rpy(2))>= PI/2 and ABS(target_rpy(2))>= PI and rpy(2) * target_rpy(2) < 0)
-  {
-    target_rpy(2) += SIGN(target_rpy(2)) * 2 * PI ;//TODO:somthing wrong
-  }
-  target_torque = Torque_KP * (target_rpy - rpy) + Torque_KD * (target_omega - omega);
+
+  Eigen::Vector3f RPYError = target_rpy - rpy;
+  if(RPYError(2) > PI)
+    RPYError(2) = -2 * PI + RPYError(2);
+  else if(RPYError(2) < -PI)
+    RPYError(2) = 2 * PI + RPYError(2);
+  // if(ABS(rpy(2))>= PI/2 and ABS(target_rpy(2))>= PI and rpy(2) * target_rpy(2) < 0)
+  // {
+  //   target_rpy(2) += SIGN(target_rpy(2)) * 2 * PI ;//TODO:somthing wrong
+  // }
+  target_torque = Torque_KP * RPYError + Torque_KD * (target_omega - omega);
 //  cout<<"pos error : "<<std::endl<<target_pos - body_pos<<std::endl;
 //  cout<<"rpy error : "<<std::endl<<target_rpy - rpy<<std::endl;
 

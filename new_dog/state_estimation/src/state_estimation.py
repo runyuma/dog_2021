@@ -162,6 +162,8 @@ class state_estimation():
                 timex = None
                 self.ser = serial.Serial(self.port_name, self.bps, timeout=timex)
                 self.recmsgQueue = b''
+                reset_imu_data = bytes([0x41, 0x01])
+                self.ser.write(reset_imu_data)
         self.footpoint_subscriber = rospy.Subscriber("/foot_points", Float32MultiArray, self.footpoint_callback)
         self.footvel_subscriber = rospy.Subscriber("/foot_vel", Float32MultiArray, self.footvel_callback)
         self.state_publisher = rospy.Publisher("/state", Float32MultiArray, queue_size=10)
