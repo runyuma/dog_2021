@@ -132,14 +132,26 @@ class JoyStick():
 
     def joycallback(self, msg):
         if self.joystick_connected:
+            print(msg)
             self.velocity = - msg.axes[4] * 0.6
             self.angular_velocity = msg.axes[0] * 0.4
+
+            # 手动重启
+            gait_button = msg.buttons[2]
+            if gait_button == 1:
+                if rospy.get_param("UserResetFlag") == 0:
+                    rospy.set_param("UserResetFlag", 1)
+                time.sleep(0.3)
+
+            # 步态切换
             gait_button = msg.buttons[0]
             if gait_button == 1:
                 self.gait_num += 1
                 if self.gait_num > GAIT_NUM:
                     self.gait_num = 0
                 time.sleep(0.3)
+
+            # 启动
             gait_button = msg.buttons[1]
             if gait_button == 1:
                 if rospy.get_param("start_move") == 0:

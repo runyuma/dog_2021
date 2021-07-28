@@ -310,7 +310,7 @@ void locomotion_controller::moving_func()
   status_publish();
   phase_publish();
   time_index += 1;
-  visual();
+  // visual();
   hz1000->sleep();
 }
 

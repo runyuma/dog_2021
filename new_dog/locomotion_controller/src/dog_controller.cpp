@@ -257,6 +257,12 @@ void dog_controller::getTarget_Force()
     Eigen::Vector3f gravity_balance;
     gravity_balance = - TF_mat.inverse() *body_mass * g;
     target_force = _Force_KP *TF_mat.inverse() *  (target_pos - body_pos) + _Force_KD *  TF_mat.inverse() *(target_vel - body_vel) + gravity_balance;
+    // std::cout << "KP:" << _Force_KP << endl;
+    // std::cout << "PosErr:" << TF_mat.inverse() * (target_pos - body_pos) << endl;
+    // std::cout << "KD:" << _Force_KD << endl;
+    // std::cout << "VelErr:" << TF_mat.inverse() * (target_vel - body_vel) << endl;
+    // std::cout << "gravity_balance:" << gravity_balance << endl;
+    // std::cout << _Force_KP << TF_mat.inverse() << (target_pos - body_pos) << _Force_KD << TF_mat.inverse() << (target_vel - body_vel) << gravity_balance << endl;
     target_force(2,0) = target_force(2,0) + z_force;
      
     // cout<<"height"<<foot_height<<"  zforce  "<<z_force<<"  "<<Force_KD * TF_mat.inverse() * (target_vel - body_vel)<<std::endl<<"  "<<TF_mat.inverse() *body_mass * g<<std::endl;

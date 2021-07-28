@@ -40,7 +40,12 @@ dic = {'total_weight': 15,
        }
 dic["move_reset"] = 0
 dic["start_move"] = 0
-dic["UserResetFlag"] = 0    # 用户重启四足命令  暂未启用
+
+# User Reset #
+dic["UserResetFlag"] = 0
+dic["LocomotionResetFlag"] = 0
+dic["StateEstimationResetFlag"] = 0
+# User Reset #
 
 dic["osqp_unsolve_error"] = 0
 dic["motor_outofrange_error"] = 0
@@ -74,9 +79,9 @@ elif dic["state_estimation_mode"] == 1:
     dic["trot_troque_p"] = [450,650,350]#400,600,500
     dic["trot_troque_D"] = [35,35,35]#[50,40,50]
     """
-    dic["trot_force_p"] = [150, 150, 400] # [450（550）, 450, 400]  // 350, 150, 400
-    dic["trot_force_D"] = [80, 80, 30]  # [550（300）, 300, 30]    // 250, 80, 30
-    dic["trot_troque_p"] = [250, 250, 250]  # [400, 600, 500]
+    dic["trot_force_p"] = [100, 150, 400] # [450（550）, 450, 400]  // 350, 150, 400
+    dic["trot_force_D"] = [150, 80, 30]  # [550（300）, 300, 30]    // 250, 80, 30
+    dic["trot_troque_p"] = [500, 250, 250]  # [400, 600, 500]
     dic["trot_troque_D"] = [45, 45, 40]  # [50, 40, 50]
 
 
