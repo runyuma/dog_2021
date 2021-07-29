@@ -51,6 +51,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
       for (int i=0;i<n;i++) {
         Eigen::Matrix<float,3,4> _state;
         Eigen::Vector3f target_rpy =  Eigen::Vector3f::Zero();
+        target_rpy(0) = command_pitch;
         target_rpy(2) = rpy(2);
         Eigen::Vector3f target_omega =  Eigen::Vector3f::Zero();
         Eigen::Vector3f target_pos = body_pos;
@@ -90,6 +91,7 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
           target_pos = last_targetstate.block(0,1,3,1);
           target_pos(2) = walking_height;
         }
+        target_rpy(0) = command_pitch;
         _state.block(0,0,3,1) = target_rpy;
         _state.block(0,1,3,1) = target_pos;
         _state.block(0,2,3,1) = target_omega;
@@ -124,7 +126,8 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
       {
         Eigen::Matrix<float,3,4> _state;
         Eigen::Vector3f target_rpy =  last_targetstate.block(0,0,3,1) + t * i * command_omega;
-        // target_rpy(1) = command_pitch;
+        target_rpy(0) = command_pitch;
+        // std::cout << target_rpy(0) << std::endl;
         Eigen::Vector3f target_omega =  command_omega;
         Eigen::Vector3f target_vel;
         Eigen::Vector3f target_pos;
@@ -163,6 +166,8 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
         Eigen::Vector3f dy_Vec;
         dy_Vec<<0,dy,0;
         Eigen::Vector3f target_rpy =  last_targetstate.block(0,0,3,1) + t * i * command_omega;
+        target_rpy(0) = command_pitch;
+        // std::cout << target_rpy(0) << std::endl;
         Eigen::Vector3f target_omega =  command_omega;
         Eigen::Vector3f target_vel = TF_mat * command_vel;
         Eigen::Vector3f target_pos = last_targetstate.block(0,1,3,1) + target_TFmat * dy_Vec;
@@ -265,11 +270,6 @@ void dog_controller::getTarget_Force()
     // std::cout << "KP:" << _Force_KP << endl;
     // std::cout << "PosErr:" << TF_mat.inverse() * (target_pos - body_pos) << endl;
     // std::cout << "KD:" << _Force_KD << endl;
-    static uint8_t index = 0;
-    if(++index == 5){
-      index = 0;
-      std::cout << "VelErr:" << (TF_mat.inverse() * (target_vel - body_vel))(1);
-    }
     // std::cout << "VelErr:" << (TF_mat.inverse() * (target_vel - body_vel))(1) << endl;
     // std::cout << "gravity_balance:" << gravity_balance << endl;
     // std::cout << _Force_KP << TF_mat.inverse() << (target_pos - body_pos) << _Force_KD << TF_mat.inverse() << (target_vel - body_vel) << gravity_balance << endl;

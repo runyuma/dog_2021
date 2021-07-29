@@ -159,7 +159,8 @@ class JoyStick():
                 time.sleep(0.3)
             
             # 俯仰
-            
+            pitchangle = msg.axes[7] * 0.15
+            rospy.set_param("command_pitch", pitchangle)
         else:
             pass
 

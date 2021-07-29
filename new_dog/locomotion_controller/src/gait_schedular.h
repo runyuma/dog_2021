@@ -36,7 +36,7 @@ public:
   std::vector<float> phase = {1,1,1,1};
   float time_step = 0.001;
   gait_schedular _gait = gait_schedular("STANDING");
-  float height = 0.100; // 0.125
+  float height = 0.090; // 0.125
   Eigen::Vector3f target_pos,target_vel,target_acc;
   state_machine();
   void gait_swingLeg(float _phase, float Tf, Eigen::Vector3f &ini_pos, Eigen::Vector3f &fin_pos);

@@ -36,7 +36,7 @@ int main(int argc, char **argv)
       _locomotion_controller.pnh->getParam("start_move", start_move);
 
       // User Reset Logic
-      #if 1 
+      #if 0 
       _locomotion_controller.pnh->getParam("UserResetFlag", UserResetFlag);
       if(UserResetFlag){
         start_move = 0;
@@ -51,6 +51,8 @@ int main(int argc, char **argv)
 
       if(start_move)
       {
+        _locomotion_controller.pnh->getParam("command_pitch", _locomotion_controller._Dog->command_pitch);
+        // std::cout << _locomotion_controller._Dog->command_pitch << std::endl;
         _locomotion_controller.moving_func();
       }
       else {

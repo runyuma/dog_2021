@@ -30,6 +30,7 @@ dic = {'total_weight': 15,
        "current_gait": 0,  # 0 is standing 1 is trot_runing
        "command_vel": 0,
        "command_omega": 0,
+       "command_pitch": 0,
        "state_estimation_mode": 1,  # 0 is getfrom gezebo, 1 is pure leg dynamic, 2 is extended kalman fillter
        "USE_TOUCHSENSOR": 0,
        "body_lenth": 0.255,
@@ -67,8 +68,8 @@ if dic["state_estimation_mode"] == 0:
 elif dic["state_estimation_mode"] == 1:
     dic["stand_force_p"] = [850, 80, 400]
     dic["stand_force_D"] = [90, 40, 40]
-    dic["stand_troque_p"] = [150, 350, 150]
-    dic["stand_troque_D"] = [10, 5, 10]
+    dic["stand_troque_p"] = [500, 350, 150]
+    dic["stand_troque_D"] = [45, 5, 10]
     # dic["stand_force_p"] = [800, 400, 400]
     # dic["stand_force_D"] = [50, 50, 50]
     # dic["stand_troque_p"] = [150, 300, 150]
