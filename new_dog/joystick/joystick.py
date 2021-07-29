@@ -156,8 +156,10 @@ class JoyStick():
             if gait_button == 1:
                 if rospy.get_param("start_move") == 0:
                     rospy.set_param("start_move", 1)
-
                 time.sleep(0.3)
+            
+            # 俯仰
+            
         else:
             pass
 

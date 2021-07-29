@@ -227,7 +227,7 @@ class state_estimation():
 
                     self.state_publish()
 
-                    print(self.rpy[0][0],self.rpy[1][0],self.rpy[2][0] )
+                    # print(self.rpy[0][0],self.rpy[1][0],self.rpy[2][0] )
                     # if self.looptime > 0.003:
                     #     print("loop_time_state_estimation:", self.looptime)
                     # print("body_pos:", self.body_pos)

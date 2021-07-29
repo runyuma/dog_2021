@@ -234,17 +234,18 @@ void locomotion_controller::visual()
   //  and _Dog->_statemachine._gait.name != "STANDING"
   if(time_index%5 == 0)
   {
-    std::cout << std::endl;
+    // std::cout << std::endl;
 
-    std::cout<<"x:"<< '\t' << _Dog->body_pos[0]<< '\t' <<"y:"<< '\t' << _Dog->body_pos[1]<< '\t' <<"z:"<< '\t' << _Dog->body_pos[2]<<std::endl;
-    std::cout<<"vx:"<< '\t' << _Dog->body_vel[0]<< '\t' <<"vy:"<< '\t' << _Dog->body_vel[1]<< '\t' <<"vz:"<< '\t' << _Dog->body_vel[2]<<std::endl;
-    std::cout<<"fx:"<< '\t' << _Dog->target_force[0]<< '\t' <<"fy:"<< '\t' << _Dog->target_force[1]<< '\t' <<"fz:"<< '\t' << _Dog->target_force[2]<<std::endl;
+    // std::cout<<"x:"<< '\t' << _Dog->body_pos[0]<< '\t' <<"y:"<< '\t' << _Dog->body_pos[1]<< '\t' <<"z:"<< '\t' << _Dog->body_pos[2]<<std::endl;
+    // std::cout<<"vx:"<< '\t' << _Dog->body_vel[0]<< '\t' <<"vy:"<< '\t' << _Dog->body_vel[1]<< '\t' <<"vz:"<< '\t' << _Dog->body_vel[2]<<std::endl;
+    // std::cout<<"fx:"<< '\t' << _Dog->target_force[0]<< '\t' <<"fy:"<< '\t' << _Dog->target_force[1]<< '\t' <<"fz:"<< '\t' << _Dog->target_force[2]<<std::endl;
 
-    std::cout<<"r:"<< '\t' << _Dog->rpy[0]<< '\t' <<"p:"<< '\t' << _Dog->rpy[1]<< '\t' <<"y:"<< '\t' << _Dog->rpy[2]<<std::endl;
-    std::cout<<"vr:"<< '\t' << _Dog->omega[0]<< '\t' <<"vp:"<< '\t' << _Dog->omega[1]<< '\t' <<"vy:"<< '\t' << _Dog->omega[2]<<std::endl;
-    std::cout<<"ar:"<< '\t' << _Dog->target_torque[0]<< '\t' <<"ap:"<< '\t' << _Dog->target_torque[1]<< '\t' <<"ay:"<< '\t' << _Dog->target_torque[2]<<std::endl;
+    
+    // std::cout<<"r:"<< '\t' << _Dog->rpy[0]<< '\t' <<"p:"<< '\t' << _Dog->rpy[1]<< '\t' <<"y:"<< '\t' << _Dog->rpy[2]<<std::endl;
+    // std::cout<<"vr:"<< '\t' << _Dog->omega[0]<< '\t' <<"vp:"<< '\t' << _Dog->omega[1]<< '\t' <<"vy:"<< '\t' << _Dog->omega[2]<<std::endl;
+    // std::cout<<"ar:"<< '\t' << _Dog->target_torque[0]<< '\t' <<"ap:"<< '\t' << _Dog->target_torque[1]<< '\t' <<"ay:"<< '\t' << _Dog->target_torque[2]<<std::endl;
 
-    std::cout << std::endl;
+    // std::cout << std::endl;
     // std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
     // std::cout<<"target_groundleg: "<<_Dog->target_groundleg<<std::endl;
     // std::cout<<"ground_point: "<<_Dog->ground_point<<std::endl;

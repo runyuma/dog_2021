@@ -117,13 +117,14 @@ void dog_controller::getTargetstate(float t, int n, Eigen::Matrix<float, 3, 4> l
             0,0,1;
     Eigen::Matrix3f target_TFmat = matr_z * matr_y * matr_x;
 
-    if(ABS(vel_diff)>0.3)
+    if(ABS(vel_diff)>0.5f)
     {
       float ay = SIGN(vel_diff) * MIN(ABS(vel_diff)/(n*t),0.8);
       for (int i=0;i<n;i++)
       {
         Eigen::Matrix<float,3,4> _state;
         Eigen::Vector3f target_rpy =  last_targetstate.block(0,0,3,1) + t * i * command_omega;
+        // target_rpy(1) = command_pitch;
         Eigen::Vector3f target_omega =  command_omega;
         Eigen::Vector3f target_vel;
         Eigen::Vector3f target_pos;
@@ -264,7 +265,12 @@ void dog_controller::getTarget_Force()
     // std::cout << "KP:" << _Force_KP << endl;
     // std::cout << "PosErr:" << TF_mat.inverse() * (target_pos - body_pos) << endl;
     // std::cout << "KD:" << _Force_KD << endl;
-    // std::cout << "VelErr:" << TF_mat.inverse() * (target_vel - body_vel) << endl;
+    static uint8_t index = 0;
+    if(++index == 5){
+      index = 0;
+      std::cout << "VelErr:" << (TF_mat.inverse() * (target_vel - body_vel))(1);
+    }
+    // std::cout << "VelErr:" << (TF_mat.inverse() * (target_vel - body_vel))(1) << endl;
     // std::cout << "gravity_balance:" << gravity_balance << endl;
     // std::cout << _Force_KP << TF_mat.inverse() << (target_pos - body_pos) << _Force_KD << TF_mat.inverse() << (target_vel - body_vel) << gravity_balance << endl;
     target_force(2,0) = target_force(2,0) + z_force;
