@@ -94,6 +94,7 @@ void UnitreeDriver::SendControlDataToSTM32(){
         switch(MotorData[count].MotionMode){
             case DISABLE:EncodeAbleFrame(SendBuffer.data() + 7 * count, count, false);break;
             case TORMODE:EncodeTorFrame(SendBuffer.data() + 7 * count, count, MotorData[count].TarTor);break;
+            case SWING_TORMODE:EncodeTorFrame(SendBuffer.data() + 7 * count, count, MotorData[count].TarTor);break;
             case VELMODE:EncodeVelFrame(SendBuffer.data() + 7 * count, count, MotorData[count].TarVel);break;
             case POSMODE:EncodePosFrame(SendBuffer.data() + 7 * count, count, MotorData[count].TarPos);break;
         }

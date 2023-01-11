@@ -57,8 +57,10 @@ elif dic["state_estimation_mode"] == 1:
     dic["stand_force_D"] = [300,350,150]
     dic["stand_troque_p"] = [200,300,300]
     dic["stand_troque_D"] = [30,12,50]
-    dic["trot_force_p"] = [400,450,600]
-    dic["trot_force_D"] = [200,100,160]
+    # dic["trot_force_p"] = [400,450,600]
+    dic["trot_force_p"] = [400, 500, 600]
+    # dic["trot_force_D"] = [200,50,160]
+    dic["trot_force_D"] = [200, 20, 160]
     dic["trot_troque_p"] = [450,650,500]#400,600,500
     dic["trot_troque_D"] = [50,70,50]#50,65
 # "swingleg_P":[200,150,150],

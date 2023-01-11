@@ -18,28 +18,45 @@ int main(int argc, char **argv)
    _state_mechane.test();
   }
   int start_move = 0;
+  int UserResetFlag = 0;
   while (ros::ok())
   {
     ros::spinOnce();
-//    _locomotion_controller.pnh->setParam("locomotion_runing",1);
+    //    _locomotion_controller.pnh->setParam("locomotion_runing",1);
     static bool error_inited = 0;
     int start_timeindex;
     if(_locomotion_controller.time_index == 0)
     {
       _locomotion_controller.moving_init();
     }
-//    _locomotion_controller.moving_func();
+    //    _locomotion_controller.moving_func();
     // std::cout<<"startmove"<<start_move <<std::endl;
     if(not _locomotion_controller.error_handle())
     {
-
       _locomotion_controller.pnh->getParam("start_move", start_move);
+
+      // User Reset Logic
+      #if 0 
+      _locomotion_controller.pnh->getParam("UserResetFlag", UserResetFlag);
+      if(UserResetFlag){
+        start_move = 0;
+        start_timeindex = _locomotion_controller.time_index;
+        bool recover = _locomotion_controller.shrink(start_timeindex,_locomotion_controller._Dog->rpy);
+        if(recover)
+        {
+          _locomotion_controller.moving_reset();
+        }
+      }
+      #endif
+
       if(start_move)
       {
+        _locomotion_controller.pnh->getParam("command_pitch", _locomotion_controller._Dog->command_pitch);
+        // std::cout << _locomotion_controller._Dog->command_pitch << std::endl;
         _locomotion_controller.moving_func();
       }
       else {
-        _locomotion_controller.pnh->getParam("start_move", start_move);
+        // _locomotion_controller.pnh->getParam("start_move", start_move);
         _locomotion_controller.idle();
       }
     }

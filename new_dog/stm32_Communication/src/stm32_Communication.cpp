@@ -22,12 +22,13 @@
 #define FRONTINDEX      0       // 前驱动板下标
 #define BACKINDEX       1       // 后驱动板下标
 // KP KD
-#define MOTOR0KP        0.05f    // 0号KP
-#define MOTOR0KD        12.0f
-#define MOTOR1KP        0.05f    // 1号KP
-#define MOTOR1KD        5.0f
-#define MOTOR2KP        0.1f    // 2号KP
-#define MOTOR2KD        5.0f
+#define MOTOR0KP            0.05f    // 0号KP
+#define MOTOR0KD            20.0f
+#define MOTOR0_SWING_KD     4.0f
+#define MOTOR1KP            0.05f    // 1号KP
+#define MOTOR1KD            5.0f
+#define MOTOR2KP            0.1f    // 2号KP
+#define MOTOR2KD            5.0f
 // 逻辑零点实际位置数组：下发命令的时候，加上本数组；接收的时候，减掉本数组；第一排是前面的电机，第二排是后面的电机
 #define LOGIZZEROPOSARRAY   {{0.f, -0.f, 0.f, 0.f, 0.f, 0.f},  \
                             {0.f,0.f, 0.f, 0.f, 0.f, 0.f}}
@@ -43,6 +44,7 @@ void DownStreamCallback(const std_msgs::Float32MultiArray::ConstPtr& DownStreamM
 void Map_PublishMotorData(ros::Publisher& Pub);
 void DebugTest();
 void NodeUserInit();
+void UpdateSwingLegMotor0KD(void);
 void FrontLowerTimercallback(const ros::TimerEvent&);
 void BackLowerTimercallback(const ros::TimerEvent&);
 
@@ -68,6 +70,7 @@ int main(int argc, char **argv){
     FrontLowerTimer.start();
     BackLowerTimer.start();
     while(ros::ok()){
+        // 更新电机状态
         if(pMotorDriver[FRONTINDEX]->UpdateMotorData()){
             FrontLowerTimer.stop();
             FrontLowerTimer.start();
@@ -76,7 +79,7 @@ int main(int argc, char **argv){
             BackLowerTimer.stop();
             BackLowerTimer.start();
         }
-
+        Map_PublishMotorData(UpStreamPub);                      // 发布电机当前数据
 #if 0
     // 显示下位机上发的数据
     static int UpdateCount = 0;
@@ -92,13 +95,12 @@ int main(int argc, char **argv){
             std::cout << pMotorDriver[BACKINDEX]->MotorData[i].CurPos << " ";
         }
         std::cout << std::endl;
-    }
-    
+    } 
 #endif
-
-        Map_PublishMotorData(UpStreamPub);                      // 发布电机当前数据
+        
         ros::spinOnce();                                        // 刷新控制数据(调用本函数之后，会直接调用CallBack函数，所以应该是不用担心数据还没来得及刷新的问题的)
         // DebugTest();
+        UpdateSwingLegMotor0KD();
         pMotorDriver[FRONTINDEX]->SendControlDataToSTM32();     // 下发新的数据到STM32
         pMotorDriver[BACKINDEX]->SendControlDataToSTM32();      // 
         loop_rate.sleep();
@@ -117,6 +119,30 @@ void NodeUserInit(void){
     }
 }
 
+/** @brief 动态调整摆动腿0号电机的阻尼 */
+void UpdateSwingLegMotor0KD(void){
+    for(int BoardIndex = 0;BoardIndex < 2;BoardIndex ++){   // 前腿和后腿
+        // if(BoardIndex == 0){
+        //     std::cout << "MotorData Front :" 
+        //     << pMotorDriver[BoardIndex]->MotorData[0].MotionMode 
+        //     << pMotorDriver[BoardIndex]->MotorData[3].MotionMode
+        //     << std::endl;
+        // }
+
+        if(pMotorDriver[BoardIndex]->MotorData[0].MotionMode == SWING_TORMODE){
+            pMotorDriver[BoardIndex]->SetKPKD(0, MOTOR0KP, MOTOR0_SWING_KD);
+        }else{
+            pMotorDriver[BoardIndex]->SetKPKD(0, MOTOR0KP, MOTOR0KD);
+        }
+        
+        if(pMotorDriver[BoardIndex]->MotorData[3].MotionMode == SWING_TORMODE){
+            pMotorDriver[BoardIndex]->SetKPKD(3, MOTOR0KP, MOTOR0_SWING_KD);
+        }else{
+            pMotorDriver[BoardIndex]->SetKPKD(3, MOTOR0KP, MOTOR0KD);
+        }
+    }
+}
+
 /**
  * @brief 订阅回调函数
  * @param DownStreamMsg：DownStream数据，前12个字节表示运动模式，对应的后12个字节表示数据(位置模式就是位置数据,速度模式就是速度数据)
@@ -131,6 +157,10 @@ void DownStreamCallback(const std_msgs::Float32MultiArray::ConstPtr& DownStreamM
             switch(pMotorData->MotionMode){
                 case DISABLE:break;
                 case TORMODE:{
+                    float LogTarTor = DownStreamMsg->data.at(12 + MotorCount + Count * 6);
+                    pMotorData->TarTor = LogTarTor / MotorRatioArray[Count][MotorCount];
+                }break;
+                case SWING_TORMODE:{
                     float LogTarTor = DownStreamMsg->data.at(12 + MotorCount + Count * 6);
                     pMotorData->TarTor = LogTarTor / MotorRatioArray[Count][MotorCount];
                 }break;

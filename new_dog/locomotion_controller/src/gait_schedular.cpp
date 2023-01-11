@@ -13,15 +13,15 @@ gait_schedular::gait_schedular(string _gait)
     Gait_pacePropotion = 0.5;
   }*/
 
-///jkc
-    if(_gait=="TROTING_WALKING")
+  ///jkc
+  if(_gait=="TROTING_WALKING")
   {
     name = _gait;
     Gait_index = 0;
     Gait_phase = {{1, 0, 0, 1},{1,1,1,1},{0, 1, 1, 0},{1,1,1,1}};
-    Gait_time = {0.15, 0.2, 0.15, 0.2};
+    Gait_time = {0.15, 0.075, 0.15, 0.075};
     Gait_status = {"pace", "land", "pace", "land"};
-    Gait_pacePropotion = 0.5;
+    Gait_pacePropotion = 1.0;
   }
 
   else if (_gait == "TROTING_RUNING") {

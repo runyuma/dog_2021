@@ -164,8 +164,9 @@ void leg_controller::main()
         for( int j=0;j<3;j++ )
         {
             _joint_pos[j] = joint_pos[j + 3*i];
-             _joint_vel[j] = joint_vel[j + 3*i];
+            _joint_vel[j] = joint_vel[j + 3*i];
         }
+
         if(leg_getvalue[i] == 1 )
         {
             Eigen::Vector3f _foot_point = get_footpoints(sidesign, _joint_pos, Leg_parameter.lenth_list);
@@ -175,32 +176,30 @@ void leg_controller::main()
             foot_vel[i] = _foot_vel;
             if(time_index%1000 == 0)
             {
-            cout<< "This is jacobian"<<i<<"\n"<<jacobian<<endl;
-            cout<< "This is foot_point"<<i<<"\n"<<_foot_point<<endl;
-            cout<<"This is foot_vel"<<i<<"\n"<<_foot_vel<<endl;
+                cout<< "This is jacobian"<<i<<"\n"<<jacobian<<endl;
+                cout<< "This is foot_point"<<i<<"\n"<<_foot_point<<endl;
+                cout<<"This is foot_vel"<<i<<"\n"<<_foot_vel<<endl;
             }
 
-            if (leg_status[i] == -1)
+            if (leg_status[i] == -1)    // 失能状态
             {
                 for( int j=0;j<3;j++ )
                 {  
                     target_mode[3*i+j] = -1;
                 }
             }
-
-            else if(leg_status[i] == 0)
+            else if(leg_status[i] == 0) // 支撑相
             {
                 Eigen::Vector3f _Force,_joint_torque;
                 _Force<<target_force[3*i+0],target_force[3*i+1],target_force[3*i+2];
-                _joint_torque = jacobian.transpose() * _Force;
+                _joint_torque = jacobian.transpose() * _Force;  // 足端力映射到各个关节电机上
                 for( int j=0;j<3;j++ )
                 {  
                     target_mode[3*i+j] = 2;
                     target_value[3*i+j] = _joint_torque.data()[j];
                 }
             }
-
-            else if(leg_status[i] == 1)
+            else if(leg_status[i] == 1) // 摆动相
             {
                 double start_time = getCurrentTime() ;
             
@@ -209,28 +208,29 @@ void leg_controller::main()
                 _target_vel<<target_swing[3*i + 12], target_swing[3*i+1 + 12], target_swing[3*i+2 + 12];
                 _joint_torque = get_tauff(sidesign, _joint_pos, _joint_vel,Leg_parameter);
                 Eigen::Vector3f taubf= jacobian * get_feedbackward(swing_P ,swing_D , _foot_point, _foot_vel, _target_pos,_target_vel);
-               if(time_index %1000 == 0)
-               {
+                if(time_index %1000 == 0)
+                {
                     cout<<"tauff"<<i<<_joint_torque<<endl;
                     cout<<"taubf"<<i<<"     "<<taubf<<swing_P<<swing_D<<_foot_point<<_foot_vel<<endl;
-               }
-               _joint_torque += taubf;
-               if(!use_sim)
-               {
-                   for( int j=0;j<3;j++ )
-                   {
+                }
+                _joint_torque += taubf;
+                if(!use_sim)
+                {
+                    for( int j=0;j<3;j++ )
+                    {
                         _joint_torque[j] = _joint_torque[j] + SIGN(_joint_torque[j]) * damping_compensation[j];
-                   }
-                   
-               }
+                    } 
+                }
+
                 // cout<<getCurrentTime() - start_time<<endl;
+                
                 for( int j=0;j<3;j++ )
                 {  
-                    target_mode[3*i+j] = 2;
+                    target_mode[3*i+j] = 3; // 摆动相力矩模式
                     target_value[3*i+j] = _joint_torque.data()[j];
                 }
             }
-             else if(leg_status[i] == 2)//force&position
+            else if(leg_status[i] == 2) //force & position “力位混合”控制
             {
                 Eigen::Matrix3f KP,KD;
                 if(ground_legnum==4)
@@ -256,26 +256,26 @@ void leg_controller::main()
                     target_value[3*i+j] = _joint_torque.data()[j];
                 }
             }
-            else if(leg_status[i] == 5)
+            else if(leg_status[i] == 5) // 位置环的腿
             {
                 Eigen::Vector3f _Force,_joint_torque;
                 _Force<<target_force[3*i+0],target_force[3*i+1],target_force[3*i+2];
                 _joint_torque =  _Force;
                 for( int j=0;j<3;j++ )
                 {  
-                    target_mode[3*i+j] = 0;
+                    target_mode[3*i+j] = 0; // 位置模式
                     target_value[3*i+j] = _joint_torque.data()[j];
                 }
             }     
 
-            else if(leg_status[i] == 6)
+            else if(leg_status[i] == 6) // TOASK：这是什么模式？
             {
                 Eigen::Vector3f _Force,_joint_torque;
                 _Force<<target_force[3*i+0],target_force[3*i+1],target_force[3*i+2];
                 _joint_torque =  _Force;
                 for( int j=0;j<3;j++ )
                 {  
-                    target_mode[3*i+j] = 2;
+                    target_mode[3*i+j] = 2; // 力矩模式
                     target_value[3*i+j] = _joint_torque.data()[j];
                 }
             }     

@@ -8,7 +8,8 @@ from std_msgs.msg import Float32MultiArray
 import sys
 import tty
 import termios
-JOYSTICK_NAME ="Microsoft X-Box 360 pad"
+
+JOYSTICK_NAME = "Microsoft X-Box 360 pad"
 GAIT_NUM = 1
 
 BLACK = (0, 0, 0)
@@ -20,6 +21,8 @@ USE_ROSJOYSTICK = 1
 if USE_SCREEN:
     screen = pygame.display.set_mode(size)
     clock = pygame.time.Clock()
+
+
 class TextPrint:
     def __init__(self):
         self.reset()
@@ -41,6 +44,7 @@ class TextPrint:
     def unindent(self):
         self.x -= 10
 
+
 class JoyStick():
     def __init__(self):
         rospy.init_node('Joystick_node', anonymous=True)
@@ -61,24 +65,23 @@ class JoyStick():
         self.angular_velocity = 0
         self.velocity = 0
         if USE_ROSJOYSTICK:
-            self.Joysubscriber = rospy.Subscriber("/joy",Joy,self.joycallback)
+            self.Joysubscriber = rospy.Subscriber("/joy", Joy, self.joycallback)
         self.vel_factor = 0.2
         self.angular_factor = 0.2
         self.command_publisher = rospy.Publisher("/command", Float32MultiArray, queue_size=10)
-
 
     def main(self):
         while not rospy.is_shutdown():
             move_reset = rospy.get_param("move_reset")
             if move_reset:
                 self.gait_num = 0
-                rospy.set_param("move_reset",0)
+                rospy.set_param("move_reset", 0)
             if USE_PYGAME:
                 if self.joystick.get_name() == JOYSTICK_NAME:
                     pygame.event.get()
                     axis = [self.joystick.get_axis(0), self.joystick.get_axis(4)]
                     self.angular_velocity = -axis[0] * 0.4
-                    self.velocity = axis[1] * 0.6
+                    self.velocity = axis[1] * 0.7
                     bottons = [self.joystick.get_button(0)]
                     if bottons[0] == 1:
                         self.gait_num += 1
@@ -89,9 +92,11 @@ class JoyStick():
                 key = readkey()
                 if key == 'a':
                     if rospy.get_param("start_move") == 0:
-                        rospy.set_param("start_move",1)
+                        rospy.set_param("start_move", 1)
+                    if rospy.get_param("start_move") == 1:
+                        rospy.set_param("start_move", 0)
                 if key == 'i':
-                    self.velocity =  - self.vel_factor
+                    self.velocity = - self.vel_factor
                 if key == 'k':
                     self.velocity = 0
                     self.angular_velocity = 0
@@ -109,8 +114,8 @@ class JoyStick():
                 print(self.velocity)
                 print(self.angular_velocity)
                 print(self.gait_num)
-            rospy.set_param("current_gait",self.gait_num)
-            rospy.set_param("command_vel",self.velocity)
+            rospy.set_param("current_gait", self.gait_num)
+            rospy.set_param("command_vel", self.velocity)
             rospy.set_param("command_omega", self.angular_velocity)
             self.command_publish()
             if USE_SCREEN:
@@ -125,28 +130,46 @@ class JoyStick():
                 clock.tick(20)
             rospy.Rate(20).sleep()
 
-    def joycallback(self,msg):
+    def joycallback(self, msg):
         if self.joystick_connected:
+            print(msg)
             self.velocity = - msg.axes[4] * 0.6
             self.angular_velocity = msg.axes[0] * 0.4
+
+            # 手动重启
+            gait_button = msg.buttons[2]
+            if gait_button == 1:
+                if rospy.get_param("UserResetFlag") == 0:
+                    rospy.set_param("UserResetFlag", 1)
+                time.sleep(0.3)
+
+            # 步态切换
             gait_button = msg.buttons[0]
             if gait_button == 1:
                 self.gait_num += 1
                 if self.gait_num > GAIT_NUM:
                     self.gait_num = 0
                 time.sleep(0.3)
+
+            # 启动
             gait_button = msg.buttons[1]
             if gait_button == 1:
                 if rospy.get_param("start_move") == 0:
-                    rospy.set_param("start_move",1)
-
+                    rospy.set_param("start_move", 1)
                 time.sleep(0.3)
+            
+            # 俯仰
+            pitchangle = msg.axes[7] * 0.15
+            rospy.set_param("command_pitch", pitchangle)
         else:
             pass
+
     def command_publish(self):
         msg = Float32MultiArray()
-        msg.data = [self.gait_num,self.velocity,self.angular_velocity]
+        msg.data = [self.gait_num, self.velocity, self.angular_velocity]
         self.command_publisher.publish(msg)
+
+
 def readchar():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
@@ -156,6 +179,7 @@ def readchar():
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
+
 
 def readkey(getchar_fn=None):
     getchar = getchar_fn or readchar
@@ -167,6 +191,7 @@ def readkey(getchar_fn=None):
         return c1
     c3 = getchar()
     return chr(0x10 + ord(c3) - 65)
+
 
 dog_joystick = JoyStick()
 dog_joystick.main()

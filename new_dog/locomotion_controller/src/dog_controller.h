@@ -14,7 +14,7 @@ private:
   float start_phasetime;
   int state_index;
 public:
-  float body_mass  ;
+  float body_mass;
   float body_width;
   float body_lenth;
   float hip_lenth;
@@ -35,6 +35,7 @@ public:
   Eigen::Vector3f body_vel = Eigen::Vector3f::Zero();
   Eigen::Vector3f command_vel = Eigen::Vector3f::Zero();
   Eigen::Vector3f command_omega = Eigen::Vector3f::Zero();
+  float command_pitch = 0.0f; // target pitch angle
   float walking_height;
   float foot_height = 0;//the hight of  robot according to the height of foot
   Eigen::Matrix<float,3,4>ground_point = Eigen::Matrix<float,3,4>::Zero();

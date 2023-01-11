@@ -13,10 +13,10 @@ void locomotion_controller::init()
   state_estimation_subscriber = pnh->subscribe("/state",10,&locomotion_controller::state_estimation_callback,this);
   command_subscriber = pnh->subscribe("/command",10,&locomotion_controller::command_callback,this);
 
-  force_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/ground_force",10);
-  swingleg_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/swing_leg",10);
-  leg_status_publisher = pnh->advertise<std_msgs::Int32MultiArray>("/leg_status",10);
-  phase_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/phase_msg",10);
+  force_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/ground_force",10);  // 足端力
+  swingleg_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/swing_leg",10);  // 摆动腿轨迹
+  leg_status_publisher = pnh->advertise<std_msgs::Int32MultiArray>("/leg_status",10); // 腿状态
+  phase_publisher = pnh->advertise<std_msgs::Float32MultiArray>("/phase_msg",10);     // 
 
   pnh->getParam("body_lenth",_Dog->body_lenth);
   pnh->getParam("body_width",_Dog->body_width);
@@ -106,9 +106,9 @@ void locomotion_controller::state_estimation_callback(const  std_msgs::Float32Mu
     {
       pnh ->setParam("fallen_error",1);
     }
-    _Dog->body_pos<<msg->data[3],msg->data[4],msg->data[5];
-    _Dog->omega<<msg->data[6],msg->data[7],msg->data[8];
-    _Dog->body_vel<<msg->data[9],msg->data[10],msg->data[11];
+    _Dog->body_pos << msg->data[3],msg->data[4],msg->data[5];
+    _Dog->omega << msg->data[6],msg->data[7],msg->data[8];
+    _Dog->body_vel << msg->data[9],msg->data[10],msg->data[11];
   }
 }
  void locomotion_controller::command_callback(const  std_msgs::Float32MultiArray::ConstPtr& msg)
@@ -231,30 +231,44 @@ void locomotion_controller::phase_publish()
 //***************************************************************************************/visualize/***************************************************************************************//
 void locomotion_controller::visual()
 {
+  //  and _Dog->_statemachine._gait.name != "STANDING"
   if(time_index%5 == 0)
   {
-    std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
-    std::cout<<"target_groundleg: "<<_Dog->target_groundleg<<std::endl;
-    std::cout<<"ground_point: "<<_Dog->ground_point<<std::endl;
-    std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
-    std::cout<<"rpy: "<<_Dog->rpy<<std::endl;
-    std::cout<<"xyz: "<<_Dog->body_pos<<std::endl;
-    std::cout<<"omega: "<<_Dog->omega<<std::endl;
-    std::cout<<"vel: "<<_Dog->body_vel<<std::endl;
-    std::cout<<"schedualgroundLeg: "<<std::endl;
-    for (int i = 0;i<4;i++) {std::cout<<_Dog->schedualgroundLeg[i]<<" ";}
-    std::cout<<std::endl;
-    std::cout<<"phase: "<<std::endl;
-    for (int i = 0;i<4;i++) {std::cout<<_Dog->_statemachine.phase[i]<<" ";}
-    std::cout<<std::endl;
-    std::cout<<"target_state: "<<_Dog->target_state<<std::endl;
-    std::cout<<"gait_time: "<<_Dog->_statemachine._gait.Gait_currentTime<<std::endl;
-    std::cout<<"loop_time: "<<_Dog->loop_time<<std::endl;
-    std::cout<<"target_force/Torque: "<<_Dog->target_force<<std::endl<<_Dog->target_torque<<std::endl;
-    std::cout<<"Error: "<<_Dog->_qp_solver.Error<<std::endl;
-    std::cout<<"force_list: "<<_Dog->force_list<<std::endl;
-    std::cout<<"swing_pos: "<<_Dog->target_swingpos<<std::endl;
-    std::cout<<"swing_vel: "<<_Dog->target_swingvel<<std::endl;
+    // std::cout << std::endl;
+
+    // std::cout<<"x:"<< '\t' << _Dog->body_pos[0]<< '\t' <<"y:"<< '\t' << _Dog->body_pos[1]<< '\t' <<"z:"<< '\t' << _Dog->body_pos[2]<<std::endl;
+    // std::cout<<"vx:"<< '\t' << _Dog->body_vel[0]<< '\t' <<"vy:"<< '\t' << _Dog->body_vel[1]<< '\t' <<"vz:"<< '\t' << _Dog->body_vel[2]<<std::endl;
+    // std::cout<<"fx:"<< '\t' << _Dog->target_force[0]<< '\t' <<"fy:"<< '\t' << _Dog->target_force[1]<< '\t' <<"fz:"<< '\t' << _Dog->target_force[2]<<std::endl;
+
+    
+    // std::cout<<"r:"<< '\t' << _Dog->rpy[0]<< '\t' <<"p:"<< '\t' << _Dog->rpy[1]<< '\t' <<"y:"<< '\t' << _Dog->rpy[2]<<std::endl;
+    // std::cout<<"vr:"<< '\t' << _Dog->omega[0]<< '\t' <<"vp:"<< '\t' << _Dog->omega[1]<< '\t' <<"vy:"<< '\t' << _Dog->omega[2]<<std::endl;
+    // std::cout<<"ar:"<< '\t' << _Dog->target_torque[0]<< '\t' <<"ap:"<< '\t' << _Dog->target_torque[1]<< '\t' <<"ay:"<< '\t' << _Dog->target_torque[2]<<std::endl;
+
+    // std::cout << std::endl;
+    // std::cout<<"foot_point: "<<_Dog->footpoint<<std::endl;
+    // std::cout<<"target_groundleg: "<<_Dog->target_groundleg<<std::endl;
+    // std::cout<<"ground_point: "<<_Dog->ground_point<<std::endl;
+    // std::cout<<"foot_vel: "<<_Dog->footvel<<std::endl;
+    // std::cout<<"rpy: "<<_Dog->rpy<<std::endl;
+    // std::cout<<"xyz: "<<_Dog->body_pos<<std::endl;
+    // std::cout<<"omega: "<<_Dog->omega<<std::endl;
+    // std::cout<<"vel: "<<_Dog->body_vel<<std::endl;
+    // std::cout<<"schedualgroundLeg: "<<std::endl;
+    // for (int i = 0;i<4;i++) {std::cout<<_Dog->schedualgroundLeg[i]<<" ";}
+    // std::cout<<std::endl;
+    // std::cout<<"phase: "<<std::endl;
+    // for (int i = 0;i<4;i++) {std::cout<<_Dog->_statemachine.phase[i]<<" ";}
+    // std::cout<<std::endl;
+    // std::cout<<"target_state: "<<_Dog->target_state<<std::endl;
+    // std::cout<<"gait_time: "<<_Dog->_statemachine._gait.Gait_currentTime<<std::endl;
+    // std::cout<<"gait_name: "<<_Dog->_statemachine._gait.name<<std::endl;
+    // std::cout<<"loop_time: "<<_Dog->loop_time<<std::endl;
+    // std::cout<<"target_force/Torque: "<<_Dog->target_force<<std::endl<<_Dog->target_torque<<std::endl;
+    // std::cout<<"Error: "<<_Dog->_qp_solver.Error<<std::endl;
+    // std::cout<<"force_list: "<<_Dog->force_list<<std::endl;
+    // std::cout<<"swing_pos: "<<_Dog->target_swingpos<<std::endl;
+    // std::cout<<"swing_vel: "<<_Dog->target_swingvel<<std::endl;
   }
 }
 
@@ -384,7 +398,7 @@ bool locomotion_controller::error_handle()
 void locomotion_controller::moving_reset()
 {
   _Dog->dog_reset();
-  pnh->setParam("move_reset", 1);//TODO: not reset
+  pnh->setParam("move_reset", 1);         //  TODO: not reset
   pnh->setParam("osqp_unsolve_error",0);
   pnh->setParam("fallen_error",0);
 }

@@ -1,3 +1,11 @@
+/****************************************************************************\
+ * @file    leg_dynamic.cpp
+ * @author  马润禹
+ * @date    2021/04/17
+ * @brief   
+ ******************************************************************************
+ * @attent  腿部动力学部分
+ ****************************************************************************/
 #include "leg_dynamic.h"
 
 leg_params::leg_params(){}
@@ -12,6 +20,8 @@ leg_params::leg_params(float *_mass_list, float *_lenth_list , float *_discomlis
     }
 
 }
+
+
 Eigen::Vector3f get_footpoints(int sidesign,float *theta_list, float *lenth_list)
 {
     Eigen::Matrix3f Tofootpoint;
@@ -32,13 +42,20 @@ Eigen::Vector3f get_footpoints(int sidesign,float *theta_list, float *lenth_list
     Tofootpoint(2,1) =  - c0 * c1;
     Tofootpoint(2,2) = - c0 * c12;
     Eigen::Vector3f lenthVec;
-    lenthVec<< lenth_list[0], lenth_list[1], lenth_list[2];
+    lenthVec << lenth_list[0], lenth_list[1], lenth_list[2];
     Eigen::Vector3f foot_point;
     foot_point = Tofootpoint * lenthVec;
 
     return foot_point;
 }
 
+/**
+ * @brief   获取雅克比矩阵
+ * @param   sidesign:
+ *          theta_list:
+ *          lenth_list:
+ * @return  雅克比矩阵
+ */
 Eigen::Matrix3f get_jacobian(int sidesign,float *theta_list, float *lenth_list)
 {
     Eigen::Matrix3f jacobian;
@@ -66,6 +83,13 @@ Eigen::Matrix3f get_jacobian(int sidesign,float *theta_list, float *lenth_list)
 
     return jacobian;
 }
+
+/**
+ * @brief   获取足端速度
+ * @param   _jacobian：雅克比矩阵
+ *          jointvel_list：关节速度列表
+ * @return  足端速度（身体坐标系,x,y,z）
+ */
 Eigen::Vector3f get_footpointvel(Eigen::Matrix3f _jacobian, float * jointvel_list)
 {
     Eigen::Vector3f joint_array;
@@ -101,9 +125,14 @@ Eigen::Vector3f get_tauff(int sidesign, float * theta_list, float * joint_vel, l
     Eigen::Vector3f joint_torque = -_legparam.mass_list[1]*(ja_l2.transpose() * gravity) -_legparam.mass_list[2]*(ja_l3.transpose() * gravity);
     joint_torque = joint_torque + C_mat * joint_array;
     return joint_torque;
-    
 }
 
+/**
+ * @brief 足端阻抗控制
+ * @param kp：
+ *        kd：
+ *        
+ */
 Eigen::Vector3f get_feedbackward(Eigen::Matrix3f kp,Eigen::Matrix3f kd,Eigen::Vector3f current_pos,Eigen::Vector3f current_vel,Eigen::Vector3f target_pos,Eigen::Vector3f target_vel)
 {
     Eigen::Vector3f leg_force = kp * (target_pos - current_pos) + kd*(target_vel - current_vel);

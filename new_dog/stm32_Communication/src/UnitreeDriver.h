@@ -14,10 +14,11 @@
 #include <string.h>
 
 typedef enum{
-    DISABLE = -1,    // 未启动
-    POSMODE = 0,
-    VELMODE = 1,
-    TORMODE = 2
+    DISABLE = -1,       // 未启动
+    POSMODE = 0,        // 位置模式
+    VELMODE = 1,        // 速度模式
+    TORMODE = 2,        // 支撑相力矩模式
+    SWING_TORMODE = 3   // 摆动相力矩模式
 }MotionMode_t;
 
 typedef struct{
