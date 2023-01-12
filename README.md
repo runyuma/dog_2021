@@ -8,12 +8,14 @@
 - Ros Melodic
 - PYTHON: Numpy, OSQP 
 - C++: Eigen3, OSQP, OSQP-Eigen
-# package
+# ROS package
 - locomotion_controller: optimization contact force & schedule gait @ 100HZ
 - leg_controller : calculate Jacobian & impedence control @1000HZ
 - state_estimation: extended kalman filter localization @500Hz
 - stm32_Communication: communication with 2 stm32 and control Unitree A1 motor @1000HZ
 - dog_sim: gazebo simulation
+# How it works?
+- nodes communicate based on topic with high frequency
 ![image](image/rosgraph1.png)
 ![image](image/rosgraph.png)
 
